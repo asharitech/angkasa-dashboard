@@ -5,7 +5,7 @@ const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "angkasa-dashboard-secret-change-me"
 );
 
-const publicPaths = ["/login", "/api/health"];
+const publicPaths = ["/login", "/api/health", "/api/auth"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
