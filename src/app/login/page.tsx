@@ -43,26 +43,26 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Landmark className="h-6 w-6 text-primary" />
+    <div className="flex min-h-dvh items-center justify-center px-5 bg-background">
+      <Card className="w-full max-w-sm shadow-lg">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+            <Landmark className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-xl">Angkasa Dashboard</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <CardTitle className="text-xl font-bold">Angkasa Dashboard</CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
             Yayasan Rangas Batara Berlayar
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
+                placeholder="Masukkan username"
                 autoComplete="username"
                 required
               />
@@ -74,15 +74,15 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="Masukkan password"
                 autoComplete="current-password"
                 required
               />
             </div>
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive font-medium">{error}</p>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Masuk
             </Button>

@@ -1,6 +1,7 @@
 import { getLedger } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MiniSummaryCard } from "@/components/summary-card";
 import {
   Table,
   TableBody,
@@ -34,29 +35,29 @@ export default async function LaporanOpPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <MiniCard
-          label="Total Masuk"
+        <MiniSummaryCard
+          title="Total Masuk"
           value={formatRupiah(totals.masuk)}
           icon={<TrendingUp className="h-5 w-5" />}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50"
         />
-        <MiniCard
-          label="Total Keluar"
+        <MiniSummaryCard
+          title="Total Keluar"
           value={formatRupiah(totals.keluar)}
           icon={<TrendingDown className="h-5 w-5" />}
           iconColor="text-rose-600"
           iconBg="bg-rose-50"
         />
-        <MiniCard
-          label="Saldo"
+        <MiniSummaryCard
+          title="Saldo"
           value={formatRupiah(totals.saldo)}
           icon={<Scale className="h-5 w-5" />}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
         />
-        <MiniCard
-          label="Dana Efektif"
+        <MiniSummaryCard
+          title="Dana Efektif"
           value={formatRupiah(dana_efektif)}
           icon={<Banknote className="h-5 w-5" />}
           iconColor="text-violet-600"
@@ -70,21 +71,21 @@ export default async function LaporanOpPage() {
           <CardTitle className="text-base font-semibold">Kewajiban</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-3.5 py-2.5">
+          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
             <span className="text-sm text-muted-foreground">Lembar2 BTN</span>
             <span className="text-sm font-semibold tabular-nums">
               {formatRupiah(kewajiban.lembar2_btn)}
             </span>
           </div>
-          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-3.5 py-2.5">
+          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
             <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
             <span className="text-sm font-semibold tabular-nums">
               {formatRupiah(kewajiban.pinjaman_btn)}
             </span>
           </div>
-          <div className="flex justify-between items-center rounded-lg bg-primary/5 px-3.5 py-3 border border-primary/10">
+          <div className="flex justify-between items-center rounded-lg bg-primary/5 px-4 py-3.5 border border-primary/10">
             <span className="text-sm font-semibold">Total Kewajiban</span>
-            <span className="text-sm font-bold tabular-nums text-primary">
+            <span className="text-base font-bold tabular-nums text-primary">
               {formatRupiah(kewajiban.total)}
             </span>
           </div>
@@ -96,38 +97,38 @@ export default async function LaporanOpPage() {
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">
             Detail Transaksi
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
-              {entries.length} item
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({entries.length} item)
             </span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto -mx-4 px-0 md:mx-0 md:px-4">
+        <CardContent className="overflow-x-auto px-0 md:px-5">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-12 text-xs">#</TableHead>
-                <TableHead className="text-xs">Keterangan</TableHead>
-                <TableHead className="text-right text-xs">Masuk</TableHead>
-                <TableHead className="text-right text-xs">Keluar</TableHead>
-                <TableHead className="text-right text-xs">Saldo</TableHead>
+                <TableHead className="w-14">#</TableHead>
+                <TableHead>Keterangan</TableHead>
+                <TableHead className="text-right">Masuk</TableHead>
+                <TableHead className="text-right">Keluar</TableHead>
+                <TableHead className="text-right">Saldo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {entries.map((e) => (
                 <TableRow key={e.no} className="hover:bg-muted/50">
-                  <TableCell className="text-xs text-muted-foreground font-medium">
+                  <TableCell className="text-sm text-muted-foreground font-medium">
                     {e.no}
                   </TableCell>
-                  <TableCell className="text-sm font-medium max-w-[200px] truncate">
+                  <TableCell className="text-sm font-medium max-w-[220px] truncate">
                     {e.keterangan}
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums text-emerald-600 font-medium">
+                  <TableCell className="text-right text-sm tabular-nums text-emerald-600 font-semibold">
                     {e.masuk > 0 ? formatRupiah(e.masuk) : ""}
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums text-rose-600 font-medium">
+                  <TableCell className="text-right text-sm tabular-nums text-rose-600 font-semibold">
                     {e.keluar > 0 ? formatRupiah(e.keluar) : ""}
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums font-semibold">
+                  <TableCell className="text-right text-sm tabular-nums font-bold">
                     {formatRupiah(e.saldo)}
                   </TableCell>
                 </TableRow>
@@ -140,32 +141,3 @@ export default async function LaporanOpPage() {
   );
 }
 
-function MiniCard({
-  label,
-  value,
-  icon,
-  iconColor,
-  iconBg,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  iconColor: string;
-  iconBg: string;
-}) {
-  return (
-    <Card className="shadow-sm">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}>
-            {icon}
-          </div>
-        </div>
-        <p className="mt-2 text-base font-bold tabular-nums md:text-lg">
-          {value}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}

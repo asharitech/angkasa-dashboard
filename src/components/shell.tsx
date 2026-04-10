@@ -48,7 +48,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <h1 className="text-sm font-semibold tracking-tight">Angkasa</h1>
-            <p className="text-[10px] text-muted-foreground leading-none">Dashboard Keuangan</p>
+            <p className="text-xs text-muted-foreground leading-none">Dashboard Keuangan</p>
           </div>
         </div>
         <nav className="flex-1 space-y-0.5 p-3">
@@ -101,7 +101,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   key={href}
                   href={href}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium transition-colors min-w-[48px]",
+                    "flex flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors min-w-[48px]",
                     active ? "text-primary" : "text-muted-foreground"
                   )}
                 >

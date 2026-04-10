@@ -37,17 +37,17 @@ export default async function PengajuanPage() {
           <Receipt className="h-6 w-6 text-primary" />
           Pengajuan Papi
         </h2>
-        <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold px-2.5 py-1">
+        <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1.5">
           {pending.length} pending · {formatRupiah(pendingTotal)}
         </Badge>
       </div>
 
       <Tabs defaultValue="pending">
         <TabsList className="w-full md:w-auto">
-          <TabsTrigger value="pending" className="flex-1 md:flex-initial text-sm">
+          <TabsTrigger value="pending" className="flex-1 md:flex-initial">
             Pending ({pending.length})
           </TabsTrigger>
-          <TabsTrigger value="resolved" className="flex-1 md:flex-initial text-sm">
+          <TabsTrigger value="resolved" className="flex-1 md:flex-initial">
             Selesai ({resolved.length})
           </TabsTrigger>
         </TabsList>
@@ -112,30 +112,30 @@ function PengajuanItem({
   const config = statusConfig[item.status];
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50">
+    <div className="flex items-start justify-between gap-3 rounded-lg px-3 py-3.5 transition-colors hover:bg-muted/50">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{item.item}</p>
-        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
           {item.month && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground font-medium">
               {item.month}
             </span>
           )}
-          <Badge variant="outline" className="text-[10px] px-1.5 font-medium">
+          <Badge variant="outline">
             {item.category.replace(/_/g, " ")}
           </Badge>
           {item.sumber_dana && (
-            <Badge variant="outline" className="text-[10px] px-1.5 font-medium">
+            <Badge variant="outline">
               {item.sumber_dana.replace(/_/g, " ")}
             </Badge>
           )}
         </div>
         {item.detail && item.detail.length > 0 && (
-          <div className="mt-2 ml-1 space-y-1 border-l-2 border-border pl-3">
+          <div className="mt-2.5 ml-1 space-y-1.5 border-l-2 border-border pl-3">
             {item.detail.map((d, i) => (
               <div
                 key={i}
-                className="flex justify-between text-xs text-muted-foreground"
+                className="flex justify-between text-sm text-muted-foreground"
               >
                 <span>{d.item}</span>
                 <span className="tabular-nums font-medium">
@@ -147,10 +147,10 @@ function PengajuanItem({
         )}
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <span className="text-sm font-bold tabular-nums">
+        <span className="text-base font-bold tabular-nums">
           {item.amount ? formatRupiah(item.amount) : "-"}
         </span>
-        <Badge className={`text-[10px] px-2 font-medium border ${config?.color ?? ""}`}>
+        <Badge className={`font-medium border ${config?.color ?? ""}`}>
           {item.status}
         </Badge>
       </div>

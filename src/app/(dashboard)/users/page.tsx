@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +66,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-sm text-muted-foreground">Memuat...</p>
+        <p className="text-base text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -74,8 +74,8 @@ export default function UsersPage() {
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Shield className="mb-3 h-10 w-10 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
+        <Shield className="mb-4 h-12 w-12 text-muted-foreground" />
+        <p className="text-base text-muted-foreground">
           Hanya admin yang dapat mengakses halaman ini
         </p>
       </div>
@@ -93,15 +93,15 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold md:text-xl flex items-center gap-2">
-          <Users className="h-5 w-5" />
+        <h2 className="text-xl font-semibold tracking-tight md:text-2xl flex items-center gap-2">
+          <Users className="h-6 w-6 text-primary" />
           Manajemen User
         </h2>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingUser(null); }}>
-          <DialogTrigger render={<Button size="sm" />}>
-            <Plus className="mr-1 h-4 w-4" /> Tambah
+          <DialogTrigger render={<Button />}>
+            <Plus className="mr-1.5 h-4 w-4" /> Tambah
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -123,47 +123,43 @@ export default function UsersPage() {
 
       <div className="space-y-3">
         {users.map((user) => (
-          <Card key={user._id}>
-            <CardContent className="flex items-center justify-between p-4">
+          <Card key={user._id} className="shadow-sm">
+            <CardContent className="flex items-center justify-between p-5">
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <Badge
-                    variant={user.role === "admin" ? "default" : "secondary"}
-                    className="text-[10px]"
-                  >
+                <div className="flex items-center gap-2.5">
+                  <p className="text-base font-semibold">{user.name}</p>
+                  <Badge variant={user.role === "admin" ? "default" : "secondary"}>
                     {user.role === "admin" ? (
-                      <><Shield className="mr-0.5 h-2.5 w-2.5" /> Admin</>
+                      <><Shield className="mr-1 h-3 w-3" /> Admin</>
                     ) : (
-                      <><Eye className="mr-0.5 h-2.5 w-2.5" /> Viewer</>
+                      <><Eye className="mr-1 h-3 w-3" /> Viewer</>
                     )}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">@{user.username}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">@{user.username}</p>
                 {user.phone && (
-                  <p className="text-xs text-muted-foreground">{user.phone}</p>
+                  <p className="text-sm text-muted-foreground">{user.phone}</p>
                 )}
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
                   onClick={() => {
                     setEditingUser(user);
                     setDialogOpen(true);
                   }}
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-4 w-4" />
                 </Button>
                 {user._id !== currentUser?.userId && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive"
+                    className="text-destructive"
                     onClick={() => handleDelete(user._id)}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
@@ -220,7 +216,7 @@ function UserForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {!user && (
         <div className="space-y-2">
           <Label>Username</Label>
@@ -251,7 +247,7 @@ function UserForm({
       <div className="space-y-2">
         <Label>Role</Label>
         <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as "admin" | "viewer" })}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -268,8 +264,8 @@ function UserForm({
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={saving}>
-        {user ? "Simpan" : "Tambah User"}
+      <Button type="submit" className="w-full" size="lg" disabled={saving}>
+        {user ? "Simpan Perubahan" : "Tambah User"}
       </Button>
     </form>
   );

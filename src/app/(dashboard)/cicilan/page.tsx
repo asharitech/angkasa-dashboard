@@ -3,6 +3,7 @@ import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { SummaryCard } from "@/components/summary-card";
 import { CreditCard, Repeat, CheckCircle2, Clock, CalendarDays } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -33,36 +34,20 @@ export default async function CicilanPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-3">
-        <Card className="shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between">
-              <span className="text-xs font-medium text-muted-foreground">
-                Cicilan {currentMonth}
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-                <CreditCard className="h-5 w-5 text-blue-600" />
-              </div>
-            </div>
-            <p className="mt-2 text-lg font-bold tabular-nums">
-              {formatRupiah(currentTotal)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between">
-              <span className="text-xs font-medium text-muted-foreground">
-                Recurring/bulan
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
-                <Repeat className="h-5 w-5 text-violet-600" />
-              </div>
-            </div>
-            <p className="mt-2 text-lg font-bold tabular-nums">
-              {formatRupiah(recurringTotal)}
-            </p>
-          </CardContent>
-        </Card>
+        <SummaryCard
+          title={`Cicilan ${currentMonth}`}
+          value={formatRupiah(currentTotal)}
+          icon={<CreditCard className="h-5 w-5" />}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-50"
+        />
+        <SummaryCard
+          title="Recurring/bulan"
+          value={formatRupiah(recurringTotal)}
+          icon={<Repeat className="h-5 w-5" />}
+          iconColor="text-violet-600"
+          iconBg="bg-violet-50"
+        />
       </div>
 
       {/* Loan cards */}
@@ -77,29 +62,29 @@ export default async function CicilanPage() {
               <CardTitle className="flex items-center justify-between text-base">
                 <span className="font-semibold">{loan.item}</span>
                 {loan.due_day && (
-                  <Badge variant="outline" className="text-xs font-medium flex items-center gap-1">
-                    <CalendarDays className="h-3 w-3" />
+                  <Badge variant="outline" className="font-medium flex items-center gap-1">
+                    <CalendarDays className="h-3.5 w-3.5" />
                     Tgl {loan.due_day}
                   </Badge>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {loan.schedule?.map((s) => {
                   const isPaid = s.status === "lunas";
                   return (
                     <div
                       key={s.month}
-                      className={`flex items-center justify-between rounded-lg px-3 py-2.5 ${
+                      className={`flex items-center justify-between rounded-lg px-4 py-3 ${
                         isPaid ? "bg-emerald-50/50" : "bg-muted/50"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         {isPaid ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500" />
                         ) : (
-                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <Clock className="h-4.5 w-4.5 text-muted-foreground" />
                         )}
                         <span
                           className={`text-sm font-medium ${
@@ -109,12 +94,12 @@ export default async function CicilanPage() {
                           {s.month}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <span className="text-sm font-semibold tabular-nums">
                           {formatRupiah(s.amount)}
                         </span>
                         <Badge
-                          className={`text-[10px] px-2 font-medium border ${
+                          className={`font-medium border ${
                             isPaid
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : "bg-amber-50 text-amber-700 border-amber-200"
@@ -145,15 +130,15 @@ export default async function CicilanPage() {
             {recurring.map((r) => (
               <div
                 key={r._id}
-                className="flex items-center justify-between py-3.5 first:pt-4 last:pb-4"
+                className="flex items-center justify-between py-4 first:pt-5 last:pb-5"
               >
                 <div>
                   <p className="text-sm font-semibold">{r.item}</p>
-                  <Badge variant="outline" className="text-[10px] px-1.5 mt-1 font-medium">
+                  <Badge variant="outline" className="mt-1.5">
                     {r.category.replace(/_/g, " ")}
                   </Badge>
                 </div>
-                <span className="text-sm font-bold tabular-nums">
+                <span className="text-base font-bold tabular-nums">
                   {formatRupiah(r.amount ?? 0)}
                 </span>
               </div>

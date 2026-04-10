@@ -47,7 +47,7 @@ export default async function SewaPage() {
           <Building2 className="h-6 w-6 text-primary" />
           Sewa Dapur
         </h2>
-        <Badge variant="secondary" className="text-xs font-semibold px-2.5 py-1">
+        <Badge variant="secondary" className="font-semibold px-3 py-1.5">
           {ledger.period}
         </Badge>
       </div>
@@ -56,33 +56,33 @@ export default async function SewaPage() {
       <div className="grid grid-cols-3 gap-3">
         <Card className="shadow-sm">
           <CardContent className="p-4 text-center">
-            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
               <DollarSign className="h-5 w-5 text-emerald-600" />
             </div>
             <p className="text-xs font-medium text-muted-foreground">Total</p>
-            <p className="text-base font-bold tabular-nums text-emerald-600 mt-0.5">
+            <p className="text-base font-bold tabular-nums text-emerald-600 mt-1">
               {formatRupiah(sewa.total)}
             </p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardContent className="p-4 text-center">
-            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <MapPin className="h-5 w-5 text-blue-600" />
             </div>
             <p className="text-xs font-medium text-muted-foreground">Lokasi Aktif</p>
-            <p className="text-base font-bold mt-0.5">
+            <p className="text-base font-bold mt-1">
               {activeCount}/{sewa.locations.length}
             </p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardContent className="p-4 text-center">
-            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50">
               <Calendar className="h-5 w-5 text-violet-600" />
             </div>
             <p className="text-xs font-medium text-muted-foreground">Rate/Hari</p>
-            <p className="text-base font-bold tabular-nums mt-0.5">
+            <p className="text-base font-bold tabular-nums mt-1">
               {formatRupiah(sewa.rate_per_day)}
             </p>
           </CardContent>
@@ -107,17 +107,17 @@ export default async function SewaPage() {
               {locations.map((loc) => (
                 <div
                   key={loc.code}
-                  className={`flex items-center justify-between rounded-xl border-l-4 ${rc.border} ${rc.bg} p-3.5 transition-colors`}
+                  className={`flex items-center justify-between rounded-xl border-l-4 ${rc.border} ${rc.bg} p-4 transition-colors`}
                 >
                   <div>
                     <p className="text-sm font-semibold">{loc.code}</p>
                     {loc.days !== null && loc.days > 0 && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-sm text-muted-foreground mt-0.5">
                         {loc.days} hari = {formatRupiah(loc.amount ?? 0)}
                       </p>
                     )}
                   </div>
-                  <Badge className={`text-[10px] px-2 font-medium border ${statusConfig[loc.status] ?? ""}`}>
+                  <Badge className={`font-medium border ${statusConfig[loc.status] ?? ""}`}>
                     {loc.status}
                   </Badge>
                 </div>
@@ -131,7 +131,7 @@ export default async function SewaPage() {
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <StickyNote className="h-4.5 w-4.5 text-muted-foreground" />
+              <StickyNote className="h-5 w-5 text-muted-foreground" />
               Catatan
             </CardTitle>
           </CardHeader>
