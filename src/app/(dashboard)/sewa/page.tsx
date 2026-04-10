@@ -2,32 +2,36 @@ import { getLedger } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Building2, MapPin, Calendar, DollarSign, StickyNote } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const statusColor: Record<string, string> = {
-  active: "bg-green-100 text-green-800",
-  running: "bg-blue-100 text-blue-800",
-  hold: "bg-amber-100 text-amber-800",
-  inactive: "bg-red-100 text-red-800",
+const statusConfig: Record<string, string> = {
+  active: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  running: "bg-blue-50 text-blue-700 border-blue-200",
+  hold: "bg-amber-50 text-amber-700 border-amber-200",
+  inactive: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
-const regionColor: Record<string, string> = {
-  TOPILAUT: "border-l-blue-500",
-  RB: "border-l-amber-500",
-  ANGKASA: "border-l-green-500",
+const regionConfig: Record<string, { border: string; bg: string }> = {
+  TOPILAUT: { border: "border-l-blue-500", bg: "bg-blue-50/50" },
+  RB: { border: "border-l-amber-500", bg: "bg-amber-50/50" },
+  ANGKASA: { border: "border-l-emerald-500", bg: "bg-emerald-50/50" },
 };
 
 export default async function SewaPage() {
   const ledger = await getLedger("sewa");
 
   if (!ledger?.sewa) {
-    return <p className="text-muted-foreground">Data sewa belum tersedia.</p>;
+    return (
+      <p className="text-muted-foreground text-center py-10">
+        Data sewa belum tersedia.
+      </p>
+    );
   }
 
   const { sewa } = ledger;
 
-  // Group by region
   const byRegion = new Map<string, typeof sewa.locations>();
   for (const loc of sewa.locations) {
     if (!byRegion.has(loc.region)) byRegion.set(loc.region, []);
@@ -35,37 +39,50 @@ export default async function SewaPage() {
   }
 
   const activeCount = sewa.locations.filter((l) => l.status === "active").length;
-  const totalDays = sewa.locations.reduce((s, l) => s + (l.days ?? 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold md:text-xl">Sewa Dapur</h2>
-        <Badge variant="secondary" className="text-xs">
-          Periode: {ledger.period}
+        <h2 className="text-xl font-semibold tracking-tight md:text-2xl flex items-center gap-2">
+          <Building2 className="h-6 w-6 text-primary" />
+          Sewa Dapur
+        </h2>
+        <Badge variant="secondary" className="text-xs font-semibold px-2.5 py-1">
+          {ledger.period}
         </Badge>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Total</p>
-            <p className="text-sm font-bold tabular-nums text-green-600">
+        <Card className="shadow-sm">
+          <CardContent className="p-4 text-center">
+            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+              <DollarSign className="h-5 w-5 text-emerald-600" />
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Total</p>
+            <p className="text-base font-bold tabular-nums text-emerald-600 mt-0.5">
               {formatRupiah(sewa.total)}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Lokasi Aktif</p>
-            <p className="text-sm font-bold">{activeCount}/{sewa.locations.length}</p>
+        <Card className="shadow-sm">
+          <CardContent className="p-4 text-center">
+            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+              <MapPin className="h-5 w-5 text-blue-600" />
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Lokasi Aktif</p>
+            <p className="text-base font-bold mt-0.5">
+              {activeCount}/{sewa.locations.length}
+            </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Rate/Hari</p>
-            <p className="text-sm font-bold tabular-nums">
+        <Card className="shadow-sm">
+          <CardContent className="p-4 text-center">
+            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+              <Calendar className="h-5 w-5 text-violet-600" />
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Rate/Hari</p>
+            <p className="text-base font-bold tabular-nums mt-0.5">
               {formatRupiah(sewa.rate_per_day)}
             </p>
           </CardContent>
@@ -75,12 +92,13 @@ export default async function SewaPage() {
       {/* Locations by region */}
       {Array.from(byRegion.entries()).map(([region, locations]) => {
         const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
+        const rc = regionConfig[region] ?? { border: "border-l-gray-400", bg: "bg-muted/50" };
         return (
-          <Card key={region}>
+          <Card key={region} className="shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between text-sm">
-                <span>{region}</span>
-                <span className="text-xs font-normal text-muted-foreground">
+              <CardTitle className="flex items-center justify-between text-base">
+                <span className="font-semibold">{region}</span>
+                <span className="text-sm font-semibold text-muted-foreground tabular-nums">
                   {formatRupiah(regionTotal)}
                 </span>
               </CardTitle>
@@ -89,22 +107,17 @@ export default async function SewaPage() {
               {locations.map((loc) => (
                 <div
                   key={loc.code}
-                  className={`flex items-center justify-between rounded border-l-4 p-2.5 ${
-                    regionColor[region] ?? "border-l-gray-300"
-                  }`}
+                  className={`flex items-center justify-between rounded-xl border-l-4 ${rc.border} ${rc.bg} p-3.5 transition-colors`}
                 >
                   <div>
-                    <p className="text-xs font-medium">{loc.code}</p>
+                    <p className="text-sm font-semibold">{loc.code}</p>
                     {loc.days !== null && loc.days > 0 && (
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {loc.days} hari = {formatRupiah(loc.amount ?? 0)}
                       </p>
                     )}
                   </div>
-                  <Badge
-                    className={`text-[9px] ${statusColor[loc.status] ?? ""}`}
-                    variant="secondary"
-                  >
+                  <Badge className={`text-[10px] px-2 font-medium border ${statusConfig[loc.status] ?? ""}`}>
                     {loc.status}
                   </Badge>
                 </div>
@@ -115,14 +128,18 @@ export default async function SewaPage() {
       })}
 
       {sewa.notes && Object.keys(sewa.notes).length > 0 && (
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Catatan</CardTitle>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <StickyNote className="h-4.5 w-4.5 text-muted-foreground" />
+              Catatan
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground space-y-1">
+          <CardContent className="space-y-2">
             {Object.entries(sewa.notes).map(([key, val]) => (
-              <p key={key}>
-                <span className="font-medium capitalize">{key}:</span> {val}
+              <p key={key} className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground capitalize">{key}:</span>{" "}
+                {val}
               </p>
             ))}
           </CardContent>
