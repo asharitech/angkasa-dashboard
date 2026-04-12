@@ -28,15 +28,22 @@ export default async function PribadiPage() {
   const data = await getPribadiSummary();
 
   const bal = data.balance?.balance;
-  const cashTotal = bal?.cash?.total ?? 0;
+  // Prefer live account balances over the cached balance ledger
+  const bcaAccount = data.personalAccounts.find((a) => a._id === "bca_angkasa");
+  const briKas = bal?.cash?.bri_kas ?? 0; // BRI kas is calculated (LUNAS ANGKASA), not from e-statement
+  const bcaBalance = bcaAccount?.balance ?? bal?.cash?.bca ?? 0;
+  const cashTotal = bcaBalance + briKas;
   const numpang = bal?.numpang ?? {};
   const numpangTotal = numpang.total ?? 0;
 
   // Piutang from live pengajuan
   const piutangTotal = data.piutangByMonth.reduce((s, p) => s + p.total, 0);
 
-  // Savings total
-  const totalSavings = data.savingsTotal.reduce((s, r) => s + r.total, 0);
+  // Savings total — angkasa records as out (spending from his account), eba as in
+  const totalSavings = data.savingsTotal.reduce((s, r) => {
+    // Use directional totals: angkasa saves = out, eba saves = in
+    return s + (r.total_out > 0 ? r.total_out : r.total_in > 0 ? r.total_in : r.total);
+  }, 0);
 
   // Cicilan current month + remaining debt
   const now = new Date();
@@ -183,11 +190,11 @@ export default async function PribadiPage() {
           <CardContent className="space-y-2">
             <div className="flex justify-between items-center rounded-lg bg-blue-50/50 px-4 py-3">
               <span className="text-sm">BCA (murni)</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(bal.cash.bca ?? 0)}</span>
+              <span className="text-sm font-semibold tabular-nums">{formatRupiah(bcaBalance)}</span>
             </div>
             <div className="flex justify-between items-center rounded-lg bg-emerald-50/50 px-4 py-3">
               <span className="text-sm">BRI kas</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(bal.cash.bri_kas ?? 0)}</span>
+              <span className="text-sm font-semibold tabular-nums">{formatRupiah(briKas)}</span>
             </div>
             <div className="flex justify-between items-center rounded-lg bg-primary/5 px-4 py-3.5 border border-primary/10">
               <span className="text-sm font-semibold">Total Kas</span>
@@ -214,17 +221,20 @@ export default async function PribadiPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {data.savingsTotal.map((s) => (
-              <div key={s._id} className="flex justify-between items-center rounded-lg bg-violet-50/50 px-4 py-3">
-                <div>
-                  <span className="text-sm font-medium capitalize">{s._id}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{s.count} setoran</span>
+            {data.savingsTotal.map((s) => {
+              const displayAmount = s.total_out > 0 ? s.total_out : s.total_in > 0 ? s.total_in : s.total;
+              return (
+                <div key={s._id} className="flex justify-between items-center rounded-lg bg-violet-50/50 px-4 py-3">
+                  <div>
+                    <span className="text-sm font-medium capitalize">{s._id}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{s.count} setoran</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {formatRupiah(displayAmount)}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold tabular-nums">
-                  {formatRupiah(s.total)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
             {/* Recent savings entries inline */}
             {data.savings.length > 0 && (
               <div className="pt-2 space-y-1">

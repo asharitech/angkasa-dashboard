@@ -104,7 +104,7 @@ export default async function DashboardPage() {
       {/* Rekening Yayasan */}
       {(() => {
         const yayasanAccounts = data.accounts.filter(
-          (acc) => acc.type === "yayasan" || acc.type === "personal_transit"
+          (acc) => acc.type === "yayasan"
         );
         return yayasanAccounts.length > 0 ? (
           <Card className="shadow-sm">
