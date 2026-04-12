@@ -77,7 +77,7 @@ export interface Ledger {
   };
   balance?: {
     cash: { bca: number; bri_kas: number; total: number };
-    piutang: { lembar2: number; april: number; total: number };
+    piutang: { maret?: number; april?: number; total: number } & Record<string, number>;
     numpang: Record<string, number>;
   };
   sewa?: {

@@ -105,13 +105,19 @@ export async function getPribadiSummary() {
       getObligations({ type: "loan", status: "active" }),
       getObligations({ type: "recurring", status: "active" }),
       db.collection("obligations").aggregate([
-        { $match: { type: "pengajuan", status: "pending", requestor: "angkasa" } },
+        { $match: { type: "pengajuan", status: "pending", requestor: "angkasa", sumber_dana: "BRI_ANGKASA" } },
         { $group: { _id: "$month", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { _id: 1 } },
       ]).toArray(),
       db.collection("entries").aggregate([
         { $match: { category: "savings" } },
-        { $group: { _id: "$owner", count: { $sum: 1 }, total: { $sum: "$amount" } } },
+        { $group: {
+            _id: "$owner",
+            count: { $sum: 1 },
+            total: { $sum: "$amount" },
+            total_in: { $sum: { $cond: [{ $eq: ["$direction", "in"] }, "$amount", 0] } },
+            total_out: { $sum: { $cond: [{ $eq: ["$direction", "out"] }, "$amount", 0] } },
+          } },
       ]).toArray(),
     ]);
 
@@ -125,7 +131,7 @@ export async function getPribadiSummary() {
     personalAccounts,
     spending,
     savings,
-    savingsTotal: savingsTotal as { _id: string; count: number; total: number }[],
+    savingsTotal: savingsTotal as { _id: string; count: number; total: number; total_in: number; total_out: number }[],
     loans,
     recurring,
     piutangByMonth: piutangByMonth as { _id: string; count: number; total: number }[],
@@ -202,7 +208,13 @@ export async function getActivityFeed(limit = 30): Promise<ActivityEvent[]> {
     });
   }
 
-  events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Sort by actual transaction date, fallback to created_at for ties
+  events.sort((a, b) => {
+    const dateA = new Date(a.date ?? a.created_at).getTime();
+    const dateB = new Date(b.date ?? b.created_at).getTime();
+    if (dateB !== dateA) return dateB - dateA;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
   return events.slice(0, limit);
 }
 
