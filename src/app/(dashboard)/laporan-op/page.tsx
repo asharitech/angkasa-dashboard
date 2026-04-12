@@ -108,7 +108,7 @@ export default async function LaporanOpPage() {
         </CardHeader>
         <CardContent className="overflow-x-auto px-0 md:px-5">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-14">#</TableHead>
                 <TableHead>Keterangan</TableHead>
@@ -123,7 +123,7 @@ export default async function LaporanOpPage() {
                   <TableCell className="text-sm text-muted-foreground font-medium">
                     {e.no}
                   </TableCell>
-                  <TableCell className="text-sm font-medium max-w-[220px] truncate">
+                  <TableCell className="text-sm font-medium whitespace-normal break-words md:max-w-[220px] md:truncate">
                     {e.keterangan}
                   </TableCell>
                   <TableCell className="text-right text-sm tabular-nums text-emerald-600 font-semibold">

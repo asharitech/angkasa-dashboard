@@ -6,11 +6,33 @@ import { SummaryCard } from "@/components/summary-card";
 import { PageHeader } from "@/components/page-header";
 import { TransactionIcon, AmountText } from "@/components/transaction-item";
 import { ArrowLeftRight, TrendingUp, TrendingDown } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function TransaksiPage() {
-  const entries = await getEntries({}, 100);
+const DOMAIN_TABS = [
+  { value: "all", label: "Semua" },
+  { value: "yayasan", label: "Yayasan" },
+  { value: "personal", label: "Pribadi" },
+  { value: "numpang", label: "Numpang" },
+];
+
+export default async function TransaksiPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ domain?: string }>;
+}) {
+  const params = await searchParams;
+  const domainFilter = params.domain ?? "all";
+
+  const filter: Record<string, unknown> = {};
+  if (domainFilter !== "all") {
+    // "personal" in URL maps to domain="personal" in DB
+    filter.domain = domainFilter;
+  }
+
+  const entries = await getEntries(filter, 100);
 
   const byDate = new Map<string, typeof entries>();
   for (const entry of entries) {
@@ -29,6 +51,29 @@ export default async function TransaksiPage() {
   return (
     <div className="space-y-6">
       <PageHeader icon={ArrowLeftRight} title="Transaksi" />
+
+      {/* Domain filter tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {DOMAIN_TABS.map((tab) => {
+          const isActive = tab.value === domainFilter;
+          const href =
+            tab.value === "all" ? "/transaksi" : `/transaksi?domain=${tab.value}`;
+          return (
+            <Link
+              key={tab.value}
+              href={href}
+              className={cn(
+                "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard

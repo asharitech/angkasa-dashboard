@@ -3,6 +3,8 @@ import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format"
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
   Activity,
   ArrowDownLeft,
@@ -13,6 +15,20 @@ import {
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+const TYPE_TABS = [
+  { value: "all", label: "Semua" },
+  { value: "entry", label: "Transaksi" },
+  { value: "obligation", label: "Pengajuan" },
+];
+
+const obligationStatusStyles: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  lunas: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  reimbursed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  approved: "bg-blue-50 text-blue-700 border-blue-200",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
+};
 
 function EventIcon({ event }: { event: { type: string; direction?: string; domain?: string } }) {
   if (event.type === "entry") {
@@ -42,8 +58,24 @@ function EventIcon({ event }: { event: { type: string; direction?: string; domai
   );
 }
 
-export default async function AktivitasPage() {
-  const events = await getActivityFeed(50);
+export default async function AktivitasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const params = await searchParams;
+  const typeFilter = params.type ?? "all";
+
+  const allEvents = await getActivityFeed(50);
+
+  const events =
+    typeFilter === "all"
+      ? allEvents
+      : allEvents.filter((e) => {
+          if (typeFilter === "entry") return e.type === "entry";
+          if (typeFilter === "obligation") return e.type === "obligation";
+          return true;
+        });
 
   // Group by date
   const grouped = new Map<string, typeof events>();
@@ -56,6 +88,29 @@ export default async function AktivitasPage() {
   return (
     <div className="space-y-6">
       <PageHeader icon={Activity} title="Aktivitas" />
+
+      {/* Type filter tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {TYPE_TABS.map((tab) => {
+          const isActive = tab.value === typeFilter;
+          const href =
+            tab.value === "all" ? "/aktivitas" : `/aktivitas?type=${tab.value}`;
+          return (
+            <Link
+              key={tab.value}
+              href={href}
+              className={cn(
+                "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
 
       {events.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">
@@ -97,8 +152,9 @@ export default async function AktivitasPage() {
                       )}
                       {event.status && (
                         <Badge
-                          variant={event.status === "pending" ? "secondary" : "outline"}
-                          className="text-xs mt-0.5"
+                          className={`text-xs mt-0.5 font-medium border ${
+                            obligationStatusStyles[event.status] ?? "bg-secondary text-secondary-foreground"
+                          }`}
                         >
                           {event.status}
                         </Badge>
