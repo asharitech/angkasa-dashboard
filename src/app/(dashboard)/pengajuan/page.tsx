@@ -3,17 +3,11 @@ import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Receipt, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { Receipt } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const statusConfig: Record<string, { color: string; icon: typeof Clock }> = {
-  pending: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
-  reimbursed: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-  approved: { color: "bg-blue-50 text-blue-700 border-blue-200", icon: CheckCircle2 },
-  rejected: { color: "bg-rose-50 text-rose-700 border-rose-200", icon: XCircle },
-  lunas: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-};
 
 export default async function PengajuanPage() {
   const all = await getObligations({ type: "pengajuan" });
@@ -32,15 +26,27 @@ export default async function PengajuanPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold tracking-tight md:text-2xl flex items-center gap-2">
-          <Receipt className="h-6 w-6 text-primary" />
-          Pengajuan Papi
-        </h2>
+      <PageHeader icon={Receipt} title="Pengajuan">
         <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1.5">
           {pending.length} pending · {formatRupiah(pendingTotal)}
         </Badge>
-      </div>
+      </PageHeader>
+
+      {/* Requestor summary */}
+      {byRequestor.size > 0 && (
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
+          {Array.from(byRequestor.entries()).map(([requestor, items]) => {
+            const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+            return (
+              <div key={requestor} className="rounded-xl bg-amber-50/50 px-4 py-3">
+                <p className="text-xs text-muted-foreground capitalize">{requestor}</p>
+                <p className="text-base font-bold tabular-nums mt-0.5">{formatRupiah(subtotal)}</p>
+                <p className="text-xs text-muted-foreground">{items.length} item</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <Tabs defaultValue="pending">
         <TabsList className="w-full md:w-auto">
@@ -56,21 +62,19 @@ export default async function PengajuanPage() {
           {Array.from(byRequestor.entries()).map(([requestor, items]) => {
             const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
             return (
-              <Card key={requestor} className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center justify-between text-base">
-                    <span className="capitalize font-semibold">{requestor}</span>
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {items.length} item · {formatRupiah(subtotal)}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-1">
-                  {items.map((item) => (
-                    <PengajuanItem key={item._id} item={item} />
-                  ))}
-                </CardContent>
-              </Card>
+              <div key={requestor} className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                    {requestor}
+                  </h3>
+                  <span className="text-sm font-semibold text-muted-foreground tabular-nums">
+                    {items.length} item · {formatRupiah(subtotal)}
+                  </span>
+                </div>
+                {items.map((item) => (
+                  <PengajuanCard key={item._id} item={item} />
+                ))}
+              </div>
             );
           })}
         </TabsContent>
@@ -82,11 +86,7 @@ export default async function PengajuanPage() {
             </p>
           ) : (
             resolved.map((item) => (
-              <Card key={item._id} className="shadow-sm">
-                <CardContent className="p-4">
-                  <PengajuanItem item={item} />
-                </CardContent>
-              </Card>
+              <PengajuanCard key={item._id} item={item} />
             ))
           )}
         </TabsContent>
@@ -95,7 +95,7 @@ export default async function PengajuanPage() {
   );
 }
 
-function PengajuanItem({
+function PengajuanCard({
   item,
 }: {
   item: {
@@ -109,35 +109,42 @@ function PengajuanItem({
     detail?: { item: string; amount: number }[] | null;
   };
 }) {
-  const config = statusConfig[item.status];
-
   return (
-    <div className="flex items-start justify-between gap-3 rounded-lg px-3 py-3.5 transition-colors hover:bg-muted/50">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">{item.item}</p>
-        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-          {item.month && (
-            <span className="text-xs text-muted-foreground font-medium">
-              {item.month}
-            </span>
-          )}
-          <Badge variant="outline">
-            {item.category.replace(/_/g, " ")}
-          </Badge>
-          {item.sumber_dana && (
-            <Badge variant="outline">
-              {item.sumber_dana.replace(/_/g, " ")}
-            </Badge>
-          )}
+    <Card className="shadow-sm">
+      <CardContent className="p-4 space-y-3">
+        {/* Top row: name + amount */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold leading-snug">{item.item}</p>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <StatusBadge status={item.status} />
+              <Badge variant="outline">
+                {item.category.replace(/_/g, " ")}
+              </Badge>
+              {item.month && (
+                <Badge variant="outline">{item.month}</Badge>
+              )}
+              {item.sumber_dana && (
+                <Badge variant="outline">
+                  {item.sumber_dana.replace(/_/g, " ")}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <span className="text-base font-bold tabular-nums shrink-0">
+            {item.amount ? formatRupiah(item.amount) : "-"}
+          </span>
         </div>
+
+        {/* Detail breakdown */}
         {item.detail && item.detail.length > 0 && (
-          <div className="mt-2.5 ml-1 space-y-1.5 border-l-2 border-border pl-3">
+          <div className="rounded-lg bg-muted/50 p-3 space-y-1.5">
             {item.detail.map((d, i) => (
               <div
                 key={i}
-                className="flex justify-between text-sm text-muted-foreground"
+                className="flex justify-between text-sm"
               >
-                <span>{d.item}</span>
+                <span className="text-muted-foreground">{d.item}</span>
                 <span className="tabular-nums font-medium">
                   {formatRupiah(d.amount)}
                 </span>
@@ -145,15 +152,7 @@ function PengajuanItem({
             ))}
           </div>
         )}
-      </div>
-      <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <span className="text-base font-bold tabular-nums">
-          {item.amount ? formatRupiah(item.amount) : "-"}
-        </span>
-        <Badge className={`font-medium border ${config?.color ?? ""}`}>
-          {item.status}
-        </Badge>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

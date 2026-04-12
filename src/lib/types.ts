@@ -114,3 +114,17 @@ export interface Entry {
   created_at: string;
   updated_at: string;
 }
+
+export interface ActivityEvent {
+  _id: string;
+  type: "entry" | "obligation";
+  date: string;
+  title: string;
+  subtitle: string;
+  amount: number | null;
+  direction?: "in" | "out";
+  status?: string;
+  domain?: string;
+  category?: string;
+  created_at: string;
+}

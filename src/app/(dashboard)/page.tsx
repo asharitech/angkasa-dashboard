@@ -1,17 +1,18 @@
+import Link from "next/link";
 import { getDashboardSummary } from "@/lib/data";
 import { formatRupiah, formatShortRupiah, formatDateShort } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SummaryCard } from "@/components/summary-card";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
 import {
   Landmark,
-  Wallet,
-  HandCoins,
-  ArrowLeftRight,
   Building2,
   Clock,
-  TrendingUp,
-  TrendingDown,
+  Receipt,
+  FileText,
+  ChevronRight,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -19,42 +20,48 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const data = await getDashboardSummary();
 
-  const danaEfektif = data.laporanOp?.laporan_op?.dana_efektif ?? 0;
-  const cashTotal = data.balance?.balance?.cash?.total ?? 0;
-  const piutangTotal = data.balance?.balance?.piutang?.total ?? 0;
+  const op = data.laporanOp?.laporan_op;
+  const danaEfektif = op?.dana_efektif ?? 0;
+  const saldo = op?.totals?.saldo ?? 0;
   const sewaTotal = data.sewa?.sewa?.total ?? 0;
+  const sewaLocations = data.sewa?.sewa?.locations ?? [];
+  const activeCount = sewaLocations.filter((l) => l.status === "active").length;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold tracking-tight md:text-2xl">
-        Ringkasan Keuangan
-      </h2>
+      <PageHeader icon={Landmark} title="Yayasan YRBB">
+        {data.laporanOp?.as_of && (
+          <span className="text-xs text-muted-foreground">
+            per {formatDateShort(data.laporanOp.as_of)}
+          </span>
+        )}
+      </PageHeader>
 
-      {/* Top summary cards */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      {/* Top summary — yayasan KPIs */}
+      <div className="grid grid-cols-2 gap-3">
         <SummaryCard
-          title="Dana Efektif BTN"
+          title="Dana Efektif"
           value={formatShortRupiah(danaEfektif)}
-          subtitle="Yayasan"
+          subtitle="Setelah kewajiban"
           icon={<Landmark className="h-5 w-5" />}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
         />
         <SummaryCard
-          title="Dana Pribadi"
-          value={formatShortRupiah(cashTotal)}
-          subtitle="BCA + BRI kas"
-          icon={<Wallet className="h-5 w-5" />}
-          iconColor="text-emerald-600"
-          iconBg="bg-emerald-50"
+          title="Saldo BTN"
+          value={formatShortRupiah(saldo)}
+          subtitle="Laporan Op"
+          icon={<FileText className="h-5 w-5" />}
+          iconColor="text-violet-600"
+          iconBg="bg-violet-50"
         />
         <SummaryCard
-          title="Piutang"
-          value={formatShortRupiah(piutangTotal)}
-          subtitle="Belum diganti"
-          icon={<HandCoins className="h-5 w-5" />}
-          iconColor="text-amber-600"
-          iconBg="bg-amber-50"
+          title="Sewa Dapur"
+          value={formatShortRupiah(sewaTotal)}
+          subtitle={`${activeCount}/${sewaLocations.length} aktif`}
+          icon={<Building2 className="h-5 w-5" />}
+          iconColor="text-teal-600"
+          iconBg="bg-teal-50"
         />
         <SummaryCard
           title="Pengajuan Pending"
@@ -66,80 +73,146 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Accounts */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Landmark className="h-5 w-5 text-muted-foreground" />
-            Rekening
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2.5">
-          {data.accounts.map((acc) => (
-            <div
-              key={acc._id}
-              className="flex items-center justify-between rounded-xl bg-muted/50 p-4 transition-colors hover:bg-muted/80"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-semibold">{acc.bank}</p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {acc.holder}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-bold tabular-nums">
-                  {formatRupiah(acc.balance)}
-                </p>
-                <Badge variant="secondary" className="mt-1">
-                  {acc.type === "yayasan"
-                    ? "Yayasan"
-                    : acc.type === "personal_transit"
-                    ? "Transit"
-                    : "Pribadi"}
-                </Badge>
-              </div>
+      {/* Kewajiban */}
+      {op?.kewajiban && op.kewajiban.total > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <Link href="/laporan-op" className="block">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-muted-foreground" />
+                Kewajiban
+                <span className="ml-auto text-sm font-bold tabular-nums text-rose-600">
+                  {formatRupiah(op.kewajiban.total)}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+              <span className="text-sm text-muted-foreground">Lembar2 BTN</span>
+              <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.lembar2_btn)}</span>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+              <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
+              <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Rekening Yayasan */}
+      {(() => {
+        const yayasanAccounts = data.accounts.filter(
+          (acc) => acc.type === "yayasan" || acc.type === "personal_transit"
+        );
+        return yayasanAccounts.length > 0 ? (
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Landmark className="h-5 w-5 text-muted-foreground" />
+                Rekening Yayasan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {yayasanAccounts.map((acc) => (
+                <div
+                  key={acc._id}
+                  className="flex items-center justify-between rounded-xl bg-muted/50 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{acc.bank}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {acc.holder}
+                      {acc.balance_as_of && (
+                        <> · per {formatDateShort(acc.balance_as_of)}</>
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-base font-bold tabular-nums">
+                      {formatRupiah(acc.balance)}
+                    </p>
+                    <Badge variant="secondary" className="mt-1">
+                      {acc.type === "yayasan" ? "Yayasan" : "Transit"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null;
+      })()}
+
+      {/* Pengajuan by requestor */}
+      {data.pengajuanByRequestor.length > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <Link href="/pengajuan" className="block">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-muted-foreground" />
+                Pengajuan Pending
+                <Badge className="ml-auto bg-amber-50 text-amber-700 border-amber-200 font-semibold tabular-nums">
+                  {formatRupiah(data.pengajuanTotalAmount)}
+                </Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {data.pengajuanByRequestor.map((r) => (
+              <div
+                key={r._id}
+                className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold capitalize">{r._id ?? "unknown"}</p>
+                  <p className="text-xs text-muted-foreground">{r.count} item</p>
+                </div>
+                <span className="text-sm font-bold tabular-nums">
+                  {formatRupiah(r.total)}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sewa summary */}
       {data.sewa?.sewa && (
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-              Sewa Dapur
-              <Badge variant="secondary" className="ml-auto font-semibold tabular-nums">
-                {formatRupiah(sewaTotal)}
-              </Badge>
-            </CardTitle>
+            <Link href="/sewa" className="block">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+                Sewa Dapur
+                <div className="ml-auto flex items-center gap-2">
+                  <Badge variant="outline" className="tabular-nums">
+                    {activeCount}/{sewaLocations.length} aktif
+                  </Badge>
+                  <Badge variant="secondary" className="font-semibold tabular-nums">
+                    {formatRupiah(sewaTotal)}
+                  </Badge>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-              {data.sewa.sewa.locations.map((loc) => (
+              {sewaLocations.map((loc) => (
                 <div
                   key={loc.code}
-                  className="flex items-center justify-between rounded-lg bg-muted/50 px-3.5 py-3"
+                  className="rounded-lg bg-muted/50 px-3.5 py-3 space-y-1.5"
                 >
-                  <span className="text-sm font-semibold">{loc.code}</span>
+                  <p className="text-sm font-semibold truncate">{loc.code}</p>
                   <div className="flex items-center gap-2">
+                    <StatusBadge status={loc.status} />
                     {loc.status === "active" && loc.days != null && (
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {loc.days}h
                       </span>
                     )}
-                    <Badge
-                      variant={
-                        loc.status === "active"
-                          ? "default"
-                          : loc.status === "running"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {loc.status}
-                    </Badge>
                   </div>
                 </div>
               ))}
@@ -147,67 +220,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Recent transactions */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <ArrowLeftRight className="h-5 w-5 text-muted-foreground" />
-            Transaksi Terakhir
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.recentEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              Belum ada transaksi
-            </p>
-          ) : (
-            <div className="space-y-1">
-              {data.recentEntries.map((entry) => (
-                <div
-                  key={entry._id}
-                  className="flex items-center justify-between rounded-lg px-2 py-3 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        entry.direction === "out"
-                          ? "bg-rose-50 text-rose-500"
-                          : "bg-emerald-50 text-emerald-500"
-                      }`}
-                    >
-                      {entry.direction === "out" ? (
-                        <TrendingDown className="h-5 w-5" />
-                      ) : (
-                        <TrendingUp className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">
-                        {entry.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDateShort(entry.date)} · {entry.category?.replace(/_/g, " ")}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className={`text-base font-bold tabular-nums shrink-0 ml-3 ${
-                      entry.direction === "out"
-                        ? "text-rose-600"
-                        : "text-emerald-600"
-                    }`}
-                  >
-                    {entry.direction === "out" ? "-" : "+"}
-                    {formatShortRupiah(entry.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
-

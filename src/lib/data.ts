@@ -1,5 +1,5 @@
 import { getDb } from "./mongodb";
-import type { Account, Obligation, Ledger, Entry } from "./types";
+import type { Account, Obligation, Ledger, Entry, ActivityEvent } from "./types";
 
 export async function getAccounts(): Promise<Account[]> {
   const db = await getDb();
@@ -93,37 +93,124 @@ export async function updateAccount(id: string, data: Record<string, unknown>): 
   );
 }
 
-export async function getDashboardSummary() {
-  const [accounts, laporanOp, balance, sewa] = await Promise.all([
-    getAccounts(),
-    getLedger("laporan_op"),
-    getLedger("balance"),
-    getLedger("sewa"),
-  ]);
-
+export async function getPribadiSummary() {
   const db = await getDb();
 
-  const [pengajuanPending, pengajuanTotal, loanActive, recurringActive, recentEntries] =
+  const [balance, accounts, entries, savings, loans, recurring, piutangByMonth, savingsTotal] =
     await Promise.all([
+      getLedger("balance"),
+      getAccounts(),
+      getEntries({ owner: "angkasa" }, 50),
+      getEntries({ category: "savings" }, 50),
+      getObligations({ type: "loan", status: "active" }),
+      getObligations({ type: "recurring", status: "active" }),
+      db.collection("obligations").aggregate([
+        { $match: { type: "pengajuan", status: "pending", requestor: "angkasa" } },
+        { $group: { _id: "$month", count: { $sum: 1 }, total: { $sum: "$amount" } } },
+        { $sort: { _id: 1 } },
+      ]).toArray(),
+      db.collection("entries").aggregate([
+        { $match: { category: "savings" } },
+        { $group: { _id: "$owner", count: { $sum: 1 }, total: { $sum: "$amount" } } },
+      ]).toArray(),
+    ]);
+
+  const spending = entries.filter((e) => e.direction === "out" && e.category !== "savings");
+
+  // Personal accounts only
+  const personalAccounts = accounts.filter((a) => a.type !== "yayasan");
+
+  return {
+    balance,
+    personalAccounts,
+    spending,
+    savings,
+    savingsTotal: savingsTotal as { _id: string; count: number; total: number }[],
+    loans,
+    recurring,
+    piutangByMonth: piutangByMonth as { _id: string; count: number; total: number }[],
+  };
+}
+
+export async function getDashboardSummary() {
+  const db = await getDb();
+
+  const [accounts, laporanOp, sewa, pengajuanPending, pengajuanTotal, pengajuanByRequestor] =
+    await Promise.all([
+      getAccounts(),
+      getLedger("laporan_op"),
+      getLedger("sewa"),
       db.collection("obligations").countDocuments({ type: "pengajuan", status: "pending" }),
       db.collection("obligations").aggregate([
         { $match: { type: "pengajuan", status: "pending" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]).toArray(),
-      getObligations({ type: "loan", status: "active" }),
-      getObligations({ type: "recurring", status: "active" }),
-      getEntries({}, 10),
+      db.collection("obligations").aggregate([
+        { $match: { type: "pengajuan", status: "pending" } },
+        { $group: { _id: "$requestor", count: { $sum: 1 }, total: { $sum: "$amount" } } },
+        { $sort: { total: -1 } },
+      ]).toArray(),
     ]);
 
   return {
     accounts,
     laporanOp,
-    balance,
     sewa,
     pengajuanPending,
     pengajuanTotalAmount: pengajuanTotal[0]?.total ?? 0,
-    loanActive,
-    recurringActive,
-    recentEntries,
+    pengajuanByRequestor: pengajuanByRequestor as { _id: string; count: number; total: number }[],
   };
+}
+
+export async function getActivityFeed(limit = 30): Promise<ActivityEvent[]> {
+  const db = await getDb();
+
+  const [entries, obligations] = await Promise.all([
+    db.collection("entries").find().sort({ created_at: -1 }).limit(limit).toArray(),
+    db.collection("obligations").find().sort({ updated_at: -1 }).limit(limit).toArray(),
+  ]);
+
+  const events: ActivityEvent[] = [];
+
+  for (const e of entries) {
+    events.push({
+      _id: e._id.toString(),
+      type: "entry",
+      date: e.date?.toString() ?? e.created_at?.toString(),
+      title: e.description ?? "Transaksi",
+      subtitle: [e.domain, e.category?.replace(/_/g, " ")].filter(Boolean).join(" · "),
+      amount: e.amount ?? null,
+      direction: e.direction,
+      domain: e.domain,
+      category: e.category,
+      created_at: e.created_at?.toString() ?? e.date?.toString(),
+    });
+  }
+
+  for (const o of obligations) {
+    events.push({
+      _id: o._id.toString(),
+      type: "obligation",
+      date: o.updated_at?.toString() ?? o.created_at?.toString(),
+      title: o.item ?? "Obligation",
+      subtitle: [o.type, o.requestor].filter(Boolean).join(" · "),
+      amount: o.amount ?? null,
+      status: o.status,
+      domain: o.type,
+      category: o.category,
+      created_at: o.created_at?.toString(),
+    });
+  }
+
+  events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return events.slice(0, limit);
+}
+
+export async function getSewaHistory(): Promise<Ledger[]> {
+  const db = await getDb();
+  return db
+    .collection("ledgers")
+    .find({ type: "sewa" })
+    .sort({ updated_at: -1 })
+    .toArray() as unknown as Ledger[];
 }

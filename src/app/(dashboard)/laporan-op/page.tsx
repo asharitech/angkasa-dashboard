@@ -2,6 +2,7 @@ import { getLedger } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MiniSummaryCard } from "@/components/summary-card";
+import { PageHeader } from "@/components/page-header";
 import {
   Table,
   TableBody,
@@ -10,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, Scale, Banknote } from "lucide-react";
+import { FileText, TrendingUp, TrendingDown, Scale, Banknote } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,14 @@ export default async function LaporanOpPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold tracking-tight md:text-2xl">
-        Laporan Keuangan Operasional
-      </h2>
+      <PageHeader icon={FileText} title="Laporan Keuangan Operasional">
+        {ledger.as_of && (
+          <span className="text-xs text-muted-foreground">
+            per {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(ledger.as_of))}
+          </span>
+        )}
+      </PageHeader>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <MiniSummaryCard
           title="Total Masuk"
@@ -140,4 +144,3 @@ export default async function LaporanOpPage() {
     </div>
   );
 }
-

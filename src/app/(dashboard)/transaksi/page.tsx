@@ -3,6 +3,8 @@ import { formatRupiah, formatDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SummaryCard } from "@/components/summary-card";
+import { PageHeader } from "@/components/page-header";
+import { TransactionIcon, AmountText } from "@/components/transaction-item";
 import { ArrowLeftRight, TrendingUp, TrendingDown } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +28,7 @@ export default async function TransaksiPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold tracking-tight md:text-2xl flex items-center gap-2">
-        <ArrowLeftRight className="h-6 w-6 text-primary" />
-        Transaksi
-      </h2>
+      <PageHeader icon={ArrowLeftRight} title="Transaksi" />
 
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
@@ -67,18 +66,8 @@ export default async function TransaksiPage() {
                     key={entry._id}
                     className="flex items-start gap-3.5 py-4 first:pt-5 last:pb-5"
                   >
-                    <div
-                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        entry.direction === "out"
-                          ? "bg-rose-50 text-rose-500"
-                          : "bg-emerald-50 text-emerald-500"
-                      }`}
-                    >
-                      {entry.direction === "out" ? (
-                        <TrendingDown className="h-5 w-5" />
-                      ) : (
-                        <TrendingUp className="h-5 w-5" />
-                      )}
+                    <div className="mt-0.5">
+                      <TransactionIcon direction={entry.direction} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate">
@@ -90,9 +79,7 @@ export default async function TransaksiPage() {
                         </p>
                       )}
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        <Badge variant="outline">
-                          {entry.domain}
-                        </Badge>
+                        <Badge variant="outline">{entry.domain}</Badge>
                         <Badge variant="outline">
                           {entry.category.replace(/_/g, " ")}
                         </Badge>
@@ -101,16 +88,11 @@ export default async function TransaksiPage() {
                         </Badge>
                       </div>
                     </div>
-                    <span
-                      className={`text-base font-bold tabular-nums shrink-0 ${
-                        entry.direction === "out"
-                          ? "text-rose-600"
-                          : "text-emerald-600"
-                      }`}
-                    >
-                      {entry.direction === "out" ? "-" : "+"}
-                      {formatRupiah(entry.amount)}
-                    </span>
+                    <AmountText
+                      amount={entry.amount}
+                      direction={entry.direction}
+                      formatter={formatRupiah}
+                    />
                   </div>
                 ))}
               </CardContent>

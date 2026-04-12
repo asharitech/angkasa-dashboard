@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Shield, Eye, Users } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
 interface User {
   _id: string;
@@ -94,11 +95,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold tracking-tight md:text-2xl flex items-center gap-2">
-          <Users className="h-6 w-6 text-primary" />
-          Manajemen User
-        </h2>
+      <PageHeader icon={Users} title="Manajemen User">
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingUser(null); }}>
           <DialogTrigger render={<Button />}>
             <Plus className="mr-1.5 h-4 w-4" /> Tambah
@@ -119,7 +116,7 @@ export default function UsersPage() {
             />
           </DialogContent>
         </Dialog>
-      </div>
+      </PageHeader>
 
       <div className="space-y-3">
         {users.map((user) => (
