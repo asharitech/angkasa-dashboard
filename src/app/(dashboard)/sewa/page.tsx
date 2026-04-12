@@ -63,7 +63,7 @@ export default async function SewaPage() {
           iconBg="bg-blue-50"
         />
         <MiniSummaryCard
-          title="Rate/Hari"
+          title="Rate/Hari/Lok"
           value={formatRupiah(sewa.rate_per_day)}
           icon={<Calendar className="h-5 w-5" />}
           iconColor="text-violet-600"

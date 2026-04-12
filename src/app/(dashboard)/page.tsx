@@ -114,10 +114,23 @@ export default async function DashboardPage() {
               <span className="text-sm text-muted-foreground">Lembar2 BTN</span>
               <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.lembar2_btn)}</span>
             </div>
-            <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-              <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn)}</span>
-            </div>
+            {op.kewajiban.pinjaman_btn_awal != null && op.kewajiban.pinjaman_btn_sumare != null ? (
+              <>
+                <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Pinjaman BTN (awal)</span>
+                  <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn_awal)}</span>
+                </div>
+                <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Pinjaman BTN (Sumare)</span>
+                  <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn_sumare)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
+                <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn)}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

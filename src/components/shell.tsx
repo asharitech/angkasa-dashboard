@@ -39,14 +39,14 @@ const mobilePrimary: NavItem[] = [
   { href: "/", label: "Yayasan", icon: Landmark },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
   { href: "/pribadi", label: "Pribadi", icon: User },
-  { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
+  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
 ];
 
 // Mobile: overflow items under "Lainnya"
 const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
-  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
+  { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
   { href: "/users", label: "Users", icon: Users },
 ];
 
@@ -74,6 +74,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const moreIsActive = mobileMore.some((item) => isActive(item.href));
 
+  // Derive current page title from pathname
+  const allNavItems: NavItem[] = [
+    ...yayasanNav,
+    ...pribadiNav,
+    ...monitorNav,
+    ...adminNav,
+  ];
+  const currentPageTitle =
+    allNavItems.find((item) => isActive(item.href))?.label ?? "Dashboard";
+
   function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) {
     const active = isActive(href);
     return (
@@ -94,6 +104,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
+      {/* Mobile top header */}
+      <header className="fixed inset-x-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border/60 bg-card/95 px-4 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Landmark className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">Angkasa</span>
+        </div>
+        <span className="text-sm font-medium text-muted-foreground">{currentPageTitle}</span>
+      </header>
+
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border/60 bg-card shadow-sm md:flex md:flex-col">
         <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
@@ -155,7 +176,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 md:ml-60">
-        <div className="mx-auto max-w-4xl px-4 pb-24 pt-5 md:px-6 md:pb-10 md:pt-8">
+        <div className="mx-auto max-w-4xl px-4 pb-24 pt-[calc(3rem+1.25rem)] md:px-6 md:pb-10 md:pt-8">
           {children}
         </div>
       </main>

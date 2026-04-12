@@ -72,7 +72,13 @@ export interface Ledger {
   laporan_op?: {
     entries: LaporanOpEntry[];
     totals: { masuk: number; keluar: number; saldo: number };
-    kewajiban: { lembar2_btn: number; pinjaman_btn: number; total: number };
+    kewajiban: {
+      lembar2_btn: number;
+      pinjaman_btn: number;
+      pinjaman_btn_awal?: number;
+      pinjaman_btn_sumare?: number;
+      total: number;
+    };
     dana_efektif: number;
   };
   balance?: {
