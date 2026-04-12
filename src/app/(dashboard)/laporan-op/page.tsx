@@ -81,12 +81,30 @@ export default async function LaporanOpPage() {
               {formatRupiah(kewajiban.lembar2_btn)}
             </span>
           </div>
-          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-            <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
-            <span className="text-sm font-semibold tabular-nums">
-              {formatRupiah(kewajiban.pinjaman_btn)}
-            </span>
-          </div>
+          {(kewajiban as { pinjaman_btn_awal?: number; pinjaman_btn_sumare?: number }).pinjaman_btn_awal != null &&
+          (kewajiban as { pinjaman_btn_awal?: number; pinjaman_btn_sumare?: number }).pinjaman_btn_sumare != null ? (
+            <>
+              <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                <span className="text-sm text-muted-foreground">Pinjaman BTN (awal)</span>
+                <span className="text-sm font-semibold tabular-nums">
+                  {formatRupiah((kewajiban as { pinjaman_btn_awal: number }).pinjaman_btn_awal)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                <span className="text-sm text-muted-foreground">Pinjaman BTN (Sumare)</span>
+                <span className="text-sm font-semibold tabular-nums">
+                  {formatRupiah((kewajiban as { pinjaman_btn_sumare: number }).pinjaman_btn_sumare)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+              <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
+              <span className="text-sm font-semibold tabular-nums">
+                {formatRupiah(kewajiban.pinjaman_btn)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between items-center rounded-lg bg-primary/5 px-4 py-3.5 border border-primary/10">
             <span className="text-sm font-semibold">Total Kewajiban</span>
             <span className="text-base font-bold tabular-nums text-primary">
