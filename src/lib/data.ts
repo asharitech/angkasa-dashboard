@@ -105,7 +105,7 @@ export async function getPribadiSummary() {
       getObligations({ type: "loan", status: "active" }),
       getObligations({ type: "recurring", status: "active" }),
       db.collection("obligations").aggregate([
-        { $match: { type: "pengajuan", status: "pending", requestor: "angkasa", sumber_dana: "BRI_ANGKASA" } },
+        { $match: { type: "pengajuan", status: "pending", sumber_dana: "BRI_ANGKASA" } },
         { $group: { _id: "$month", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { _id: 1 } },
       ]).toArray(),
