@@ -1,6 +1,6 @@
 import { getObligations } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/page-header";
@@ -9,20 +9,35 @@ import { Receipt } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+const MONTH_LABELS: Record<string, string> = {
+  "2026-03": "Maret",
+  "2026-04": "April",
+  "2026-05": "Mei",
+  "2026-06": "Juni",
+};
+
+function monthLabel(m: string) {
+  return MONTH_LABELS[m] ?? m;
+}
+
 export default async function PengajuanPage() {
   const all = await getObligations({ type: "pengajuan" });
 
   const pending = all.filter((o) => o.status === "pending");
   const resolved = all.filter((o) => o.status !== "pending");
 
+  // Group by month → requestor
+  const months = Array.from(new Set(pending.map((o) => o.month ?? "").filter(Boolean))).sort();
+
+  const pendingTotal = pending.reduce((s, o) => s + (o.amount ?? 0), 0);
+
+  // Summary per requestor across all months
   const byRequestor = new Map<string, typeof pending>();
   for (const item of pending) {
     const key = item.requestor ?? "unknown";
     if (!byRequestor.has(key)) byRequestor.set(key, []);
     byRequestor.get(key)!.push(item);
   }
-
-  const pendingTotal = pending.reduce((s, o) => s + (o.amount ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -58,25 +73,81 @@ export default async function PengajuanPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pending" className="mt-4 space-y-4">
-          {Array.from(byRequestor.entries()).map(([requestor, items]) => {
-            const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
-            return (
-              <div key={requestor} className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground capitalize">
-                    {requestor}
-                  </h3>
-                  <span className="text-sm font-semibold text-muted-foreground tabular-nums">
-                    {items.length} item · {formatRupiah(subtotal)}
-                  </span>
-                </div>
-                {items.map((item) => (
-                  <PengajuanCard key={item._id} item={item} />
-                ))}
-              </div>
-            );
-          })}
+        <TabsContent value="pending" className="mt-4">
+          {months.length > 1 ? (
+            /* Multiple months — show inner tabs */
+            <Tabs defaultValue={months[months.length - 1]}>
+              <TabsList className="w-full mb-4">
+                {months.map((m) => {
+                  const items = pending.filter((o) => (o.month ?? "") === m);
+                  const total = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+                  return (
+                    <TabsTrigger key={m} value={m} className="flex-1 text-sm">
+                      {monthLabel(m)}{" "}
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {formatRupiah(total)}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+
+              {months.map((m) => {
+                const monthItems = pending.filter((o) => (o.month ?? "") === m);
+                // Group by requestor within this month
+                const monthByRequestor = new Map<string, typeof monthItems>();
+                for (const item of monthItems) {
+                  const key = item.requestor ?? "unknown";
+                  if (!monthByRequestor.has(key)) monthByRequestor.set(key, []);
+                  monthByRequestor.get(key)!.push(item);
+                }
+                return (
+                  <TabsContent key={m} value={m} className="space-y-4">
+                    {Array.from(monthByRequestor.entries()).map(([requestor, items]) => {
+                      const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+                      return (
+                        <div key={requestor} className="space-y-2">
+                          <div className="flex items-center justify-between px-1">
+                            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                              {requestor}
+                            </h3>
+                            <span className="text-sm font-semibold text-muted-foreground tabular-nums">
+                              {items.length} item · {formatRupiah(subtotal)}
+                            </span>
+                          </div>
+                          {items.map((item) => (
+                            <PengajuanCard key={item._id} item={item} />
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
+          ) : (
+            /* Single month or no month — flat list by requestor */
+            <div className="space-y-4">
+              {Array.from(byRequestor.entries()).map(([requestor, items]) => {
+                const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+                return (
+                  <div key={requestor} className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                        {requestor}
+                      </h3>
+                      <span className="text-sm font-semibold text-muted-foreground tabular-nums">
+                        {items.length} item · {formatRupiah(subtotal)}
+                      </span>
+                    </div>
+                    {items.map((item) => (
+                      <PengajuanCard key={item._id} item={item} />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="resolved" className="mt-4 space-y-2">
@@ -112,7 +183,6 @@ function PengajuanCard({
   return (
     <Card className="shadow-sm">
       <CardContent className="p-4 space-y-3">
-        {/* Top row: name + amount */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug">{item.item}</p>
@@ -121,9 +191,6 @@ function PengajuanCard({
               <Badge variant="outline">
                 {item.category.replace(/_/g, " ")}
               </Badge>
-              {item.month && (
-                <Badge variant="outline">{item.month}</Badge>
-              )}
               {item.sumber_dana && (
                 <Badge variant="outline">
                   {item.sumber_dana.replace(/_/g, " ")}
@@ -136,18 +203,12 @@ function PengajuanCard({
           </span>
         </div>
 
-        {/* Detail breakdown */}
         {item.detail && item.detail.length > 0 && (
           <div className="rounded-lg bg-muted/50 p-3 space-y-1.5">
             {item.detail.map((d, i) => (
-              <div
-                key={i}
-                className="flex justify-between text-sm"
-              >
+              <div key={i} className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{d.item}</span>
-                <span className="tabular-nums font-medium">
-                  {formatRupiah(d.amount)}
-                </span>
+                <span className="tabular-nums font-medium">{formatRupiah(d.amount)}</span>
               </div>
             ))}
           </div>
