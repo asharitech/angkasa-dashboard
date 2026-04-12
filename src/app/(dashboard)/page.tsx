@@ -27,12 +27,21 @@ export default async function DashboardPage() {
   const sewaLocations = data.sewa?.sewa?.locations ?? [];
   const activeCount = sewaLocations.filter((l) => l.status === "active").length;
 
+  // Show updated_at if newer than as_of
+  const asOf = data.laporanOp?.as_of;
+  const updatedAt = data.laporanOp?.updated_at;
+  const displayDate = (() => {
+    if (!asOf) return updatedAt ?? null;
+    if (!updatedAt) return asOf;
+    return new Date(updatedAt) > new Date(asOf) ? updatedAt : asOf;
+  })();
+
   return (
     <div className="space-y-6">
       <PageHeader icon={Landmark} title="Yayasan YRBB">
-        {data.laporanOp?.as_of && (
+        {displayDate && (
           <span className="text-xs text-muted-foreground">
-            per {formatDateShort(data.laporanOp.as_of)}
+            per {formatDateShort(displayDate)}
           </span>
         )}
       </PageHeader>
@@ -63,14 +72,26 @@ export default async function DashboardPage() {
           iconColor="text-teal-600"
           iconBg="bg-teal-50"
         />
-        <SummaryCard
-          title="Pengajuan Pending"
-          value={formatShortRupiah(data.pengajuanTotalAmount)}
-          subtitle={`${data.pengajuanPending} item`}
-          icon={<Clock className="h-5 w-5" />}
-          iconColor="text-rose-600"
-          iconBg="bg-rose-50"
-        />
+        <div className="col-span-1">
+          <SummaryCard
+            title="Pengajuan Pending"
+            value={formatShortRupiah(data.pengajuanTotalAmount)}
+            subtitle={`${data.pengajuanPending} item`}
+            icon={<Clock className="h-5 w-5" />}
+            iconColor="text-rose-600"
+            iconBg="bg-rose-50"
+          />
+          {data.pengajuanByRequestor.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {data.pengajuanByRequestor.map((r) => (
+                <div key={r._id} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-1.5">
+                  <span className="text-xs font-medium capitalize text-muted-foreground">{r._id ?? "unknown"}</span>
+                  <span className="text-xs font-semibold tabular-nums">{formatShortRupiah(r.total)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Kewajiban */}
@@ -143,40 +164,6 @@ export default async function DashboardPage() {
           </Card>
         ) : null;
       })()}
-
-      {/* Pengajuan by requestor */}
-      {data.pengajuanByRequestor.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <Link href="/pengajuan" className="block">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-muted-foreground" />
-                Pengajuan Pending
-                <Badge className="ml-auto bg-amber-50 text-amber-700 border-amber-200 font-semibold tabular-nums">
-                  {formatRupiah(data.pengajuanTotalAmount)}
-                </Badge>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </CardTitle>
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {data.pengajuanByRequestor.map((r) => (
-              <div
-                key={r._id}
-                className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold capitalize">{r._id ?? "unknown"}</p>
-                  <p className="text-xs text-muted-foreground">{r.count} item</p>
-                </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {formatRupiah(r.total)}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Sewa summary */}
       {data.sewa?.sewa && (

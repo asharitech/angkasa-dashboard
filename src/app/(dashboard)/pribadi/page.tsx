@@ -85,10 +85,18 @@ export default async function PribadiPage() {
       {/* Top summary */}
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
-          title="Dana Pribadi"
-          value={formatShortRupiah(cashTotal)}
-          subtitle="BCA + BRI kas"
+          title="BCA"
+          value={formatShortRupiah(bcaBalance)}
+          subtitle={bcaAccount?.balance_as_of ? `per ${formatDateShort(bcaAccount.balance_as_of)}` : "murni"}
           icon={<Wallet className="h-5 w-5" />}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-50"
+        />
+        <SummaryCard
+          title="BRI Kas"
+          value={formatShortRupiah(briKas)}
+          subtitle="dari Lembar2"
+          icon={<Banknote className="h-5 w-5" />}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50"
         />

@@ -1,5 +1,5 @@
 import { getObligations } from "@/lib/data";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -178,6 +178,7 @@ function PengajuanCard({
     sumber_dana?: string | null;
     status: string;
     detail?: { item: string; amount: number }[] | null;
+    date_spent?: string | null;
   };
 }) {
   return (
@@ -197,6 +198,11 @@ function PengajuanCard({
                 </Badge>
               )}
             </div>
+            {item.date_spent && (
+              <p className="text-xs text-muted-foreground mt-1.5">
+                📅 {formatDateShort(item.date_spent)}
+              </p>
+            )}
           </div>
           <span className="text-base font-bold tabular-nums shrink-0">
             {item.amount ? formatRupiah(item.amount) : "-"}
