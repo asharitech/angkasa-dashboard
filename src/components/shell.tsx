@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,11 +13,15 @@ import {
   User,
   LogOut,
   Activity,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+
 // Yayasan domain
-const yayasanNav = [
+const yayasanNav: NavItem[] = [
   { href: "/", label: "Yayasan", icon: Landmark },
   { href: "/laporan-op", label: "Laporan", icon: FileText },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
@@ -24,29 +29,38 @@ const yayasanNav = [
 ];
 
 // Personal domain
-const pribadiNav = [
+const pribadiNav: NavItem[] = [
   { href: "/pribadi", label: "Pribadi", icon: User },
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
 ];
 
-// Mobile bottom nav — 5 most-used items (sewa accessible from yayasan dashboard)
-const mobileNav = [
+// Mobile: 4 primary items shown directly
+const mobilePrimary: NavItem[] = [
   { href: "/", label: "Yayasan", icon: Landmark },
-  { href: "/laporan-op", label: "Laporan", icon: FileText },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
   { href: "/pribadi", label: "Pribadi", icon: User },
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
 ];
+
+// Mobile: overflow items under "Lainnya"
+const mobileMore: NavItem[] = [
+  { href: "/laporan-op", label: "Laporan Op", icon: FileText },
+  { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
+  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
+  { href: "/users", label: "Users", icon: Users },
+];
+
 // Monitoring
-const monitorNav = [
+const monitorNav: NavItem[] = [
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
 ];
 
-const adminNav = [{ href: "/users", label: "Users", icon: Users }];
+const adminNav: NavItem[] = [{ href: "/users", label: "Users", icon: Users }];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -57,6 +71,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
   }
+
+  const moreIsActive = mobileMore.some((item) => isActive(item.href));
 
   function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) {
     const active = isActive(href);
@@ -144,10 +160,61 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </main>
 
-      {/* Mobile bottom nav — compact, most-used items */}
+      {/* Mobile "More" overlay */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMoreOpen(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-card pb-20 pt-3 px-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3 px-1">
+              <p className="text-sm font-semibold">Lainnya</p>
+              <button
+                onClick={() => setMoreOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {mobileMore.map(({ href, label, icon: Icon }) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMoreOpen(false)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 rounded-xl py-3 text-xs font-medium transition-colors",
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mt-3 border-t border-border/60 pt-3">
+              <button
+                onClick={() => { setMoreOpen(false); handleLogout(); }}
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              >
+                <LogOut className="h-5 w-5" />
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden safe-area-bottom">
         <div className="mx-auto flex max-w-lg items-center justify-around px-1">
-          {mobileNav.map(({ href, label, icon: Icon }) => {
+          {mobilePrimary.map(({ href, label, icon: Icon }) => {
             const active = isActive(href);
             return (
               <Link
@@ -163,6 +230,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className={cn(
+              "flex flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors min-w-[48px]",
+              moreIsActive ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <MoreHorizontal className={cn("h-5 w-5", moreIsActive && "text-primary")} />
+            <span>Lainnya</span>
+          </button>
         </div>
       </nav>
     </div>
