@@ -80,12 +80,16 @@ export default async function TransaksiPage() {
                       )}
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         <Badge variant="outline">{entry.domain}</Badge>
-                        <Badge variant="outline">
-                          {entry.category.replace(/_/g, " ")}
-                        </Badge>
-                        <Badge variant="outline">
-                          {entry.account.replace(/_/g, " ")}
-                        </Badge>
+                        {entry.category && (
+                          <Badge variant="outline">
+                            {entry.category.replace(/_/g, " ")}
+                          </Badge>
+                        )}
+                        {entry.account && (
+                          <Badge variant="outline">
+                            {entry.account.replace(/_/g, " ")}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <AmountText
