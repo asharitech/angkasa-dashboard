@@ -110,26 +110,40 @@ export default async function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-              <span className="text-sm text-muted-foreground">Lembar2 BTN</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.lembar2_btn)}</span>
-            </div>
-            {op.kewajiban.pinjaman_btn_awal != null && op.kewajiban.pinjaman_btn_sumare != null ? (
+            {op.kewajiban.dana_pinjam_angkasa_tahap1 != null ? (
               <>
                 <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-                  <span className="text-sm text-muted-foreground">Pinjaman BTN (awal)</span>
-                  <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn_awal)}</span>
+                  <span className="text-sm text-muted-foreground">Dana Pinjam Angkasa Tahap 1</span>
+                  <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.dana_pinjam_angkasa_tahap1)}</span>
                 </div>
-                <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-                  <span className="text-sm text-muted-foreground">Pinjaman BTN (Sumare)</span>
-                  <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn_sumare)}</span>
-                </div>
+                {op.kewajiban.dana_pinjam_angkasa_tahap2 != null && (
+                  <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                    <span className="text-sm text-muted-foreground">Dana Pinjam Angkasa Tahap 2</span>
+                    <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.dana_pinjam_angkasa_tahap2)}</span>
+                  </div>
+                )}
+                {op.kewajiban.dana_pinjam_angkasa_tahap3 != null && (
+                  <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                    <span className="text-sm text-muted-foreground">Dana Pinjam Angkasa Tahap 3</span>
+                    <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.dana_pinjam_angkasa_tahap3)}</span>
+                  </div>
+                )}
               </>
             ) : (
-              <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-                <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
-                <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn)}</span>
-              </div>
+              <>
+                {op.kewajiban.lembar2_btn != null && (
+                  <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                    <span className="text-sm text-muted-foreground">Lembar2 BTN</span>
+                    <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.lembar2_btn)}</span>
+                  </div>
+                )}
+                {op.kewajiban.pinjaman_btn != null && (
+                  <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                    <span className="text-sm text-muted-foreground">Pinjaman BTN</span>
+                    <span className="text-sm font-semibold tabular-nums">{formatRupiah(op.kewajiban.pinjaman_btn)}</span>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
