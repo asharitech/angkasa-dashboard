@@ -96,7 +96,7 @@ export default async function DanaPribadiPage() {
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
           title="BCA"
-          value={formatShortRupiah(bcaBalance)}
+          value={formatRupiah(bcaBalance)}
           subtitle="Dana bersih 100%"
           icon={<Wallet className="h-5 w-5" />}
           iconColor="text-blue-600"
@@ -104,8 +104,8 @@ export default async function DanaPribadiPage() {
         />
         <SummaryCard
           title="BRI (Total)"
-          value={formatShortRupiah(briEstatement > 0 ? briEstatement : briKas + numpangTotal)}
-          subtitle={`Kas ${formatShortRupiah(briKas)} + Numpang ${formatShortRupiah(numpangTotal)}`}
+          value={formatRupiah(briEstatement > 0 ? briEstatement : briKas + numpangTotal)}
+          subtitle={`Kas ${formatRupiah(briKas)} + Numpang ${formatRupiah(numpangTotal)}`}
           icon={<Banknote className="h-5 w-5" />}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50"
