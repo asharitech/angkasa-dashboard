@@ -26,28 +26,33 @@ export default async function DanaCashPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dana Cash Yayasan"
-        description="Kas tunai yayasan yang dipegang Pak Angkasa"
+        icon={Banknote}
       />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MiniSummaryCard
           title="Saldo Awal"
           value={formatRupiah(saldoAwal)}
-          icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
+          icon={<Wallet className="h-4 w-4" />}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-100"
         />
         <MiniSummaryCard
           title="Terpakai"
           value={formatRupiah(totalTerpakai)}
-          subtitle={`${pctTerpakai}% dari saldo awal`}
-          icon={<TrendingDown className="h-4 w-4 text-destructive" />}
-          valueClassName="text-destructive"
+          icon={<TrendingDown className="h-4 w-4" />}
+          iconColor="text-red-600"
+          iconBg="bg-red-100"
+          valueColor="text-red-600"
         />
         <MiniSummaryCard
           title="Sisa Cash"
           value={formatRupiah(saldoSisa)}
-          icon={<Banknote className="h-4 w-4 text-green-600" />}
-          valueClassName="text-green-600"
+          icon={<Banknote className="h-4 w-4" />}
+          iconColor="text-green-600"
+          iconBg="bg-green-100"
+          valueColor="text-green-600"
         />
       </div>
 

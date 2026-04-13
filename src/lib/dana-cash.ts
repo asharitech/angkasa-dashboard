@@ -6,21 +6,21 @@ export async function getDanaCashSummary() {
 
   const [account, pengeluaran, pengajuan] = await Promise.all([
     // Saldo cash yayasan
-    db.collection("accounts").findOne({ _id: "cash_yayasan" }) as Promise<Account | null>,
+    db.collection("accounts").findOne({ _id: "cash_yayasan" as any }) as unknown as Promise<Account | null>,
 
     // Semua pengeluaran dari cash_yayasan
     db
       .collection("entries")
-      .find({ account: "cash_yayasan", direction: "out" })
+      .find({ account: "cash_yayasan" as any, direction: "out" })
       .sort({ date: -1 })
-      .toArray() as Promise<Entry[]>,
+      .toArray() as unknown as Promise<Entry[]>,
 
     // Pengajuan yang bersumber dari cash_yayasan (bulan berjalan)
     db
       .collection("obligations")
-      .find({ sumber_dana: "CASH_YAYASAN", status: "pending" })
+      .find({ sumber_dana: "CASH_YAYASAN" as any, status: "pending" })
       .sort({ created_at: -1 })
-      .toArray() as Promise<Obligation[]>,
+      .toArray() as unknown as Promise<Obligation[]>,
   ]);
 
   const saldoAwal = (account as unknown as { meta?: { initial_amount?: number } })?.meta?.initial_amount ?? 0;
