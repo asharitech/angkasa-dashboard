@@ -15,6 +15,7 @@ import {
   Activity,
   MoreHorizontal,
   X,
+  Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const yayasanNav: NavItem[] = [
   { href: "/laporan-op", label: "Laporan", icon: FileText },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
   { href: "/sewa", label: "Sewa", icon: Building2 },
+  { href: "/dana-cash", label: "Dana Cash", icon: Banknote },
 ];
 
 // Personal domain
@@ -46,6 +48,7 @@ const mobilePrimary: NavItem[] = [
 const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
+  { href: "/dana-cash", label: "Dana Cash", icon: Banknote },
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
   { href: "/users", label: "Users", icon: Users },
 ];
