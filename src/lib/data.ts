@@ -218,6 +218,53 @@ export async function getActivityFeed(limit = 30): Promise<ActivityEvent[]> {
   return events.slice(0, limit);
 }
 
+export async function getDanaPribadiSummary() {
+  const db = await getDb();
+
+  const [balance, bcaAccount, briAccount, personalEntries] = await Promise.all([
+    getLedger("balance"),
+    db.collection("accounts").findOne({ _id: "bca_angkasa" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
+    db.collection("accounts").findOne({ _id: "bri_angkasa" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
+    db
+      .collection("entries")
+      .find({ domain: "personal" })
+      .sort({ date: -1 })
+      .limit(50)
+      .toArray() as unknown as Promise<Entry[]>,
+  ]);
+
+  const bal = balance?.balance;
+  const bcaBalance = (bcaAccount as unknown as Account)?.balance ?? bal?.cash?.bca ?? 0;
+  const briKas = bal?.cash?.bri_kas ?? 0;
+  const briEstatement = (briAccount as unknown as Account)?.balance ?? 0;
+  const numpang = bal?.numpang ?? {};
+  const numpangTotal: number = (numpang as Record<string, number>).total ?? 0;
+
+  // BRI bersih = kas yang benar-benar milik Angkasa
+  const briBersih = briKas;
+  // Total cash bersih Pak Angkasa
+  const totalCashBersih = bcaBalance + briBersih;
+
+  // Numpang entries: exclude 'total' key, map to array
+  const numpangEntries = Object.entries(numpang as Record<string, number>)
+    .filter(([k]) => k !== "total")
+    .map(([key, amount]) => ({ key, amount }));
+
+  return {
+    balance,
+    bcaAccount: bcaAccount as unknown as Account | null,
+    briAccount: briAccount as unknown as Account | null,
+    bcaBalance,
+    briKas,
+    briEstatement,
+    briBersih,
+    numpangTotal,
+    numpangEntries,
+    totalCashBersih,
+    personalEntries: personalEntries as unknown as Entry[],
+  };
+}
+
 export async function getSewaHistory(): Promise<Ledger[]> {
   const db = await getDb();
   return db

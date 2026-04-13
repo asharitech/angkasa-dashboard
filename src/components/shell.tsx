@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   X,
   Banknote,
+  PiggyBank,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const yayasanNav: NavItem[] = [
 // Personal domain
 const pribadiNav: NavItem[] = [
   { href: "/pribadi", label: "Pribadi", icon: User },
+  { href: "/dana-pribadi", label: "Dana Pribadi", icon: PiggyBank },
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
 ];
 
@@ -49,6 +51,7 @@ const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Dana Cash", icon: Banknote },
+  { href: "/dana-pribadi", label: "Dana Pribadi", icon: PiggyBank },
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
   { href: "/users", label: "Users", icon: Users },
 ];
