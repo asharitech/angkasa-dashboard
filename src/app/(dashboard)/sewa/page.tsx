@@ -18,18 +18,19 @@ const regionColors: Record<string, string> = {
   ANGKASA: "bg-emerald-50/60",
 };
 
-const LOCATION_REFERENCE: { code: string; name: string; region: string; holder: string }[] = [
-  { code: "RB", name: "Simboro", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "DP", name: "Dipo", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "KB", name: "Kurbas", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "TPL", name: "Tapalang", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "CL", name: "Kenje", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "SRD", name: "Sarudu", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "BDG", name: "Budong-Budong", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "SPG", name: "Sampaga", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "KRS", name: "Karossa", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "LR", name: "Lara", region: "ANGKASA", holder: "—" },
-  { code: "SMR", name: "Sumare", region: "ANGKASA", holder: "—" },
+// code = real ledgers.sewa.locations[].code in DB. bgn = abbreviation as used in BGN PDFs.
+const LOCATION_REFERENCE: { code: string; bgn: string; name: string; region: string; holder: string }[] = [
+  { code: "SIMBORO", bgn: "RB", name: "Simboro", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "DIPO", bgn: "DP", name: "Dipo", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "KURBAS", bgn: "KB", name: "Kurbas", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "TAPALANG", bgn: "TPL", name: "Tapalang", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "KENJE", bgn: "CL", name: "Kenje", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "SARUDU", bgn: "SRD", name: "Sarudu", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "BUDONG_BUDONG", bgn: "BDG", name: "Budong-Budong", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "SAMPAGA", bgn: "SPG", name: "Sampaga", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "KAROSSA", bgn: "KRS", name: "Karossa", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "LARA", bgn: "LR", name: "Lara", region: "ANGKASA", holder: "—" },
+  { code: "SUMARE", bgn: "SMR", name: "Sumare", region: "ANGKASA", holder: "—" },
 ];
 
 const stageLabels: Record<string, { label: string; cls: string }> = {
@@ -280,7 +281,8 @@ export default async function SewaPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold">Kode</th>
+                  <th className="px-3 py-2 text-left font-semibold">Kode DB</th>
+                  <th className="px-3 py-2 text-left font-semibold">BGN</th>
                   <th className="px-3 py-2 text-left font-semibold">Nama</th>
                   <th className="px-3 py-2 text-left font-semibold">Region</th>
                   <th className="px-3 py-2 text-left font-semibold">Via</th>
@@ -290,6 +292,7 @@ export default async function SewaPage() {
                 {LOCATION_REFERENCE.map((l, i) => (
                   <tr key={l.code} className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}>
                     <td className="px-3 py-2 font-semibold tabular-nums">{l.code}</td>
+                    <td className="px-3 py-2 text-muted-foreground tabular-nums">{l.bgn}</td>
                     <td className="px-3 py-2">{l.name}</td>
                     <td className="px-3 py-2 text-muted-foreground">{l.region}</td>
                     <td className="px-3 py-2 text-muted-foreground">{l.holder}</td>
