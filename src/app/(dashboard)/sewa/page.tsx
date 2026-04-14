@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Building2, MapPin, Calendar, DollarSign, StickyNote,
-  History, ArrowUpRight, Wallet, BookOpen,
+  History, ArrowUpRight, Wallet, BookOpen, AlertTriangle,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -122,6 +122,8 @@ export default async function SewaPage() {
               {locations.map((loc) => {
                 const stage = loc.pipeline?.stage;
                 const stageCfg = stage ? stageLabels[stage] : null;
+                const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
+                const regionMismatch = ref && ref.region !== loc.region;
                 return (
                   <div
                     key={loc.code}
@@ -137,6 +139,12 @@ export default async function SewaPage() {
                       {loc.pipeline?.holder && (
                         <p className="text-xs text-muted-foreground mt-0.5">
                           via {loc.pipeline.holder}
+                        </p>
+                      )}
+                      {regionMismatch && ref && (
+                        <p className="text-xs text-amber-700 mt-0.5 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          ref: {ref.name} / {ref.region}
                         </p>
                       )}
                     </div>
