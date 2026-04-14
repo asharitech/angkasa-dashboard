@@ -121,6 +121,8 @@ export interface Entry {
   tags?: string[];
   source: string;
   ref_no?: string | null;
+  dana_sumber?: "sewa" | "operasional" | null;
+  tahap_sewa?: string | null;
   created_at: string;
   updated_at: string;
 }

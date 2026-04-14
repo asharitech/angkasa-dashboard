@@ -1,23 +1,29 @@
-import { getLedger, getSewaHistory } from "@/lib/data";
-import { formatRupiah } from "@/lib/format";
+import { getLedger, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
+import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MiniSummaryCard } from "@/components/summary-card";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
-import { formatDateShort } from "@/lib/format";
-import { Building2, MapPin, Calendar, DollarSign, StickyNote, History } from "lucide-react";
+import {
+  Building2, MapPin, Calendar, DollarSign, StickyNote,
+  History, ArrowDownLeft, ArrowUpRight, Wallet,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const regionColors: Record<string, string> = {
   TOPILAUT: "bg-blue-50/60",
-  RB: "bg-amber-50/60",
+  "Rangas Beach": "bg-amber-50/60",
   ANGKASA: "bg-emerald-50/60",
 };
 
 export default async function SewaPage() {
-  const ledger = await getLedger("sewa");
+  const [ledger, sewaHistory, danaSewa] = await Promise.all([
+    getLedger("sewa"),
+    getSewaHistory(),
+    getSewaDanaUsage(),
+  ]);
 
   if (!ledger?.sewa) {
     return (
@@ -27,7 +33,6 @@ export default async function SewaPage() {
     );
   }
 
-  const sewaHistory = await getSewaHistory();
   const { sewa } = ledger;
 
   const byRegion = new Map<string, typeof sewa.locations>();
@@ -37,6 +42,9 @@ export default async function SewaPage() {
   }
 
   const activeCount = sewa.locations.filter((l) => l.status === "active").length;
+  const sisaPct = danaSewa.totalMasuk > 0
+    ? Math.round((danaSewa.sisaDana / danaSewa.totalMasuk) * 100)
+    : 100;
 
   return (
     <div className="space-y-6">
@@ -46,9 +54,10 @@ export default async function SewaPage() {
         </Badge>
       </PageHeader>
 
+      {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
         <MiniSummaryCard
-          title="Total"
+          title="Total Sewa"
           value={formatRupiah(sewa.total)}
           icon={<DollarSign className="h-5 w-5" />}
           iconColor="text-emerald-600"
@@ -71,6 +80,7 @@ export default async function SewaPage() {
         />
       </div>
 
+      {/* Lokasi per region */}
       {Array.from(byRegion.entries()).map(([region, locations]) => {
         const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
         const bg = regionColors[region] ?? "bg-muted/50";
@@ -106,6 +116,118 @@ export default async function SewaPage() {
         );
       })}
 
+      {/* Dana Operasional dari Sewa */}
+      <Card className="shadow-sm border-orange-100">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-orange-500" />
+            Dana Operasional dari Sewa
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Summary bar */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-emerald-50 p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Masuk</p>
+              <p className="text-sm font-bold text-emerald-700 tabular-nums">
+                {formatRupiah(danaSewa.totalMasuk)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-red-50 p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Terpakai</p>
+              <p className="text-sm font-bold text-red-600 tabular-nums">
+                {formatRupiah(danaSewa.totalTerpakai)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-blue-50 p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Sisa ({sisaPct}%)</p>
+              <p className="text-sm font-bold text-blue-700 tabular-nums">
+                {formatRupiah(danaSewa.sisaDana)}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          {danaSewa.totalMasuk > 0 && (
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="bg-red-400 h-2 rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, Math.round((danaSewa.totalTerpakai / danaSewa.totalMasuk) * 100))}%`,
+                }}
+              />
+            </div>
+          )}
+
+          {/* Sewa masuk */}
+          {danaSewa.sewaMasuk.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Dana Masuk
+              </p>
+              {danaSewa.sewaMasuk.map((e) => (
+                <div
+                  key={e._id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50/60 p-3"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <ArrowDownLeft className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{e.counterparty}</p>
+                      <p className="text-xs text-muted-foreground truncate">{e.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-emerald-700 tabular-nums">
+                      +{formatRupiah(e.amount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateShort(e.date)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pengeluaran dari sewa */}
+          {danaSewa.pengeluaranSewa.length > 0 ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Pengeluaran dari Dana Sewa
+              </p>
+              {danaSewa.pengeluaranSewa.map((e) => (
+                <div
+                  key={e._id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-red-50/60 p-3"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <ArrowUpRight className="h-4 w-4 text-red-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{e.counterparty}</p>
+                      <p className="text-xs text-muted-foreground truncate">{e.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-red-600 tabular-nums">
+                      -{formatRupiah(e.amount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateShort(e.date)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Belum ada pengeluaran dari dana sewa
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
       {sewa.notes && Object.keys(sewa.notes).length > 0 && (
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
@@ -125,7 +247,7 @@ export default async function SewaPage() {
         </Card>
       )}
 
-      {/* Sewa History */}
+      {/* Riwayat Tahap */}
       {sewaHistory.length > 1 && (
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
