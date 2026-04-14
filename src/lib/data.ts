@@ -363,7 +363,8 @@ export async function findDuplicateEntries(opts: { period?: string } = {}): Prom
   const groups = new Map<string, Entry[]>();
   for (const e of entries) {
     const day = new Date(e.date).toISOString().slice(0, 10);
-    const key = `${day}|${e.amount}|${e.direction}`;
+    const cp = (e.counterparty ?? "").toLowerCase().trim().replace(/\s+/g, " ");
+    const key = `${day}|${e.amount}|${e.direction}|${cp}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(e);
   }
