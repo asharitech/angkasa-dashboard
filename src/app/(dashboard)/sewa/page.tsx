@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Building2, MapPin, Calendar, DollarSign, StickyNote,
-  History, ArrowDownLeft, ArrowUpRight, Wallet,
+  History, ArrowUpRight, Wallet,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -159,36 +159,7 @@ export default async function SewaPage() {
             </div>
           )}
 
-          {/* Sewa masuk */}
-          {danaSewa.sewaMasuk.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Dana Masuk
-              </p>
-              {danaSewa.sewaMasuk.map((e) => (
-                <div
-                  key={e._id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50/60 p-3"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <ArrowDownLeft className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{e.counterparty}</p>
-                      <p className="text-xs text-muted-foreground truncate">{e.description}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-emerald-700 tabular-nums">
-                      +{formatRupiah(e.amount)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDateShort(e.date)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Sewa masuk — dihapus, pakai total dari ledger */}
 
           {/* Pengeluaran dari sewa */}
           {danaSewa.pengeluaranSewa.length > 0 ? (

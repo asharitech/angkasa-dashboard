@@ -277,12 +277,9 @@ export async function getSewaHistory(): Promise<Ledger[]> {
 export async function getSewaDanaUsage(tahap?: string) {
   const db = await getDb();
 
-  // Semua sewa masuk (in) per tahap
-  const sewaLedgers = await db
-    .collection("ledgers")
-    .find({ type: "sewa" })
-    .sort({ updated_at: -1 })
-    .toArray();
+  // Total sewa dari ledger aktif (bukan dari entries)
+  const sewaLedger = await getLedger("sewa");
+  const totalMasuk = sewaLedger?.sewa?.total ?? 0;
 
   // Pengeluaran yang di-tag dari dana sewa
   const filter: Record<string, unknown> = {
@@ -298,29 +295,12 @@ export async function getSewaDanaUsage(tahap?: string) {
     .sort({ date: -1 })
     .toArray() as unknown as Entry[];
 
-  // Sewa masuk dari entries (category=sewa_masuk)
-  const sewaFilter: Record<string, unknown> = {
-    domain: "yayasan",
-    direction: "in",
-    category: "sewa_masuk",
-  };
-  if (tahap) sewaFilter.tahap_sewa = tahap;
-
-  const sewaMasuk = await db
-    .collection("entries")
-    .find(sewaFilter)
-    .sort({ date: -1 })
-    .toArray() as unknown as Entry[];
-
-  const totalMasuk = sewaMasuk.reduce((s, e) => s + e.amount, 0);
   const totalTerpakai = pengeluaranSewa.reduce((s, e) => s + e.amount, 0);
   const sisaDana = totalMasuk - totalTerpakai;
 
   return {
-    sewaLedgers,
-    sewaMasuk,
-    pengeluaranSewa,
     totalMasuk,
+    pengeluaranSewa,
     totalTerpakai,
     sisaDana,
   };
