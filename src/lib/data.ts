@@ -1,5 +1,6 @@
 import { getDb } from "./mongodb";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent } from "./types";
+import type { Document } from "mongodb";
 
 export async function getAccounts(): Promise<Account[]> {
   const db = await getDb();
@@ -141,7 +142,7 @@ export async function getPribadiSummary() {
 export async function getDashboardSummary() {
   const db = await getDb();
 
-  const [accounts, laporanOp, sewa, pengajuanPending, pengajuanTotal, pengajuanByRequestor] =
+  const [accounts, laporanOp, sewa, pengajuanPending, pengajuanTotal, pengajuanByRequestor, cashAccount] =
     await Promise.all([
       getAccounts(),
       getLedger("laporan_op"),
@@ -156,7 +157,11 @@ export async function getDashboardSummary() {
         { $group: { _id: "$requestor", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { total: -1 } },
       ]).toArray(),
+      db.collection("accounts").findOne({ _id: "cash_yayasan" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
     ]);
+
+  const cashAwal = (cashAccount as unknown as { meta?: { initial_amount?: number } })?.meta?.initial_amount ?? 0;
+  const cashSisa = cashAccount?.balance ?? 0;
 
   return {
     accounts,
@@ -165,18 +170,29 @@ export async function getDashboardSummary() {
     pengajuanPending,
     pengajuanTotalAmount: pengajuanTotal[0]?.total ?? 0,
     pengajuanByRequestor: pengajuanByRequestor as { _id: string; count: number; total: number }[],
+    cashYayasan: { awal: cashAwal, sisa: cashSisa, terpakai: cashAwal - cashSisa },
   };
 }
 
-export async function getActivityFeed(limit = 30): Promise<ActivityEvent[]> {
+export async function getActivityFeed(
+  limit = 30,
+  opts: { domain?: string } = {},
+): Promise<ActivityEvent[]> {
   const db = await getDb();
 
   // Fetch a larger pool sorted by the timestamp we'll display, so the merged
   // feed isn't missing items whose `date` is recent but `created_at` is old.
   const pool = limit * 3;
+
+  const entryFilter: Record<string, unknown> = {};
+  if (opts.domain) entryFilter.domain = opts.domain;
+
   const [entries, obligations] = await Promise.all([
-    db.collection("entries").find().sort({ date: -1, created_at: -1 }).limit(pool).toArray(),
-    db.collection("obligations").find().sort({ updated_at: -1 }).limit(pool).toArray(),
+    db.collection("entries").find(entryFilter).sort({ date: -1, created_at: -1 }).limit(pool).toArray(),
+    // Obligations don't carry a domain field; only include them when no domain filter is applied.
+    opts.domain
+      ? Promise.resolve([] as Document[])
+      : db.collection("obligations").find().sort({ updated_at: -1 }).limit(pool).toArray(),
   ]);
 
   const events: ActivityEvent[] = [];

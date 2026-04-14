@@ -13,6 +13,7 @@ import {
   Receipt,
   FileText,
   ChevronRight,
+  Banknote,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -64,17 +65,29 @@ export default async function DashboardPage() {
           iconColor="text-violet-600"
           iconBg="bg-violet-50"
         />
-        <SummaryCard
-          title="Sewa Dapur"
-          value={formatShortRupiah(sewaTotal)}
-          subtitle={`${activeCount}/${sewaLocations.length} aktif`}
-          icon={<Building2 className="h-5 w-5" />}
-          iconColor="text-teal-600"
-          iconBg="bg-teal-50"
-        />
-        <div className="col-span-1">
+        <Link href="/sewa">
           <SummaryCard
-            title="Pengajuan Pending"
+            title="Sewa Dapur"
+            value={formatShortRupiah(sewaTotal)}
+            subtitle={`${activeCount}/${sewaLocations.length} aktif`}
+            icon={<Building2 className="h-5 w-5" />}
+            iconColor="text-teal-600"
+            iconBg="bg-teal-50"
+          />
+        </Link>
+        <Link href="/dana-cash">
+          <SummaryCard
+            title="Cash Yayasan"
+            value={formatShortRupiah(data.cashYayasan.sisa)}
+            subtitle={`Terpakai ${formatShortRupiah(data.cashYayasan.terpakai)}`}
+            icon={<Banknote className="h-5 w-5" />}
+            iconColor="text-amber-600"
+            iconBg="bg-amber-50"
+          />
+        </Link>
+        <div className="col-span-2">
+          <SummaryCard
+            title="Pengajuan Belum Lunas"
             value={formatShortRupiah(data.pengajuanTotalAmount)}
             subtitle={`${data.pengajuanPending} item`}
             icon={<Clock className="h-5 w-5" />}

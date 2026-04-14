@@ -22,6 +22,12 @@ const TYPE_TABS = [
   { value: "obligation", label: "Pengajuan" },
 ];
 
+const DOMAIN_TABS = [
+  { value: "all", label: "Semua Domain" },
+  { value: "yayasan", label: "Yayasan" },
+  { value: "personal", label: "Pribadi" },
+];
+
 const obligationStatusStyles: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
   lunas: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -61,12 +67,16 @@ function EventIcon({ event }: { event: { type: string; direction?: string; domai
 export default async function AktivitasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; domain?: string }>;
 }) {
   const params = await searchParams;
   const typeFilter = params.type ?? "all";
+  const domainFilter = params.domain ?? "all";
 
-  const allEvents = await getActivityFeed(50);
+  const allEvents = await getActivityFeed(
+    50,
+    domainFilter !== "all" ? { domain: domainFilter } : {},
+  );
 
   const events =
     typeFilter === "all"
@@ -76,6 +86,16 @@ export default async function AktivitasPage({
           if (typeFilter === "obligation") return e.type === "obligation";
           return true;
         });
+
+  function buildHref(next: { type?: string; domain?: string }) {
+    const qs = new URLSearchParams();
+    const t = next.type ?? typeFilter;
+    const d = next.domain ?? domainFilter;
+    if (t !== "all") qs.set("type", t);
+    if (d !== "all") qs.set("domain", d);
+    const s = qs.toString();
+    return s ? `/aktivitas?${s}` : "/aktivitas";
+  }
 
   // Group by date
   const grouped = new Map<string, typeof events>();
@@ -93,12 +113,10 @@ export default async function AktivitasPage({
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {TYPE_TABS.map((tab) => {
           const isActive = tab.value === typeFilter;
-          const href =
-            tab.value === "all" ? "/aktivitas" : `/aktivitas?type=${tab.value}`;
           return (
             <Link
               key={tab.value}
-              href={href}
+              href={buildHref({ type: tab.value })}
               className={cn(
                 "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                 isActive
@@ -111,6 +129,29 @@ export default async function AktivitasPage({
           );
         })}
       </div>
+
+      {/* Domain filter tabs (entries only) */}
+      {typeFilter !== "obligation" && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {DOMAIN_TABS.map((tab) => {
+            const isActive = tab.value === domainFilter;
+            return (
+              <Link
+                key={tab.value}
+                href={buildHref({ domain: tab.value })}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                  isActive
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-background text-muted-foreground border-border hover:text-foreground"
+                )}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {events.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">

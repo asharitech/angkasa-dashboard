@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getDanaCashSummary } from "@/lib/dana-cash";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Banknote, TrendingDown, Wallet } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Banknote, TrendingDown, Wallet, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -109,43 +109,22 @@ export default async function DanaCashPage() {
         </CardContent>
       </Card>
 
-      {/* Pengajuan Pending */}
+      {/* Pengajuan dari cash — link only, detail di /pengajuan */}
       {pengajuan.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">
-              Pengajuan Pending (dari Cash)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Bulan</TableHead>
-                  <TableHead className="text-right">Jumlah</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pengajuan.map((o) => (
-                  <TableRow key={o._id}>
-                    <TableCell className="text-sm">{o.item}</TableCell>
-                    <TableCell className="text-sm tabular-nums">{o.month}</TableCell>
-                    <TableCell className="text-sm font-semibold tabular-nums text-right">
-                      {formatRupiah(o.amount ?? 0)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {o.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Link href="/pengajuan" className="block">
+          <Card className="shadow-sm hover:bg-muted/30 transition-colors">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-sm font-semibold">Pengajuan dari Cash</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {pengajuan.length} item belum lunas ·{" "}
+                  {formatRupiah(pengajuan.reduce((s, o) => s + (o.amount ?? 0), 0))}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
       )}
     </div>
   );

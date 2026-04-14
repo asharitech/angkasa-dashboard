@@ -109,7 +109,7 @@ export default async function PribadiPage() {
           iconBg="bg-amber-50"
         />
         <SummaryCard
-          title="Sisa Hutang"
+          title="Sisa Cicilan"
           value={formatShortRupiah(totalRemainingDebt)}
           subtitle={`${data.loans.length} cicilan aktif`}
           icon={<TrendingDown className="h-5 w-5" />}
@@ -185,36 +185,6 @@ export default async function PribadiPage() {
           ))}
         </CardContent>
       </Card>
-
-      {/* BRI Kas Breakdown */}
-      {bal?.cash && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-muted-foreground" />
-              Komposisi Dana Pribadi
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between items-center rounded-lg bg-blue-50/50 px-4 py-3">
-              <span className="text-sm">BCA (murni)</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(bcaBalance)}</span>
-            </div>
-            <div className="flex justify-between items-center rounded-lg bg-emerald-50/50 px-4 py-3">
-              <span className="text-sm">BRI kas</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(briKas)}</span>
-            </div>
-            <div className="flex justify-between items-center rounded-lg bg-primary/5 px-4 py-3.5 border border-primary/10">
-              <span className="text-sm font-semibold">Total Kas</span>
-              <span className="text-base font-bold tabular-nums text-primary">{formatRupiah(cashTotal)}</span>
-            </div>
-            <p className="text-xs text-muted-foreground px-1 pt-1">
-              BRI kas = dari item LUNAS (ANGKASA) di Lembar2, dikurangi yang terpakai.
-              Saldo e-statement BRI bukan uang Angkasa.
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Tabungan */}
       {data.savingsTotal.length > 0 && (
@@ -302,7 +272,7 @@ export default async function PribadiPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <HandCoins className="h-5 w-5 text-muted-foreground" />
-              Piutang ke Yayasan
+              Hutang Yayasan ke Saya
               <span className="ml-auto text-sm font-bold tabular-nums text-amber-700">
                 {formatRupiah(piutangTotal)}
               </span>

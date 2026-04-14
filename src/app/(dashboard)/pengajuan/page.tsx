@@ -43,7 +43,7 @@ export default async function PengajuanPage() {
     <div className="space-y-6">
       <PageHeader icon={Receipt} title="Pengajuan">
         <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1.5">
-          {pending.length} pending · {formatRupiah(pendingTotal)}
+          {pending.length} belum lunas · {formatRupiah(pendingTotal)}
         </Badge>
       </PageHeader>
 
@@ -66,7 +66,7 @@ export default async function PengajuanPage() {
       <Tabs defaultValue="pending">
         <TabsList className="w-full md:w-auto">
           <TabsTrigger value="pending" className="flex-1 md:flex-initial">
-            Pending ({pending.length})
+            Belum Lunas ({pending.length})
           </TabsTrigger>
           <TabsTrigger value="resolved" className="flex-1 md:flex-initial">
             Selesai ({resolved.length})

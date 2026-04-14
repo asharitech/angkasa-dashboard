@@ -8,7 +8,6 @@ import {
   FileText,
   Receipt,
   Building2,
-  ArrowLeftRight,
   Users,
   User,
   LogOut,
@@ -16,7 +15,6 @@ import {
   MoreHorizontal,
   X,
   Banknote,
-  PiggyBank,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,17 +23,15 @@ type NavItem = { href: string; label: string; icon: React.ComponentType<{ classN
 // Yayasan domain
 const yayasanNav: NavItem[] = [
   { href: "/", label: "Yayasan", icon: Landmark },
-  { href: "/laporan-op", label: "Laporan", icon: FileText },
+  { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
-  { href: "/sewa", label: "Sewa", icon: Building2 },
-  { href: "/dana-cash", label: "Dana Cash", icon: Banknote },
+  { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
+  { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
 ];
 
-// Personal domain
+// Personal domain (consolidated — dana-pribadi & transaksi removed)
 const pribadiNav: NavItem[] = [
   { href: "/pribadi", label: "Pribadi", icon: User },
-  { href: "/dana-pribadi", label: "Dana Pribadi", icon: PiggyBank },
-  { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
 ];
 
 // Mobile: 4 primary items shown directly
@@ -50,9 +46,7 @@ const mobilePrimary: NavItem[] = [
 const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
-  { href: "/dana-cash", label: "Dana Cash", icon: Banknote },
-  { href: "/dana-pribadi", label: "Dana Pribadi", icon: PiggyBank },
-  { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
+  { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/users", label: "Users", icon: Users },
 ];
 
@@ -204,7 +198,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {mobileMore.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
