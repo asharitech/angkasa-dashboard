@@ -3,6 +3,7 @@ import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format"
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
+import { PeriodPicker } from "@/components/period-picker";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -67,16 +68,17 @@ function EventIcon({ event }: { event: { type: string; direction?: string; domai
 export default async function AktivitasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; domain?: string }>;
+  searchParams: Promise<{ type?: string; domain?: string; period?: string }>;
 }) {
   const params = await searchParams;
   const typeFilter = params.type ?? "all";
   const domainFilter = params.domain ?? "all";
+  const period = params.period;
 
-  const allEvents = await getActivityFeed(
-    50,
-    domainFilter !== "all" ? { domain: domainFilter } : {},
-  );
+  const allEvents = await getActivityFeed(50, {
+    ...(domainFilter !== "all" ? { domain: domainFilter } : {}),
+    ...(period ? { period } : {}),
+  });
 
   const events =
     typeFilter === "all"
@@ -93,9 +95,14 @@ export default async function AktivitasPage({
     const d = next.domain ?? domainFilter;
     if (t !== "all") qs.set("type", t);
     if (d !== "all") qs.set("domain", d);
+    if (period) qs.set("period", period);
     const s = qs.toString();
     return s ? `/aktivitas?${s}` : "/aktivitas";
   }
+
+  const periodExtra: Record<string, string> = {};
+  if (typeFilter !== "all") periodExtra.type = typeFilter;
+  if (domainFilter !== "all") periodExtra.domain = domainFilter;
 
   // Group by date
   const grouped = new Map<string, typeof events>();
@@ -108,6 +115,8 @@ export default async function AktivitasPage({
   return (
     <div className="space-y-6">
       <PageHeader icon={Activity} title="Aktivitas" />
+
+      <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
 
       {/* Type filter tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">

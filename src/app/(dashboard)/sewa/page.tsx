@@ -18,6 +18,13 @@ const regionColors: Record<string, string> = {
   ANGKASA: "bg-emerald-50/60",
 };
 
+const stageLabels: Record<string, { label: string; cls: string }> = {
+  belum_diterima: { label: "Belum Diterima", cls: "bg-rose-50 text-rose-700 border-rose-200" },
+  di_intermediate: { label: "Di Intermediate", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  transfer_yayasan: { label: "Transfer ke Yayasan", cls: "bg-blue-50 text-blue-700 border-blue-200" },
+  tercatat: { label: "Tercatat", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+};
+
 export default async function SewaPage() {
   const [ledger, sewaHistory, danaSewa] = await Promise.all([
     getLedger("sewa"),
@@ -98,22 +105,39 @@ export default async function SewaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {locations.map((loc) => (
-                <div
-                  key={loc.code}
-                  className={`flex items-center justify-between gap-3 rounded-xl ${bg} p-4`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{loc.code}</p>
-                    {loc.days !== null && loc.days > 0 && (
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {loc.days} hari = {formatRupiah(loc.amount ?? 0)}
-                      </p>
-                    )}
+              {locations.map((loc) => {
+                const stage = loc.pipeline?.stage;
+                const stageCfg = stage ? stageLabels[stage] : null;
+                return (
+                  <div
+                    key={loc.code}
+                    className={`flex items-center justify-between gap-3 rounded-xl ${bg} p-4`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{loc.code}</p>
+                      {loc.days !== null && loc.days > 0 && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {loc.days} hari = {formatRupiah(loc.amount ?? 0)}
+                        </p>
+                      )}
+                      {loc.pipeline?.holder && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          via {loc.pipeline.holder}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {stageCfg ? (
+                        <Badge className={`text-xs border ${stageCfg.cls}`}>
+                          {stageCfg.label}
+                        </Badge>
+                      ) : (
+                        <StatusBadge status={loc.status} />
+                      )}
+                    </div>
                   </div>
-                  <StatusBadge status={loc.status} />
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         );

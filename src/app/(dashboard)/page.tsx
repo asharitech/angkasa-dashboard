@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardSummary } from "@/lib/data";
+import { getDashboardSummary, getPendingTransfers } from "@/lib/data";
 import { formatRupiah, formatShortRupiah, formatDate, formatDateShort } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +14,16 @@ import {
   FileText,
   ChevronRight,
   Banknote,
+  Truck,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const data = await getDashboardSummary();
+  const [data, pendingTransfers] = await Promise.all([
+    getDashboardSummary(),
+    getPendingTransfers(),
+  ]);
 
   const op = data.laporanOp?.laporan_op;
   const danaEfektif = op?.dana_efektif ?? 0;
@@ -106,6 +110,49 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Menunggu Transfer Masuk — sewa locations not yet tercatat */}
+      {pendingTransfers.pending.length > 0 && (
+        <Link href="/sewa" className="block">
+          <Card className="shadow-sm border-amber-200 bg-amber-50/30 hover:bg-amber-50/60 transition-colors">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Truck className="h-5 w-5 text-amber-600" />
+                Menunggu Transfer Masuk
+                <span className="ml-auto text-sm font-bold tabular-nums text-amber-700">
+                  {formatRupiah(pendingTransfers.totalExpected)}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1.5">
+              {pendingTransfers.pending.slice(0, 5).map((loc) => (
+                <div
+                  key={loc.code}
+                  className="flex items-center justify-between rounded-lg bg-white/60 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">{loc.code}</p>
+                    {loc.pipeline?.holder && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        via {loc.pipeline.holder}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {formatRupiah(loc.pipeline?.expected_amount ?? loc.amount ?? 0)}
+                  </span>
+                </div>
+              ))}
+              {pendingTransfers.pending.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center pt-1">
+                  +{pendingTransfers.pending.length - 5} lainnya
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Kewajiban */}
       {op?.kewajiban && op.kewajiban.total > 0 && (

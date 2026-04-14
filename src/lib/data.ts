@@ -176,7 +176,7 @@ export async function getDashboardSummary() {
 
 export async function getActivityFeed(
   limit = 30,
-  opts: { domain?: string } = {},
+  opts: { domain?: string; period?: string } = {},
 ): Promise<ActivityEvent[]> {
   const db = await getDb();
 
@@ -186,13 +186,17 @@ export async function getActivityFeed(
 
   const entryFilter: Record<string, unknown> = {};
   if (opts.domain) entryFilter.domain = opts.domain;
+  if (opts.period) entryFilter.month = opts.period;
+
+  const obligationFilter: Record<string, unknown> = {};
+  if (opts.period) obligationFilter.month = opts.period;
 
   const [entries, obligations] = await Promise.all([
     db.collection("entries").find(entryFilter).sort({ date: -1, created_at: -1 }).limit(pool).toArray(),
     // Obligations don't carry a domain field; only include them when no domain filter is applied.
     opts.domain
       ? Promise.resolve([] as Document[])
-      : db.collection("obligations").find().sort({ updated_at: -1 }).limit(pool).toArray(),
+      : db.collection("obligations").find(obligationFilter).sort({ updated_at: -1 }).limit(pool).toArray(),
   ]);
 
   const events: ActivityEvent[] = [];
@@ -322,4 +326,54 @@ export async function getSewaDanaUsage(tahap?: string) {
     totalTerpakai,
     sisaDana,
   };
+}
+
+export async function getPendingTransfers() {
+  const ledger = await getLedger("sewa");
+  const locations = ledger?.sewa?.locations ?? [];
+  const pending = locations.filter(
+    (l) => l.pipeline?.stage && l.pipeline.stage !== "tercatat",
+  );
+  const totalExpected = pending.reduce(
+    (s, l) => s + (l.pipeline?.expected_amount ?? l.amount ?? 0),
+    0,
+  );
+  return { pending, totalExpected };
+}
+
+export interface DuplicateGroup {
+  key: string;
+  date: string;
+  amount: number;
+  entries: Entry[];
+}
+
+export async function findDuplicateEntries(opts: { period?: string } = {}): Promise<DuplicateGroup[]> {
+  const db = await getDb();
+  const filter: Record<string, unknown> = {};
+  if (opts.period) filter.month = opts.period;
+
+  const entries = (await db
+    .collection("entries")
+    .find(filter)
+    .sort({ date: -1 })
+    .limit(500)
+    .toArray()) as unknown as Entry[];
+
+  const groups = new Map<string, Entry[]>();
+  for (const e of entries) {
+    const day = new Date(e.date).toISOString().slice(0, 10);
+    const key = `${day}|${e.amount}|${e.direction}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(e);
+  }
+
+  const dupes: DuplicateGroup[] = [];
+  for (const [key, items] of groups) {
+    if (items.length < 2) continue;
+    const [day, amountStr] = key.split("|");
+    dupes.push({ key, date: day, amount: Number(amountStr), entries: items });
+  }
+  dupes.sort((a, b) => b.date.localeCompare(a.date));
+  return dupes;
 }

@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   X,
   Banknote,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,12 +48,14 @@ const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
+  { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
   { href: "/users", label: "Users", icon: Users },
 ];
 
 // Monitoring
 const monitorNav: NavItem[] = [
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
+  { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
 ];
 
 const adminNav: NavItem[] = [{ href: "/users", label: "Users", icon: Users }];
@@ -198,7 +201,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {mobileMore.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (

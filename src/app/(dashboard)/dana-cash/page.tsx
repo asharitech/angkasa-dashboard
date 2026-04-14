@@ -4,6 +4,7 @@ import { formatRupiah, formatDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MiniSummaryCard } from "@/components/summary-card";
 import { PageHeader } from "@/components/page-header";
+import { PeriodPicker } from "@/components/period-picker";
 import {
   Table,
   TableBody,
@@ -16,18 +17,31 @@ import { Banknote, TrendingDown, Wallet, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function DanaCashPage() {
-  const { saldoAwal, saldoSisa, totalTerpakai, pengeluaran, pengajuan } =
-    await getDanaCashSummary();
+export default async function DanaCashPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
+  const { period } = await searchParams;
+  const summary = await getDanaCashSummary({ period });
+  const { saldoAwal, saldoSisa, pengeluaran, pengajuan } = summary;
+
+  // When a period filter is active, "Terpakai" reflects spending in that period only;
+  // otherwise it's all-time (saldoAwal − saldoSisa).
+  const totalTerpakai = period
+    ? pengeluaran.reduce((s, e) => s + e.amount, 0)
+    : summary.totalTerpakai;
 
   const pctTerpakai = saldoAwal > 0 ? Math.round((totalTerpakai / saldoAwal) * 100) : 0;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dana Cash Yayasan"
+        title="Cash Yayasan"
         icon={Banknote}
       />
+
+      <PeriodPicker basePath="/dana-cash" current={period} />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

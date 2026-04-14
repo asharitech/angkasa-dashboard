@@ -98,12 +98,27 @@ export interface Ledger {
   };
 }
 
+export type SewaPipelineStage =
+  | "belum_diterima"
+  | "di_intermediate"
+  | "transfer_yayasan"
+  | "tercatat";
+
+export interface SewaPipeline {
+  stage: SewaPipelineStage;
+  holder?: string | null;
+  expected_amount?: number | null;
+  received_at?: string | null;
+  notes?: string | null;
+}
+
 export interface SewaLocation {
   code: string;
   region: string;
   days: number | null;
   amount: number | null;
   status: "active" | "running" | "hold" | "inactive";
+  pipeline?: SewaPipeline | null;
 }
 
 export interface Entry {
