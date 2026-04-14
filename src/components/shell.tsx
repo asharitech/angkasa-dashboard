@@ -239,7 +239,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden safe-area-bottom">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto flex max-w-lg items-center justify-around px-1">
           {mobilePrimary.map(({ href, label, icon: Icon }) => {
             const active = isActive(href);

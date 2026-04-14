@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Shield, Eye, Users } from "lucide-react";
+import Link from "next/link";
+import { Plus, Pencil, Trash2, Shield, Eye, Users, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
 interface User {
@@ -67,7 +68,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-base text-muted-foreground">Memuat...</p>
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -79,6 +80,12 @@ export default function UsersPage() {
         <p className="text-base text-muted-foreground">
           Hanya admin yang dapat mengakses halaman ini
         </p>
+        <Link
+          href="/"
+          className="mt-4 text-sm font-medium text-primary hover:underline"
+        >
+          Kembali ke beranda
+        </Link>
       </div>
     );
   }

@@ -54,7 +54,7 @@ export default async function PengajuanPage() {
             const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
             return (
               <div key={requestor} className="rounded-xl bg-amber-50/50 px-4 py-3">
-                <p className="text-xs text-muted-foreground capitalize">{requestor}</p>
+                <p className="text-xs text-muted-foreground">{requestor}</p>
                 <p className="text-base font-bold tabular-nums mt-0.5">{formatRupiah(subtotal)}</p>
                 <p className="text-xs text-muted-foreground">{items.length} item</p>
               </div>
@@ -108,7 +108,7 @@ export default async function PengajuanPage() {
                       return (
                         <div key={requestor} className="space-y-2">
                           <div className="flex items-center justify-between px-1">
-                            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                               {requestor}
                             </h3>
                             <span className="text-sm font-semibold text-muted-foreground tabular-nums">
@@ -133,7 +133,7 @@ export default async function PengajuanPage() {
                 return (
                   <div key={requestor} className="space-y-2">
                     <div className="flex items-center justify-between px-1">
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground capitalize">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                         {requestor}
                       </h3>
                       <span className="text-sm font-semibold text-muted-foreground tabular-nums">

@@ -1,5 +1,5 @@
 import { getDanaCashSummary } from "@/lib/dana-cash";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MiniSummaryCard } from "@/components/summary-card";
 import { PageHeader } from "@/components/page-header";
@@ -95,11 +95,7 @@ export default async function DanaCashPage() {
                 {pengeluaran.map((e) => (
                   <TableRow key={e._id}>
                     <TableCell className="text-sm tabular-nums">
-                      {new Date(e.date).toLocaleDateString("id-ID", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {formatDate(e.date)}
                     </TableCell>
                     <TableCell className="text-sm">{e.description}</TableCell>
                     <TableCell className="text-sm font-semibold tabular-nums text-right text-destructive">

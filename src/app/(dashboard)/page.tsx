@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getDashboardSummary } from "@/lib/data";
-import { formatRupiah, formatShortRupiah, formatDateShort } from "@/lib/format";
+import { formatRupiah, formatShortRupiah, formatDate, formatDateShort } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SummaryCard } from "@/components/summary-card";
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
       <PageHeader icon={Landmark} title="Yayasan YRBB">
         {displayDate && (
           <span className="text-xs text-muted-foreground">
-            per {formatDateShort(displayDate)}
+            per {formatDate(displayDate)}
           </span>
         )}
       </PageHeader>
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
             <div className="mt-2 space-y-1">
               {data.pengajuanByRequestor.map((r) => (
                 <div key={r._id} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-1.5">
-                  <span className="text-xs font-medium capitalize text-muted-foreground">{r._id ?? "unknown"}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{r._id ?? "unknown"}</span>
                   <span className="text-xs font-semibold tabular-nums">{formatShortRupiah(r.total)}</span>
                 </div>
               ))}
