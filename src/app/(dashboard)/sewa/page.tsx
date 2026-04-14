@@ -27,9 +27,12 @@ export default async function SewaPage() {
 
   if (!ledger?.sewa) {
     return (
-      <p className="text-muted-foreground text-center py-10">
-        Data sewa belum tersedia.
-      </p>
+      <div className="space-y-6">
+        <PageHeader icon={Building2} title="Sewa Dapur" />
+        <p className="text-muted-foreground text-center py-10">
+          Data sewa belum tersedia.
+        </p>
+      </div>
     );
   }
 

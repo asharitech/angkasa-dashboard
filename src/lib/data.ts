@@ -171,9 +171,12 @@ export async function getDashboardSummary() {
 export async function getActivityFeed(limit = 30): Promise<ActivityEvent[]> {
   const db = await getDb();
 
+  // Fetch a larger pool sorted by the timestamp we'll display, so the merged
+  // feed isn't missing items whose `date` is recent but `created_at` is old.
+  const pool = limit * 3;
   const [entries, obligations] = await Promise.all([
-    db.collection("entries").find().sort({ created_at: -1 }).limit(limit).toArray(),
-    db.collection("obligations").find().sort({ updated_at: -1 }).limit(limit).toArray(),
+    db.collection("entries").find().sort({ date: -1, created_at: -1 }).limit(pool).toArray(),
+    db.collection("obligations").find().sort({ updated_at: -1 }).limit(pool).toArray(),
   ]);
 
   const events: ActivityEvent[] = [];
