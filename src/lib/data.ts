@@ -100,7 +100,7 @@ export async function getPribadiSummary() {
     await Promise.all([
       getLedger("balance"),
       getAccounts(),
-      getEntries({ owner: "angkasa" }, 50),
+      getEntries({ owner: "angkasa", domain: { $ne: "yayasan" } }, 50),
       getEntries({ category: "savings" }, 50),
       getObligations({ type: "loan", status: "active" }),
       getObligations({ type: "recurring", status: "active" }),
@@ -205,7 +205,6 @@ export async function getActivityFeed(limit = 30): Promise<ActivityEvent[]> {
       subtitle: [o.type, o.requestor].filter(Boolean).join(" · "),
       amount: o.amount ?? null,
       status: o.status,
-      domain: o.type,
       category: o.category,
       created_at: o.created_at?.toString(),
     });

@@ -204,7 +204,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {mobileMore.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
