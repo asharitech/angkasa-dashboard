@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Building2, MapPin, Calendar, DollarSign, StickyNote,
-  History, ArrowUpRight, Wallet,
+  History, ArrowUpRight, Wallet, BookOpen,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,20 @@ const regionColors: Record<string, string> = {
   "Rangas Beach": "bg-amber-50/60",
   ANGKASA: "bg-emerald-50/60",
 };
+
+const LOCATION_REFERENCE: { code: string; name: string; region: string; holder: string }[] = [
+  { code: "RB", name: "Simboro", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "DP", name: "Dipo", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "KB", name: "Kurbas", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "TPL", name: "Tapalang", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "CL", name: "Kenje", region: "TOPILAUT", holder: "Patta Wellang" },
+  { code: "SRD", name: "Sarudu", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "BDG", name: "Budong-Budong", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "SPG", name: "Sampaga", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "KRS", name: "Karossa", region: "Rangas Beach", holder: "Pak Sandi" },
+  { code: "LR", name: "Lara", region: "ANGKASA", holder: "—" },
+  { code: "SMR", name: "Sumare", region: "ANGKASA", holder: "—" },
+];
 
 const stageLabels: Record<string, { label: string; cls: string }> = {
   belum_diterima: { label: "Belum Diterima", cls: "bg-rose-50 text-rose-700 border-rose-200" },
@@ -244,6 +258,40 @@ export default async function SewaPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Referensi Kode Lokasi */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            Referensi Kode Lokasi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-hidden rounded-lg border border-border/60">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left font-semibold">Kode</th>
+                  <th className="px-3 py-2 text-left font-semibold">Nama</th>
+                  <th className="px-3 py-2 text-left font-semibold">Region</th>
+                  <th className="px-3 py-2 text-left font-semibold">Via</th>
+                </tr>
+              </thead>
+              <tbody>
+                {LOCATION_REFERENCE.map((l, i) => (
+                  <tr key={l.code} className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}>
+                    <td className="px-3 py-2 font-semibold tabular-nums">{l.code}</td>
+                    <td className="px-3 py-2">{l.name}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.region}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.holder}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Riwayat Tahap */}
       {sewaHistory.length > 1 && (
