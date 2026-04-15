@@ -140,7 +140,7 @@ export default function PengajuanPage() {
 
       {/* Summary Cards */}
       {requestorStats.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {requestorStats.map(({ requestor, count, total }) => (
             <Card
               key={requestor}
@@ -152,19 +152,19 @@ export default function PengajuanPage() {
               onClick={() => setRequestorFilter(requestorFilter === requestor ? "all" : requestor)}
             >
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                <div className="flex items-start gap-2 mb-3">
+                  <div className="p-1.5 bg-blue-100 rounded-lg shrink-0">
                     <User className="h-3 w-3 text-blue-600" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide leading-tight break-words">
                     {formatRequestorName(requestor)}
                   </span>
                 </div>
-                <p className="text-lg font-bold text-gray-900 tabular-nums mb-1">
+                <p className="text-base font-bold text-gray-900 tabular-nums mb-1 break-words" title={formatRupiah(total)}>
                   {formatRupiah(total)}
                 </p>
                 <div className="flex items-center gap-1">
-                  <FileText className="h-3 w-3 text-gray-400" />
+                  <FileText className="h-3 w-3 text-gray-400 shrink-0" />
                   <span className="text-xs text-gray-500">
                     {count} item{count > 1 ? 's' : ''}
                   </span>
