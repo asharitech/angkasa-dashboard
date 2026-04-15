@@ -29,9 +29,20 @@ export default async function DashboardPage() {
   const op = data.laporanOp?.laporan_op;
   const danaEfektif = op?.dana_efektif ?? 0;
   const saldo = op?.totals?.saldo ?? 0;
+  const totalKewajiban = op?.kewajiban?.total ?? 0;
   const sewaTotal = data.sewa?.sewa?.total ?? 0;
   const sewaLocations = data.sewa?.sewa?.locations ?? [];
   const activeCount = sewaLocations.filter((l) => l.status === "active").length;
+
+  // Financial health calculation
+  const netPosition = danaEfektif - totalKewajiban;
+  const healthRatio = danaEfektif > 0 ? netPosition / danaEfektif : 0;
+  const healthStatus = (() => {
+    if (healthRatio >= 0.8) return { label: "Sangat Sehat", color: "emerald", icon: "👍" };
+    if (healthRatio >= 0.5) return { label: "Sehat", color: "green", icon: "✅" };
+    if (healthRatio >= 0.2) return { label: "Perlu Perhatian", color: "amber", icon: "⚠️" };
+    return { label: "Berisiko", color: "red", icon: "🚨" };
+  })();
 
   // Show updated_at if newer than as_of
   const asOf = data.laporanOp?.as_of;
@@ -51,6 +62,49 @@ export default async function DashboardPage() {
           </span>
         )}
       </PageHeader>
+
+      {/* Financial Health Indicator */}
+      <Card className={`shadow-sm border-2 bg-gradient-to-r ${
+        healthStatus.color === 'emerald' ? 'from-emerald-50 to-emerald-100 border-emerald-200' :
+        healthStatus.color === 'green' ? 'from-green-50 to-green-100 border-green-200' :
+        healthStatus.color === 'amber' ? 'from-amber-50 to-amber-100 border-amber-200' :
+        'from-red-50 to-red-100 border-red-200'
+      }`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full text-2xl bg-white/80 ${
+                healthStatus.color === 'emerald' ? 'text-emerald-600' :
+                healthStatus.color === 'green' ? 'text-green-600' :
+                healthStatus.color === 'amber' ? 'text-amber-600' :
+                'text-red-600'
+              }`}>
+                {healthStatus.icon}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                  Status Kesehatan Keuangan: {healthStatus.label}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Posisi Bersih: <span className="font-bold">{formatRupiah(netPosition)}</span>
+                  {healthRatio > 0 ? ' tersedia' : ' defisit'}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-gray-500 mb-1">Dana Efektif - Kewajiban</div>
+              <div className="text-lg font-mono">
+                <span className="text-blue-700">{formatRupiah(danaEfektif)}</span>
+                <span className="mx-2 text-gray-400">-</span>
+                <span className="text-orange-700">{formatRupiah(totalKewajiban)}</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Rasio: {(healthRatio * 100).toFixed(1)}% tersisa
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Top summary — yayasan KPIs */}
       <div className="grid grid-cols-2 gap-3">
