@@ -32,7 +32,10 @@ export default async function DanaCashPage({
     ? pengeluaran.reduce((s, e) => s + e.amount, 0)
     : summary.totalTerpakai;
 
-  const pctTerpakai = saldoAwal > 0 ? Math.round((totalTerpakai / saldoAwal) * 100) : 0;
+  // Fix: Use absolute value for display and calculate percentage based on total available funds
+  const displayTerpakai = Math.abs(totalTerpakai);
+  const totalAvailable = saldoAwal + Math.max(0, saldoSisa - saldoAwal); // Initial + any additional income
+  const pctTerpakai = totalAvailable > 0 ? Math.round((displayTerpakai / totalAvailable) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -54,7 +57,7 @@ export default async function DanaCashPage({
         />
         <MiniSummaryCard
           title="Terpakai"
-          value={formatRupiah(totalTerpakai)}
+          value={formatRupiah(displayTerpakai)}
           icon={<TrendingDown className="h-4 w-4" />}
           iconColor="text-red-600"
           iconBg="bg-red-100"
@@ -74,7 +77,7 @@ export default async function DanaCashPage({
       <Card className="shadow-sm">
         <CardContent className="pt-4 pb-4">
           <div className="flex justify-between text-xs text-muted-foreground mb-2">
-            <span>Terpakai: {formatRupiah(totalTerpakai)}</span>
+            <span>Terpakai: {formatRupiah(displayTerpakai)}</span>
             <span>Sisa: {formatRupiah(saldoSisa)}</span>
           </div>
           <div className="w-full bg-muted rounded-full h-3">
