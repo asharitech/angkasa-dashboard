@@ -216,21 +216,18 @@ ${i + 1}. ${ob.item}
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={isExporting || obligations.length === 0}
-            >
-              {isExporting ? (
-                "Mengexport..."
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Data
-                </>
-              )}
-            </Button>
+          <DropdownMenuTrigger
+            className="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            disabled={isExporting || obligations.length === 0}
+          >
+            {isExporting ? (
+              "Mengexport..."
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Download Data
+              </>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuItem onClick={() => handleExport("csv")}>
