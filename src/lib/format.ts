@@ -43,3 +43,27 @@ export function formatRelativeTime(date: string | Date): string {
   if (diffDay < 7) return `${diffDay} hari lalu`;
   return formatDateShort(date);
 }
+
+export function formatDateRange(period: string): string {
+  // Handle raw period strings like "2026-03-30_2026-04-07"
+  if (period.includes('_') && period.includes('-')) {
+    const [startDate, endDate] = period.split('_');
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      // Same year check
+      if (start.getFullYear() === end.getFullYear()) {
+        return `${formatDateShort(start)} – ${formatDate(end)}`;
+      } else {
+        return `${formatDate(start)} – ${formatDate(end)}`;
+      }
+    } catch {
+      // Fallback if parsing fails
+      return period;
+    }
+  }
+
+  // Return as-is if not a recognizable raw format
+  return period;
+}

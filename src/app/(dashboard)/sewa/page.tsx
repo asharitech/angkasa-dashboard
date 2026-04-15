@@ -1,5 +1,5 @@
 import { getLedger, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
-import { formatRupiah, formatDateShort } from "@/lib/format";
+import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MiniSummaryCard } from "@/components/summary-card";
@@ -75,7 +75,7 @@ export default async function SewaPage() {
     <div className="space-y-6">
       <PageHeader icon={Building2} title="Sewa Dapur">
         <Badge variant="secondary" className="font-semibold px-3 py-1.5">
-          {ledger.period}
+          {formatDateRange(ledger.period)}
         </Badge>
       </PageHeader>
 
