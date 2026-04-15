@@ -168,7 +168,7 @@ export function ObligationSearch({
         </div>
 
         {/* Status filter */}
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value || "all")}>
           <SelectTrigger>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -183,7 +183,7 @@ export function ObligationSearch({
         </Select>
 
         {/* Category filter */}
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value || "all")}>
           <SelectTrigger>
             <SelectValue placeholder="Kategori" />
           </SelectTrigger>
@@ -198,7 +198,7 @@ export function ObligationSearch({
         </Select>
 
         {/* Requestor filter */}
-        <Select value={requestorFilter} onValueChange={setRequestorFilter}>
+        <Select value={requestorFilter} onValueChange={(value) => setRequestorFilter(value || "all")}>
           <SelectTrigger>
             <SelectValue placeholder="Requestor" />
           </SelectTrigger>
@@ -213,7 +213,7 @@ export function ObligationSearch({
         </Select>
 
         {/* Amount range filter */}
-        <Select value={amountRange} onValueChange={setAmountRange}>
+        <Select value={amountRange} onValueChange={(value) => setAmountRange(value || "all")}>
           <SelectTrigger>
             <SelectValue placeholder="Rentang Jumlah" />
           </SelectTrigger>
