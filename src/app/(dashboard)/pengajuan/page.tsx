@@ -1,3 +1,5 @@
+"use client";
+
 import { getObligations, validateObligationData } from "@/lib/data";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,8 +10,6 @@ import { StatusBadge } from "@/components/status-badge";
 import { ObligationSearch } from "@/components/obligation-search";
 import { DataExport } from "@/components/data-export";
 import { Receipt, AlertTriangle } from "lucide-react";
-
-"use client";
 
 import { useState, useEffect } from "react";
 import { Obligation } from "@/lib/types";
