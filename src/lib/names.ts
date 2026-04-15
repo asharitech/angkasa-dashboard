@@ -79,3 +79,32 @@ export function formatIdentifier(identifier: string | null | undefined): string 
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
+
+// Mapping of English status terms to Indonesian
+const STATUS_LABELS_ID: Record<string, string> = {
+  'pending': 'Menunggu',
+  'approved': 'Disetujui',
+  'rejected': 'Ditolak',
+  'lunas': 'Lunas',
+  'active': 'Aktif',
+  'running': 'Berjalan',
+  'hold': 'Ditahan',
+  'inactive': 'Nonaktif',
+  'completed': 'Selesai',
+  'cancelled': 'Dibatalkan',
+  'expired': 'Kadaluarsa',
+};
+
+/**
+ * Convert status labels to Indonesian for consistent UI display
+ */
+export function formatStatusLabel(status: string | null | undefined): string {
+  if (!status) return '';
+
+  // Check for exact match first
+  const mapped = STATUS_LABELS_ID[status.toLowerCase()];
+  if (mapped) return mapped;
+
+  // Fallback: capitalize first letter
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+}

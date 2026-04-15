@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, FileSpreadsheet, FileText, Calendar, CheckCircle } from "lucide-react";
 import { formatRupiah, formatDateShort } from "@/lib/format";
-import { formatRequestorName, formatFundSource } from "@/lib/names";
+import { formatRequestorName, formatFundSource, formatStatusLabel } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
 
 interface DataExportProps {
@@ -114,7 +114,7 @@ RINGKASAN:
 
 BREAKDOWN STATUS:
 ${Object.entries(statusBreakdown)
-  .map(([status, count]) => `- ${status}: ${count} item`)
+  .map(([status, count]) => `- ${formatStatusLabel(status)}: ${count} item`)
   .join("\n")}
 
 BREAKDOWN KATEGORI:
@@ -140,7 +140,7 @@ ${i + 1}. ${ob.item}
    Requestor: ${formatRequestorName(ob.requestor)}
    Kategori: ${ob.category?.replace(/_/g, " ")}
    Jumlah: ${formatRupiah(ob.amount || 0)}
-   Status: ${ob.status}
+   Status: ${formatStatusLabel(ob.status)}
    Sumber Dana: ${formatFundSource(ob.sumber_dana)}
    Bulan: ${ob.month}
 `).join("\n")}

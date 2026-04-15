@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { statusStyles } from "@/lib/constants";
+import { formatStatusLabel } from "@/lib/names";
 
 export function StatusBadge({
   status,
@@ -12,7 +13,7 @@ export function StatusBadge({
 
   return (
     <Badge className={`font-medium border ${sizeClasses} ${statusStyles[status] ?? ""}`}>
-      {status}
+      {formatStatusLabel(status)}
     </Badge>
   );
 }

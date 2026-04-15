@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ObligationSearch } from "@/components/obligation-search";
 import { DataExport } from "@/components/data-export";
 import { Receipt, AlertTriangle, Calendar, DollarSign, User, FileText } from "lucide-react";
-import { formatRequestorName, formatFundSource } from "@/lib/names";
+import { formatRequestorName, formatFundSource, formatStatusLabel } from "@/lib/names";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -198,8 +198,8 @@ export default function PengajuanPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="lunas">Complete</SelectItem>
+                  <SelectItem value="pending">{formatStatusLabel("pending")}</SelectItem>
+                  <SelectItem value="lunas">{formatStatusLabel("lunas")}</SelectItem>
                 </SelectContent>
               </Select>
 

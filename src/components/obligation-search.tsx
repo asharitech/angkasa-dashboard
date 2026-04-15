@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Filter, X, AlertTriangle } from "lucide-react";
+import { formatStatusLabel } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
 
 interface ObligationSearchProps {
@@ -176,7 +177,7 @@ export function ObligationSearch({
             <SelectItem value="all">Semua Status</SelectItem>
             {statuses.map(status => (
               <SelectItem key={status} value={status}>
-                {status}
+                {formatStatusLabel(status)}
               </SelectItem>
             ))}
           </SelectContent>
