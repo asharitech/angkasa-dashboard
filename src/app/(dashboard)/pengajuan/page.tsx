@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ObligationSearch } from "@/components/obligation-search";
 import { DataExport } from "@/components/data-export";
 import { Receipt, AlertTriangle, Calendar, DollarSign, User, FileText } from "lucide-react";
+import { formatRequestorName, formatFundSource } from "@/lib/names";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -156,7 +157,7 @@ export default function PengajuanPage() {
                     <User className="h-3 w-3 text-blue-600" />
                   </div>
                   <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    {requestor}
+                    {formatRequestorName(requestor)}
                   </span>
                 </div>
                 <p className="text-lg font-bold text-gray-900 tabular-nums mb-1">
@@ -210,7 +211,7 @@ export default function PengajuanPage() {
                   <SelectItem value="all">All Requestors</SelectItem>
                   {uniqueRequestors.map(requestor => (
                     <SelectItem key={requestor} value={requestor}>
-                      {requestor}
+                      {formatRequestorName(requestor)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -259,7 +260,7 @@ export default function PengajuanPage() {
               )}
               {requestorFilter !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                  Requestor: {requestorFilter}
+                  Requestor: {formatRequestorName(requestorFilter)}
                   <button onClick={() => setRequestorFilter('all')} className="ml-1 text-blue-600 hover:text-blue-800">×</button>
                 </span>
               )}
@@ -417,7 +418,7 @@ function CompactList({ items }: { items: Obligation[] }) {
                       <User className="h-3 w-3 text-blue-600" />
                     </div>
                     <span className="text-sm font-medium text-gray-700">
-                      {item.requestor}
+                      {formatRequestorName(item.requestor)}
                     </span>
                   </div>
                 </td>
@@ -430,7 +431,7 @@ function CompactList({ items }: { items: Obligation[] }) {
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-3 w-3 text-green-600" />
                     <span className="text-sm text-gray-600">
-                      {item.sumber_dana?.replace(/_/g, " ") || "-"}
+                      {formatFundSource(item.sumber_dana) || "-"}
                     </span>
                   </div>
                 </td>
@@ -473,7 +474,7 @@ function EnhancedPengajuanCard({ item }: { item: Obligation }) {
                   {item.requestor && (
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      <span>{item.requestor}</span>
+                      <span>{formatRequestorName(item.requestor)}</span>
                     </div>
                   )}
                   {item.date_spent && (
@@ -494,7 +495,7 @@ function EnhancedPengajuanCard({ item }: { item: Obligation }) {
               {item.sumber_dana && (
                 <Badge variant="outline" className="text-xs">
                   <DollarSign className="h-3 w-3 mr-1" />
-                  {item.sumber_dana.replace(/_/g, " ")}
+                  {formatFundSource(item.sumber_dana)}
                 </Badge>
               )}
             </div>

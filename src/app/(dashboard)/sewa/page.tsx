@@ -1,5 +1,6 @@
 import { getLedger, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
+import { formatRequestorName } from "@/lib/names";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MiniSummaryCard } from "@/components/summary-card";
@@ -139,7 +140,7 @@ export default async function SewaPage() {
                       )}
                       {loc.pipeline?.holder && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          via {loc.pipeline.holder}
+                          via {formatRequestorName(loc.pipeline.holder)}
                         </p>
                       )}
                       {regionMismatch && ref && (

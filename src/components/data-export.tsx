@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, FileSpreadsheet, FileText, Calendar, CheckCircle } from "lucide-react";
 import { formatRupiah, formatDateShort } from "@/lib/format";
+import { formatRequestorName, formatFundSource } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
 
 interface DataExportProps {
@@ -44,10 +45,10 @@ export function DataExport({ obligations, title = "Data Pengajuan" }: DataExport
         ob._id,
         `"${ob.item?.replace(/"/g, '""') || ""}"`,
         ob.amount || 0,
-        ob.requestor || "",
+        formatRequestorName(ob.requestor) || "",
         ob.category || "",
         ob.status || "",
-        ob.sumber_dana || "",
+        formatFundSource(ob.sumber_dana) || "",
         ob.month || "",
         ob.created_at ? formatDateShort(ob.created_at) : "",
         ob.updated_at ? formatDateShort(ob.updated_at) : ""
@@ -128,7 +129,7 @@ BREAKDOWN REQUESTOR:
 ${Object.entries(requestorBreakdown)
   .sort((a, b) => b[1].amount - a[1].amount)
   .map(([requestor, data]) =>
-    `- ${requestor}: ${data.count} item (${formatRupiah(data.amount)})`
+    `- ${formatRequestorName(requestor)}: ${data.count} item (${formatRupiah(data.amount)})`
   )
   .join("\n")}
 
@@ -136,11 +137,11 @@ DETAIL PENGAJUAN:
 ${"=".repeat(50)}
 ${data.map((ob, i) => `
 ${i + 1}. ${ob.item}
-   Requestor: ${ob.requestor}
+   Requestor: ${formatRequestorName(ob.requestor)}
    Kategori: ${ob.category?.replace(/_/g, " ")}
    Jumlah: ${formatRupiah(ob.amount || 0)}
    Status: ${ob.status}
-   Sumber Dana: ${ob.sumber_dana}
+   Sumber Dana: ${formatFundSource(ob.sumber_dana)}
    Bulan: ${ob.month}
 `).join("\n")}
 `;

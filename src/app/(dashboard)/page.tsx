@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDashboardSummary, getPendingTransfers } from "@/lib/data";
 import { formatRupiah, formatShortRupiah, formatDate, formatDateShort } from "@/lib/format";
+import { formatRequestorName } from "@/lib/names";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SummaryCard } from "@/components/summary-card";
@@ -135,7 +136,7 @@ export default async function DashboardPage() {
                     <p className="text-sm font-semibold truncate">{loc.code}</p>
                     {loc.pipeline?.holder && (
                       <p className="text-xs text-muted-foreground truncate">
-                        via {loc.pipeline.holder}
+                        via {formatRequestorName(loc.pipeline.holder)}
                       </p>
                     )}
                   </div>
@@ -231,7 +232,7 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">{acc.bank}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {acc.holder}
+                      {formatRequestorName(acc.holder)}
                       {acc.balance_as_of && (
                         <> · per {formatDateShort(acc.balance_as_of)}</>
                       )}
