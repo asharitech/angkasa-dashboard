@@ -1,13 +1,18 @@
-import { getObligations } from "@/lib/data";
+import { getObligations, validateObligationData } from "@/lib/data";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
-import { Receipt } from "lucide-react";
+import { ObligationSearch } from "@/components/obligation-search";
+import { DataExport } from "@/components/data-export";
+import { Receipt, AlertTriangle } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Obligation } from "@/lib/types";
 
 const MONTH_LABELS: Record<string, string> = {
   "2026-03": "Maret",
@@ -20,11 +25,51 @@ function monthLabel(m: string) {
   return MONTH_LABELS[m] ?? m;
 }
 
-export default async function PengajuanPage() {
-  const all = await getObligations({ type: "pengajuan" });
+export default function PengajuanPage() {
+  const [obligations, setObligations] = useState<Obligation[]>([]);
+  const [filteredObligations, setFilteredObligations] = useState<Obligation[]>([]);
+  const [qualityReport, setQualityReport] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const pending = all.filter((o) => o.status === "pending");
-  const resolved = all.filter((o) => o.status !== "pending");
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [allObligations, report] = await Promise.all([
+          fetch("/api/obligations").then(res => res.json()),
+          fetch("/api/obligations/quality").then(res => res.json())
+        ]);
+
+        setObligations(allObligations.filter((o: Obligation) => o.type === "pengajuan"));
+        setFilteredObligations(allObligations.filter((o: Obligation) => o.type === "pengajuan"));
+        setQualityReport(report);
+      } catch (error) {
+        console.error("Failed to load obligations:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader icon={Receipt} title="Pengajuan">
+          <Badge className="bg-gray-100 text-gray-600 animate-pulse">
+            Loading...
+          </Badge>
+        </PageHeader>
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-gray-200 rounded-lg"></div>
+          <div className="h-32 bg-gray-200 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const pending = filteredObligations.filter((o) => o.status === "pending");
+  const resolved = filteredObligations.filter((o) => o.status !== "pending");
 
   // Group by month → requestor
   const months = Array.from(new Set(pending.map((o) => o.month ?? "").filter(Boolean))).sort();
@@ -39,31 +84,75 @@ export default async function PengajuanPage() {
     byRequestor.get(key)!.push(item);
   }
 
+  // Extract duplicate amounts for warning
+  const duplicateAmounts = qualityReport?.duplicateObligations?.map((dup: any) => dup.amount) || [];
+
   return (
     <div className="space-y-6">
       <PageHeader icon={Receipt} title="Pengajuan">
-        <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1.5">
-          {pending.length} belum lunas · {formatRupiah(pendingTotal)}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1.5">
+            {pending.length} belum lunas · {formatRupiah(pendingTotal)}
+          </Badge>
+          {qualityReport && qualityReport.duplicateCount > 0 && (
+            <Badge className="bg-red-50 text-red-700 border-red-200 font-semibold px-3 py-1.5">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              {qualityReport.duplicateCount} duplikasi
+            </Badge>
+          )}
+        </div>
       </PageHeader>
 
-      {/* Requestor summary */}
-      {byRequestor.size > 0 && (
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
-          {Array.from(byRequestor.entries()).map(([requestor, items]) => {
-            const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
-            return (
-              <div key={requestor} className="rounded-xl bg-amber-50/50 px-4 py-3">
-                <p className="text-xs text-muted-foreground">{requestor}</p>
-                <p className="text-base font-bold tabular-nums mt-0.5">{formatRupiah(subtotal)}</p>
-                <p className="text-xs text-muted-foreground">{items.length} item</p>
+      {/* Search and Filter */}
+      <ObligationSearch
+        obligations={obligations}
+        onFilteredChange={setFilteredObligations}
+        duplicateAmounts={duplicateAmounts}
+      />
+
+      {/* Data Quality Report */}
+      {qualityReport && (qualityReport.duplicateCount > 0 || qualityReport.missingFieldCount > 0) && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <h3 className="text-sm font-semibold text-amber-800">Masalah Kualitas Data</h3>
+                <div className="mt-2 space-y-1 text-xs text-amber-700">
+                  {qualityReport.duplicateCount > 0 && (
+                    <p>• {qualityReport.duplicateCount} pengajuan duplikasi ditemukan</p>
+                  )}
+                  {qualityReport.missingFieldCount > 0 && (
+                    <p>• {qualityReport.missingFieldCount} field kosong ditemukan</p>
+                  )}
+                </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <Tabs defaultValue="pending">
+      {/* Export Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Requestor summary */}
+          {byRequestor.size > 0 && (
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
+              {Array.from(byRequestor.entries()).map(([requestor, items]) => {
+                const subtotal = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+                return (
+                  <div key={requestor} className="rounded-xl bg-amber-50/50 px-4 py-3">
+                    <p className="text-xs text-muted-foreground">{requestor}</p>
+                    <p className="text-base font-bold tabular-nums mt-0.5">{formatRupiah(subtotal)}</p>
+                    <p className="text-xs text-muted-foreground">{items.length} item</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Main Tabs Content */}
+          <Tabs defaultValue="pending">
         <TabsList className="w-full md:w-auto">
           <TabsTrigger value="pending" className="flex-1 md:flex-initial">
             Belum Lunas ({pending.length})
@@ -161,7 +250,13 @@ export default async function PengajuanPage() {
             ))
           )}
         </TabsContent>
-      </Tabs>
+          </Tabs>
+        </div>
+
+        <div>
+          <DataExport obligations={filteredObligations} />
+        </div>
+      </div>
     </div>
   );
 }

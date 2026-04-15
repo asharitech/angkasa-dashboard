@@ -378,3 +378,100 @@ export async function findDuplicateEntries(opts: { period?: string } = {}): Prom
   dupes.sort((a, b) => b.date.localeCompare(a.date));
   return dupes;
 }
+
+export interface DuplicateObligation {
+  amount: number;
+  obligations: Obligation[];
+}
+
+export interface DataQualityReport {
+  duplicateObligations: DuplicateObligation[];
+  missingFields: Record<string, number>;
+  totalObligations: number;
+  duplicateCount: number;
+  missingFieldCount: number;
+}
+
+export async function findDuplicateObligations(opts: { month?: string } = {}): Promise<DuplicateObligation[]> {
+  const db = await getDb();
+  const filter: Record<string, unknown> = { type: "pengajuan" };
+  if (opts.month) filter.month = opts.month;
+
+  const obligations = (await db
+    .collection("obligations")
+    .find(filter)
+    .sort({ created_at: -1 })
+    .toArray()) as unknown as Obligation[];
+
+  const byAmount = new Map<number, Obligation[]>();
+  for (const ob of obligations) {
+    const amount = ob.amount ?? 0;
+    if (amount === 0) continue; // Skip zero amounts
+    if (!byAmount.has(amount)) byAmount.set(amount, []);
+    byAmount.get(amount)!.push(ob);
+  }
+
+  const duplicates: DuplicateObligation[] = [];
+  for (const [amount, items] of byAmount) {
+    if (items.length > 1) {
+      duplicates.push({ amount, obligations: items });
+    }
+  }
+
+  duplicates.sort((a, b) => b.amount - a.amount);
+  return duplicates;
+}
+
+export async function validateObligationData(opts: { month?: string } = {}): Promise<DataQualityReport> {
+  const db = await getDb();
+  const filter: Record<string, unknown> = { type: "pengajuan" };
+  if (opts.month) filter.month = opts.month;
+
+  const obligations = (await db
+    .collection("obligations")
+    .find(filter)
+    .toArray()) as unknown as Obligation[];
+
+  const missingFields: Record<string, number> = {};
+  const requiredFields = ['item', 'amount', 'category', 'requestor', 'sumber_dana'];
+
+  for (const ob of obligations) {
+    for (const field of requiredFields) {
+      const value = ob[field as keyof Obligation];
+      if (value === null || value === undefined || value === "") {
+        missingFields[field] = (missingFields[field] || 0) + 1;
+      }
+    }
+  }
+
+  const duplicateObligations = await findDuplicateObligations(opts);
+
+  return {
+    duplicateObligations,
+    missingFields,
+    totalObligations: obligations.length,
+    duplicateCount: duplicateObligations.reduce((sum, dup) => sum + dup.obligations.length - 1, 0),
+    missingFieldCount: Object.values(missingFields).reduce((sum, count) => sum + count, 0)
+  };
+}
+
+export async function removeDuplicateObligations(keepFirst: boolean = true): Promise<{ removed: number; savedAmount: number }> {
+  const db = await getDb();
+
+  const duplicates = await findDuplicateObligations();
+  let removed = 0;
+  let savedAmount = 0;
+
+  for (const dup of duplicates) {
+    const toRemove = keepFirst ? dup.obligations.slice(1) : dup.obligations.slice(0, -1);
+
+    for (const ob of toRemove) {
+      const { ObjectId } = await import("mongodb");
+      await db.collection("obligations").deleteOne({ _id: new ObjectId(ob._id) });
+      removed++;
+      savedAmount += ob.amount ?? 0;
+    }
+  }
+
+  return { removed, savedAmount };
+}
