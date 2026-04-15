@@ -56,7 +56,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
           title="Dana Efektif"
-          value={formatShortRupiah(danaEfektif)}
+          value={formatRupiah(danaEfektif)}
           subtitle="Setelah kewajiban"
           icon={<Landmark className="h-5 w-5" />}
           iconColor="text-blue-600"
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
         />
         <SummaryCard
           title="Saldo BTN"
-          value={formatShortRupiah(saldo)}
+          value={formatRupiah(saldo)}
           subtitle="Laporan Op"
           icon={<FileText className="h-5 w-5" />}
           iconColor="text-violet-600"
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
         <Link href="/sewa">
           <SummaryCard
             title="Sewa Dapur"
-            value={formatShortRupiah(sewaTotal)}
+            value={formatRupiah(sewaTotal)}
             subtitle={`${activeCount}/${sewaLocations.length} aktif`}
             icon={<Building2 className="h-5 w-5" />}
             iconColor="text-teal-600"
@@ -83,8 +83,8 @@ export default async function DashboardPage() {
         <Link href="/dana-cash">
           <SummaryCard
             title="Cash Yayasan"
-            value={formatShortRupiah(data.cashYayasan.sisa)}
-            subtitle={`Terpakai ${formatShortRupiah(data.cashYayasan.terpakai)}`}
+            value={formatRupiah(data.cashYayasan.sisa)}
+            subtitle={`Terpakai ${formatRupiah(data.cashYayasan.terpakai)}`}
             icon={<Banknote className="h-5 w-5" />}
             iconColor="text-amber-600"
             iconBg="bg-amber-50"
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
         <div className="col-span-2">
           <SummaryCard
             title="Pengajuan Belum Lunas"
-            value={formatShortRupiah(data.pengajuanTotalAmount)}
+            value={formatRupiah(data.pengajuanTotalAmount)}
             subtitle={`${data.pengajuanPending} item`}
             icon={<Clock className="h-5 w-5" />}
             iconColor="text-rose-600"
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
               {data.pengajuanByRequestor.map((r) => (
                 <div key={r._id} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-1.5">
                   <span className="text-xs font-medium text-muted-foreground">{r._id ?? "unknown"}</span>
-                  <span className="text-xs font-semibold tabular-nums">{formatShortRupiah(r.total)}</span>
+                  <span className="text-xs font-semibold tabular-nums">{formatRupiah(r.total)}</span>
                 </div>
               ))}
             </div>

@@ -1,5 +1,5 @@
 import { getPribadiSummary } from "@/lib/data";
-import { formatRupiah, formatShortRupiah, formatDateShort } from "@/lib/format";
+import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SummaryCard } from "@/components/summary-card";
@@ -86,7 +86,7 @@ export default async function PribadiPage() {
       <div className="grid grid-cols-2 gap-3">
         <SummaryCard
           title="BCA"
-          value={formatShortRupiah(bcaBalance)}
+          value={formatRupiah(bcaBalance)}
           subtitle={bcaAccount?.balance_as_of ? `per ${formatDateShort(bcaAccount.balance_as_of)}` : "murni"}
           icon={<Wallet className="h-5 w-5" />}
           iconColor="text-blue-600"
@@ -94,7 +94,7 @@ export default async function PribadiPage() {
         />
         <SummaryCard
           title="BRI Kas"
-          value={formatShortRupiah(briKas)}
+          value={formatRupiah(briKas)}
           subtitle="dari Lembar2"
           icon={<Banknote className="h-5 w-5" />}
           iconColor="text-emerald-600"
@@ -102,7 +102,7 @@ export default async function PribadiPage() {
         />
         <SummaryCard
           title="Piutang"
-          value={formatShortRupiah(piutangTotal)}
+          value={formatRupiah(piutangTotal)}
           subtitle="Belum diganti yayasan"
           icon={<HandCoins className="h-5 w-5" />}
           iconColor="text-amber-600"
@@ -110,7 +110,7 @@ export default async function PribadiPage() {
         />
         <SummaryCard
           title="Sisa Cicilan"
-          value={formatShortRupiah(totalRemainingDebt)}
+          value={formatRupiah(totalRemainingDebt)}
           subtitle={`${data.loans.length} cicilan aktif`}
           icon={<TrendingDown className="h-5 w-5" />}
           iconColor="text-rose-600"
@@ -119,7 +119,7 @@ export default async function PribadiPage() {
         />
         <SummaryCard
           title="Posisi Bersih"
-          value={formatShortRupiah(netPosition)}
+          value={formatRupiah(netPosition)}
           subtitle="Kas + piutang − hutang"
           icon={<Target className="h-5 w-5" />}
           iconColor={netPosition >= 0 ? "text-blue-600" : "text-rose-600"}
@@ -231,7 +231,7 @@ export default async function PribadiPage() {
                       </p>
                     </div>
                     <span className="text-sm font-semibold tabular-nums text-violet-600">
-                      {formatShortRupiah(entry.amount)}
+                      {formatRupiah(entry.amount)}
                     </span>
                   </div>
                 ))}
@@ -426,7 +426,7 @@ export default async function PribadiPage() {
                   <AmountText
                     amount={entry.amount}
                     direction={entry.direction}
-                    formatter={formatShortRupiah}
+                    formatter={formatRupiah}
                   />
                 </div>
               ))}
