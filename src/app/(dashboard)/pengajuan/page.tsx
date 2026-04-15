@@ -365,11 +365,14 @@ function CompactList({ items }: { items: Obligation[] }) {
   return (
     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px]">
+        <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b bg-gray-50/80">
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
                 Item
+              </th>
+              <th className="text-left px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                Date
               </th>
               <th className="text-left px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
                 Requestor
@@ -396,18 +399,25 @@ function CompactList({ items }: { items: Obligation[] }) {
                 <td className="px-4 py-4">
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 leading-snug">{item.item}</p>
-                    {item.date_spent && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Calendar className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">
-                          {formatDateShort(item.date_spent)}
-                        </span>
-                      </div>
-                    )}
                     {item.category && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 mt-1">
                         {item.category.replace(/_/g, " ")}
                       </span>
+                    )}
+                  </div>
+                </td>
+
+                <td className="px-3 py-4">
+                  <div className="text-sm">
+                    {item.date_spent ? (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium text-gray-700">
+                          {formatDateShort(item.date_spent)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">No date</span>
                     )}
                   </div>
                 </td>

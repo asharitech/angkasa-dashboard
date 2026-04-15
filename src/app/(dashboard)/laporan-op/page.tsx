@@ -138,6 +138,9 @@ export default async function LaporanOpPage() {
               ({entries.length} item)
             </span>
           </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            Sequential ledger entries for period ending {ledger.as_of ? new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(ledger.as_of)) : 'N/A'} • Entries are chronologically ordered by transaction sequence
+          </p>
         </CardHeader>
         <CardContent className="overflow-x-auto px-0 md:px-5">
           <Table>
