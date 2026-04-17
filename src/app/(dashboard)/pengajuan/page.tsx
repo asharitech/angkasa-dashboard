@@ -166,6 +166,21 @@ function RequestorGroup({
   yayasanAccounts: Account[];
 }) {
   const total = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+
+  // group per category, preserve order from groupByRequestor sort
+  const categoryGroups: { cat: string; rows: { o: Obligation; globalIdx: number }[] }[] = [];
+  let globalIndex = 0;
+  for (const o of items) {
+    const cat = o.category || 'lainnya';
+    let group = categoryGroups.find((g) => g.cat === cat);
+    if (!group) {
+      group = { cat, rows: [] };
+      categoryGroups.push(group);
+    }
+    group.rows.push({ o, globalIdx: globalIndex });
+    globalIndex++;
+  }
+
   return (
     <section>
       <div className="flex items-baseline justify-between gap-3 pb-2">
@@ -174,15 +189,25 @@ function RequestorGroup({
           {items.length} item · {formatRupiah(total)}
         </p>
       </div>
-      <div className="divide-y divide-border/60 border-y border-border/60">
-        {items.map((o, index) => (
-          <PengajuanRow
-            key={o._id}
-            o={o}
-            index={index}
-            isAdmin={isAdmin}
-            yayasanAccounts={yayasanAccounts}
-          />
+
+      <div className="space-y-4">
+        {categoryGroups.map(({ cat, rows }) => (
+          <div key={`${requestorName}-${cat}`}>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {cat.replace(/_/g, ' ')}
+            </p>
+            <div className="divide-y divide-border/60 border-y border-border/60">
+              {rows.map(({ o, globalIdx }) => (
+                <PengajuanRow
+                  key={o._id}
+                  o={o}
+                  index={globalIdx}
+                  isAdmin={isAdmin}
+                  yayasanAccounts={yayasanAccounts}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </section>
