@@ -27,14 +27,14 @@ export const dynamic = "force-dynamic";
 export default async function PribadiPage() {
   const data = await getPribadiSummary();
 
-  const bal = data.balance?.balance;
-  // Prefer live account balances over the cached balance ledger
+  // Live derivation: BRI kas = bri_angkasa.balance − sum(active numpang)
   const bcaAccount = data.personalAccounts.find((a) => a._id === "bca_angkasa");
-  const briKas = bal?.cash?.bri_kas ?? 0; // BRI kas is calculated (LUNAS ANGKASA), not from e-statement
-  const bcaBalance = bcaAccount?.balance ?? bal?.cash?.bca ?? 0;
+  const briAccount = data.personalAccounts.find((a) => a._id === "bri_angkasa");
+  const bcaBalance = bcaAccount?.balance ?? 0;
+  const briEstatement = briAccount?.balance ?? 0;
+  const numpangTotal = data.numpang.reduce((s, n) => s + n.amount, 0);
+  const briKas = briEstatement - numpangTotal;
   const cashTotal = bcaBalance + briKas;
-  const numpang = bal?.numpang ?? {};
-  const numpangTotal = numpang.total ?? 0;
 
   // Piutang from live pengajuan
   const piutangTotal = data.piutangByMonth.reduce((s, p) => s + p.total, 0);
@@ -75,9 +75,9 @@ export default async function PribadiPage() {
   return (
     <div className="space-y-6">
       <PageHeader icon={User} title="Keuangan Pribadi">
-        {data.balance?.as_of && (
+        {briAccount?.balance_as_of && (
           <span className="text-xs text-muted-foreground">
-            per {formatDateShort(data.balance.as_of)}
+            BRI per {formatDateShort(briAccount.balance_as_of)}
           </span>
         )}
       </PageHeader>
@@ -254,14 +254,17 @@ export default async function PribadiPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {Object.entries(numpang)
-              .filter(([k]) => k !== "total")
-              .map(([key, val]) => (
-                <div key={key} className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-                  <span className="text-sm capitalize">{key.replace(/_/g, " ")}</span>
-                  <span className="text-sm font-semibold tabular-nums">{formatRupiah(val as number)}</span>
+            {data.numpang.map((n) => (
+              <div key={n._id} className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
+                <div>
+                  <span className="text-sm capitalize">{n._id.replace(/_/g, " ")}</span>
+                  {n.description && n.description !== n._id && (
+                    <p className="text-xs text-muted-foreground">{n.description}</p>
+                  )}
                 </div>
-              ))}
+                <span className="text-sm font-semibold tabular-nums">{formatRupiah(n.amount)}</span>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

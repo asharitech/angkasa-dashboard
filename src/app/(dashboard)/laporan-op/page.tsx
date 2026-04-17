@@ -1,4 +1,4 @@
-import { getLedger } from "@/lib/data";
+import { getLedger, getLaporanOpReconciliation } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MiniSummaryCard } from "@/components/summary-card";
@@ -11,12 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, TrendingUp, TrendingDown, Scale, Banknote } from "lucide-react";
+import { FileText, TrendingUp, TrendingDown, Scale, Banknote, GitCompare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function LaporanOpPage() {
-  const ledger = await getLedger("laporan_op");
+  const [ledger, recon] = await Promise.all([
+    getLedger("laporan_op"),
+    getLaporanOpReconciliation(),
+  ]);
 
   if (!ledger?.laporan_op) {
     return (
@@ -68,6 +71,54 @@ export default async function LaporanOpPage() {
           iconBg="bg-violet-50"
         />
       </div>
+
+      {/* Rekonsiliasi: Ledger Snapshot vs Live Entries */}
+      {recon && (recon.diffMasuk !== 0 || recon.diffKeluar !== 0) && (
+        <Card className="shadow-sm border-amber-200 bg-amber-50/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <GitCompare className="h-5 w-5 text-amber-600" />
+              Rekonsiliasi: Ledger vs Entries
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Snapshot Laporan Op vs hitungan live dari entries (account: btn_yayasan)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead></TableHead>
+                  <TableHead className="text-right">Ledger</TableHead>
+                  <TableHead className="text-right">Entries</TableHead>
+                  <TableHead className="text-right">Selisih</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell className="text-sm font-semibold">Masuk</TableCell>
+                  <TableCell className="text-right text-sm tabular-nums">{formatRupiah(recon.ledgerMasuk)}</TableCell>
+                  <TableCell className="text-right text-sm tabular-nums">{formatRupiah(recon.entriesMasuk)}</TableCell>
+                  <TableCell className={`text-right text-sm font-bold tabular-nums ${recon.diffMasuk !== 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                    {recon.diffMasuk > 0 ? "+" : ""}{formatRupiah(recon.diffMasuk)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell className="text-sm font-semibold">Keluar</TableCell>
+                  <TableCell className="text-right text-sm tabular-nums">{formatRupiah(recon.ledgerKeluar)}</TableCell>
+                  <TableCell className="text-right text-sm tabular-nums">{formatRupiah(recon.entriesKeluar)}</TableCell>
+                  <TableCell className={`text-right text-sm font-bold tabular-nums ${recon.diffKeluar !== 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                    {recon.diffKeluar > 0 ? "+" : ""}{formatRupiah(recon.diffKeluar)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+            <p className="text-xs text-muted-foreground mt-3 italic">
+              Selisih bukan error — Laporan Op adalah snapshot manual yang tidak otomatis ter-update saat entries baru ditambahkan. Update via mongo_helper bila perlu.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Kewajiban */}
       <Card className="shadow-sm">

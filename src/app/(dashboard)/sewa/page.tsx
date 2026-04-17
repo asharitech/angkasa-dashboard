@@ -1,4 +1,5 @@
-import { getLedger, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
+import Link from "next/link";
+import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,12 +42,21 @@ const stageLabels: Record<string, { label: string; cls: string }> = {
   tercatat: { label: "Tercatat", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
 };
 
-export default async function SewaPage() {
-  const [ledger, sewaHistory, danaSewa] = await Promise.all([
+export default async function SewaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tahap?: string }>;
+}) {
+  const { tahap } = await searchParams;
+  const [requestedLedger, currentLedger, sewaHistory] = await Promise.all([
+    tahap ? getLedgerByCode("sewa", tahap) : getLedger("sewa"),
     getLedger("sewa"),
     getSewaHistory(),
-    getSewaDanaUsage(),
   ]);
+  const ledger = requestedLedger ?? currentLedger;
+  const activeTahap = ledger?.period_code ?? ledger?.period;
+  const danaSewa = await getSewaDanaUsage(activeTahap ?? undefined);
+  const isHistorical = !!tahap && ledger?.period_code !== currentLedger?.period_code;
 
   if (!ledger?.sewa) {
     return (
@@ -76,9 +86,41 @@ export default async function SewaPage() {
     <div className="space-y-6">
       <PageHeader icon={Building2} title="Sewa Dapur">
         <Badge variant="secondary" className="font-semibold px-3 py-1.5">
-          {formatDateRange(ledger.period)}
+          {ledger.period_code ?? formatDateRange(ledger.period)}
         </Badge>
+        {isHistorical && (
+          <Link
+            href="/sewa"
+            className="text-xs text-muted-foreground hover:text-foreground underline ml-2"
+          >
+            ← kembali ke aktif
+          </Link>
+        )}
       </PageHeader>
+
+      {/* Tahap selector */}
+      {sewaHistory.length > 1 && (
+        <div className="flex flex-wrap gap-1.5">
+          {sewaHistory.map((h) => {
+            const code = h.period_code ?? h.period;
+            const isActive = code === activeTahap;
+            return (
+              <Link
+                key={h._id}
+                href={h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                }`}
+              >
+                {code}
+                {h.is_current && <span className="ml-1 opacity-70">·</span>}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
@@ -315,29 +357,37 @@ export default async function SewaPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {sewaHistory.map((h) => (
-              <div
-                key={h._id}
-                className={`flex items-center justify-between rounded-xl p-4 ${
-                  h.is_current ? "bg-primary/5 border border-primary/10" : "bg-muted/50"
-                }`}
-              >
-                <div>
-                  <p className="text-sm font-semibold">
-                    {h.period}
-                    {h.is_current && (
-                      <Badge variant="secondary" className="ml-2 text-xs">aktif</Badge>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Update: {formatDateShort(h.updated_at)}
-                  </p>
-                </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {formatRupiah(h.sewa?.total ?? 0)}
-                </span>
-              </div>
-            ))}
+            {sewaHistory.map((h) => {
+              const code = h.period_code ?? h.period;
+              const href = h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`;
+              const isActive = code === activeTahap;
+              return (
+                <Link
+                  key={h._id}
+                  href={href}
+                  className={`flex items-center justify-between rounded-xl p-4 transition-colors ${
+                    isActive
+                      ? "bg-primary/10 border border-primary/20"
+                      : "bg-muted/50 hover:bg-muted"
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {code}
+                      {h.is_current && (
+                        <Badge variant="secondary" className="ml-2 text-xs">aktif</Badge>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {formatDateRange(h.period)} · update {formatDateShort(h.updated_at)}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold tabular-nums">
+                    {formatRupiah(h.sewa?.total ?? 0)}
+                  </span>
+                </Link>
+              );
+            })}
           </CardContent>
         </Card>
       )}

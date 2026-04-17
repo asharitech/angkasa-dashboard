@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardSummary, getPendingTransfers } from "@/lib/data";
+import { getDashboardSummary, getPendingTransfers, getDataIntegrityIssues } from "@/lib/data";
 import { formatRupiah, formatShortRupiah, formatDate, formatDateShort } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,15 +16,19 @@ import {
   ChevronRight,
   Banknote,
   Truck,
+  ShieldAlert,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [data, pendingTransfers] = await Promise.all([
+  const [data, pendingTransfers, integrityIssues] = await Promise.all([
     getDashboardSummary(),
     getPendingTransfers(),
+    getDataIntegrityIssues(),
   ]);
+  const errorCount = integrityIssues.filter((i) => i.severity === "error").length;
+  const warnCount = integrityIssues.filter((i) => i.severity === "warn").length;
 
   const op = data.laporanOp?.laporan_op;
   const danaEfektif = op?.dana_efektif ?? 0;
@@ -62,6 +66,30 @@ export default async function DashboardPage() {
           </span>
         )}
       </PageHeader>
+
+      {/* Data Integrity Alert */}
+      {(errorCount > 0 || warnCount > 0) && (
+        <Link href="/audit" className="block">
+          <Card className={`shadow-sm border ${errorCount > 0 ? "border-rose-200 bg-rose-50/40 hover:bg-rose-50/70" : "border-amber-200 bg-amber-50/40 hover:bg-amber-50/70"} transition-colors`}>
+            <CardContent className="py-3 flex items-center gap-3">
+              <ShieldAlert className={`h-5 w-5 ${errorCount > 0 ? "text-rose-600" : "text-amber-600"}`} />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold ${errorCount > 0 ? "text-rose-700" : "text-amber-700"}`}>
+                  {errorCount > 0 ? `${errorCount} isu integritas data` : `${warnCount} peringatan data`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {errorCount > 0 && warnCount > 0
+                    ? `${errorCount} error · ${warnCount} warn — review di Audit Data`
+                    : errorCount > 0
+                      ? "Perlu tindakan segera — review di Audit Data"
+                      : "Lihat detail di Audit Data"}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Financial Health Indicator */}
       <Card className={`shadow-sm border-2 bg-gradient-to-r ${

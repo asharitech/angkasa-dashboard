@@ -16,6 +16,7 @@ import {
   X,
   Banknote,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ const mobileMore: NavItem[] = [
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
+  { href: "/audit", label: "Audit Data", icon: ShieldCheck },
   { href: "/users", label: "Users", icon: Users },
 ];
 
@@ -56,6 +58,7 @@ const mobileMore: NavItem[] = [
 const monitorNav: NavItem[] = [
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
+  { href: "/audit", label: "Audit Data", icon: ShieldCheck },
 ];
 
 const adminNav: NavItem[] = [{ href: "/users", label: "Users", icon: Users }];

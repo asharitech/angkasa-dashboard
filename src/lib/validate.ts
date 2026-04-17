@@ -1,0 +1,79 @@
+// Mirror of scripts/mongo_helper.py validators.
+// Atlas free tier blocks collMod $jsonSchema, so invariants live here.
+// Call validateObligation / validateEntry before insert or update operations.
+
+export class ValidationError extends Error {
+  constructor(msg: string) {
+    super(msg);
+    this.name = "ValidationError";
+  }
+}
+
+const VALID_OBLIGATION_TYPES = new Set(["pengajuan", "loan", "recurring"]);
+const VALID_OBLIGATION_STATUS = new Set([
+  "pending", "lunas", "reimbursed", "active", "settled", "cancelled",
+]);
+const VALID_ENTRY_DIRECTIONS = new Set(["in", "out"]);
+const VALID_DANA_SUMBER = new Set<string | null | undefined>([
+  "sewa", "operasional", null, undefined,
+]);
+const VALID_NUMPANG_STATUS = new Set(["active", "settled"]);
+
+function require(cond: unknown, msg: string): asserts cond {
+  if (!cond) throw new ValidationError(msg);
+}
+
+export function validateObligation(doc: Record<string, unknown>): void {
+  const t = doc.type as string;
+  require(VALID_OBLIGATION_TYPES.has(t), `obligation.type invalid: ${t}`);
+
+  const status = doc.status as string | undefined;
+  if (status !== undefined) {
+    require(VALID_OBLIGATION_STATUS.has(status), `obligation.status invalid: ${status}`);
+  }
+
+  if (doc.amount !== undefined && doc.amount !== null) {
+    const amt = doc.amount as number;
+    require(typeof amt === "number" && !Number.isNaN(amt), "obligation.amount must be numeric");
+    require(amt >= 0, "obligation.amount must be non-negative");
+  }
+
+  if (status === "lunas" || status === "reimbursed") {
+    require(doc.resolved_at != null, "resolved status requires resolved_at");
+  }
+
+  if (t === "pengajuan" && status === "pending") {
+    require(doc.sumber_dana != null,
+      "pengajuan pending requires sumber_dana (BRI_ANGKASA, BCA_ANGKASA, BTN_YAYASAN, ...)");
+  }
+}
+
+export function validateEntry(doc: Record<string, unknown>): void {
+  const direction = doc.direction as string;
+  require(VALID_ENTRY_DIRECTIONS.has(direction),
+    `entry.direction must be 'in' or 'out', got ${direction}`);
+  const amt = doc.amount as number;
+  require(typeof amt === "number" && amt > 0, "entry.amount must be positive number");
+  require(doc.account, "entry.account is required");
+  require(doc.date, "entry.date is required");
+
+  const danaSumber = doc.dana_sumber as string | null | undefined;
+  require(VALID_DANA_SUMBER.has(danaSumber),
+    `entry.dana_sumber must be 'sewa', 'operasional', or null — got ${danaSumber}`);
+
+  if (danaSumber === "sewa" || doc.category === "sewa_masuk") {
+    require(doc.tahap_sewa, "sewa-related entry requires tahap_sewa (e.g. 2026-T6)");
+  }
+}
+
+export function validateNumpang(doc: Record<string, unknown>): void {
+  require(doc.description, "numpang.description required");
+  require(doc.parked_in, "numpang.parked_in required (e.g. bri_angkasa)");
+  const status = (doc.status ?? "active") as string;
+  require(VALID_NUMPANG_STATUS.has(status), `numpang.status must be active|settled`);
+  const amt = doc.amount as number;
+  require(typeof amt === "number" && amt >= 0, "numpang.amount must be non-negative number");
+  if (status === "active") {
+    require(amt > 0, "active numpang must have positive amount");
+  }
+}

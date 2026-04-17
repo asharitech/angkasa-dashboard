@@ -62,10 +62,11 @@ export interface LaporanOpEntry {
 
 export interface Ledger {
   _id: string;
-  type: "laporan_op" | "balance" | "sewa" | "lembar2";
+  type: "laporan_op" | "balance" | "balance_archived" | "sewa" | "lembar2";
   org?: string | null;
   owner?: string | null;
   period: string;
+  period_code?: string | null;
   is_current: boolean;
   as_of: string;
   updated_at: string;
@@ -138,8 +139,28 @@ export interface Entry {
   ref_no?: string | null;
   dana_sumber?: "sewa" | "operasional" | null;
   tahap_sewa?: string | null;
+  obligation_id?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Numpang {
+  _id: string;
+  description: string;
+  amount: number;
+  parked_in: string;
+  status: "active" | "settled";
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DataIntegrityIssue {
+  kind: string;
+  severity: "info" | "warn" | "error";
+  message: string;
+  entity_id?: string;
+  hint?: string;
 }
 
 export interface ActivityEvent {
