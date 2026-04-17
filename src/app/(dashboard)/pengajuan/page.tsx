@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getObligations, validateObligationData } from "@/lib/data";
+import { getObligations, validateObligationData, getAccounts } from "@/lib/data";
+import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { formatRequestorName, formatFundSource, formatStatusLabel } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
@@ -9,6 +10,10 @@ import { SectionCard } from "@/components/section-card";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { EmptyState } from "@/components/empty-state";
 import { DataTable, type Column } from "@/components/data-table";
+import {
+  PengajuanCreateButton,
+  PengajuanRowActions,
+} from "@/components/pengajuan-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { obligationStatusTone, toneBadge } from "@/lib/colors";
@@ -53,10 +58,14 @@ export default async function PengajuanPage({
   const baseFilter: Record<string, unknown> = { type: "pengajuan" };
   if (period) baseFilter.month = period;
 
-  const [allInScope, qualityReport] = await Promise.all([
+  const [allInScope, qualityReport, session, accounts] = await Promise.all([
     getObligations(baseFilter),
     validateObligationData(period ? { month: period } : {}),
+    getSession(),
+    getAccounts(),
   ]);
+  const isAdmin = session?.role === "admin";
+  const yayasanAccounts = accounts.filter((a) => a.type === "yayasan");
 
   const requestors = Array.from(
     new Set(allInScope.map((o) => o.requestor).filter(Boolean)),
@@ -202,6 +211,18 @@ export default async function PengajuanPage({
         </span>
       ),
     },
+    ...(isAdmin
+      ? ([
+          {
+            key: "actions",
+            header: "",
+            align: "right",
+            cell: (o: Obligation) => (
+              <PengajuanRowActions obligation={o} accounts={yayasanAccounts} />
+            ),
+          },
+        ] as Column<Obligation>[])
+      : []),
   ];
 
   const hasQualityIssues =
@@ -214,6 +235,7 @@ export default async function PengajuanPage({
           <Badge className={cn("font-semibold", toneBadge.warning)}>
             {pending.length} pending · {formatRupiah(pendingTotal)}
           </Badge>
+          {isAdmin && <PengajuanCreateButton />}
         </div>
       </PageHeader>
 

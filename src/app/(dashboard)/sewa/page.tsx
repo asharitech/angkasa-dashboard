@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
+import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
@@ -8,6 +9,7 @@ import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { StatusBadge } from "@/components/status-badge";
+import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toneBadge, type Tone } from "@/lib/colors";
@@ -62,15 +64,17 @@ export default async function SewaPage({
 }) {
   const { tahap, view } = await searchParams;
   const activeView = view ?? "lokasi";
-  const [requestedLedger, currentLedger, sewaHistory] = await Promise.all([
+  const [requestedLedger, currentLedger, sewaHistory, session] = await Promise.all([
     tahap ? getLedgerByCode("sewa", tahap) : getLedger("sewa"),
     getLedger("sewa"),
     getSewaHistory(),
+    getSession(),
   ]);
   const ledger = requestedLedger ?? currentLedger;
   const activeTahap = ledger?.period_code ?? ledger?.period;
   const danaSewa = await getSewaDanaUsage(activeTahap ?? undefined);
   const isHistorical = !!tahap && ledger?.period_code !== currentLedger?.period_code;
+  const canEdit = session?.role === "admin" && !isHistorical;
 
   if (!ledger?.sewa) {
     return (
@@ -201,11 +205,14 @@ export default async function SewaPage({
                             </p>
                           )}
                         </div>
-                        {stage ? (
-                          <Badge className={cn("text-xs", toneBadge[stage.tone])}>{stage.label}</Badge>
-                        ) : (
-                          <StatusBadge status={loc.status} size="sm" />
-                        )}
+                        <div className="flex shrink-0 items-center gap-1">
+                          {stage ? (
+                            <Badge className={cn("text-xs", toneBadge[stage.tone])}>{stage.label}</Badge>
+                          ) : (
+                            <StatusBadge status={loc.status} size="sm" />
+                          )}
+                          {canEdit && <SewaLocationEditButton location={loc} />}
+                        </div>
                       </div>
                     );
                   })}

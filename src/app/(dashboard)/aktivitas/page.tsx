@@ -1,10 +1,15 @@
-import { getActivityFeed } from "@/lib/data";
+import { getActivityFeed, getAccounts } from "@/lib/data";
+import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
+import {
+  EntryCreateButton,
+  EntryRowActions,
+} from "@/components/entry-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { obligationStatusTone, toneBadge } from "@/lib/colors";
 import { formatStatusLabel } from "@/lib/names";
@@ -69,10 +74,15 @@ export default async function AktivitasPage({
   const domainFilter = params.domain ?? "all";
   const period = params.period;
 
-  const allEvents = await getActivityFeed(50, {
-    ...(domainFilter !== "all" ? { domain: domainFilter } : {}),
-    ...(period ? { period } : {}),
-  });
+  const [allEvents, session, accounts] = await Promise.all([
+    getActivityFeed(50, {
+      ...(domainFilter !== "all" ? { domain: domainFilter } : {}),
+      ...(period ? { period } : {}),
+    }),
+    getSession(),
+    getAccounts(),
+  ]);
+  const isAdmin = session?.role === "admin";
   const events =
     typeFilter === "all"
       ? allEvents
@@ -116,7 +126,10 @@ export default async function AktivitasPage({
   return (
     <div className="space-y-5">
       <PageHeader icon={Activity} title="Aktivitas">
-        <span className="text-xs text-muted-foreground tabular-nums">{events.length} event</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground tabular-nums">{events.length} event</span>
+          {isAdmin && <EntryCreateButton accounts={accounts} />}
+        </div>
       </PageHeader>
 
       <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
@@ -173,6 +186,9 @@ export default async function AktivitasPage({
                           {formatRelativeTime(event.date)}
                         </p>
                       </div>
+                      {isAdmin && event.type === "entry" && (
+                        <EntryRowActions entryId={event._id} accounts={accounts} />
+                      )}
                     </li>
                   );
                 })}

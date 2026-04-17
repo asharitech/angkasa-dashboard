@@ -5,12 +5,14 @@ import {
   getDataIntegrityIssues,
   getLaporanOpReconciliation,
 } from "@/lib/data";
+import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
+import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,12 +32,14 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [data, pendingTransfers, integrityIssues, recon] = await Promise.all([
+  const [data, pendingTransfers, integrityIssues, recon, session] = await Promise.all([
     getDashboardSummary(),
     getPendingTransfers(),
     getDataIntegrityIssues(),
     getLaporanOpReconciliation(),
+    getSession(),
   ]);
+  const isAdmin = session?.role === "admin";
   const errorCount = integrityIssues.filter((i) => i.severity === "error").length;
   const warnCount = integrityIssues.filter((i) => i.severity === "warn").length;
 
@@ -280,7 +284,10 @@ export default async function DashboardPage() {
                       )}
                     </p>
                   </div>
-                  <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
+                    {isAdmin && <AccountAdjustButton account={acc} />}
+                  </div>
                 </div>
               ))}
             </div>

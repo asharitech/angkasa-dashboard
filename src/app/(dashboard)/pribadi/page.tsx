@@ -1,5 +1,6 @@
 import { getPribadiSummary } from "@/lib/data";
-import type { Obligation } from "@/lib/types";
+import { getSession } from "@/lib/auth";
+import type { Obligation, Numpang } from "@/lib/types";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
@@ -7,6 +8,11 @@ import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { TransactionIcon, AmountText } from "@/components/transaction-item";
+import {
+  NumpangCreateButton,
+  NumpangRowActions,
+} from "@/components/numpang-manager";
+import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -50,7 +56,8 @@ export default async function PribadiPage({
     ? (view as View)
     : "ringkasan";
 
-  const data = await getPribadiSummary();
+  const [data, session] = await Promise.all([getPribadiSummary(), getSession()]);
+  const isAdmin = session?.role === "admin";
 
   const bcaAccount = data.personalAccounts.find((a) => a._id === "bca_angkasa");
   const briAccount = data.personalAccounts.find((a) => a._id === "bri_angkasa");
@@ -150,7 +157,9 @@ export default async function PribadiPage({
         />
       )}
 
-      {activeView === "akun" && <AkunView accounts={data.personalAccounts} />}
+      {activeView === "akun" && (
+        <AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />
+      )}
 
       {activeView === "cicilan" && (
         <CicilanView
@@ -162,7 +171,11 @@ export default async function PribadiPage({
       )}
 
       {activeView === "numpang" && (
-        <NumpangView numpang={data.numpang} numpangTotal={numpangTotal} />
+        <NumpangView
+          numpang={data.numpang}
+          numpangTotal={numpangTotal}
+          isAdmin={isAdmin}
+        />
       )}
 
       {activeView === "pengeluaran" && (
@@ -275,8 +288,10 @@ function RingkasanView({
 
 function AkunView({
   accounts,
+  isAdmin,
 }: {
   accounts: { _id: string; bank: string; holder: string; balance: number; balance_as_of?: string }[];
+  isAdmin: boolean;
 }) {
   return (
     <SectionCard icon={Wallet} title="Rekening Pribadi" tone="info">
@@ -284,9 +299,9 @@ function AkunView({
         {accounts.map((acc) => (
           <div
             key={acc._id}
-            className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2.5"
+            className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2.5"
           >
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{acc.bank}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {acc.holder}
@@ -294,6 +309,7 @@ function AkunView({
               </p>
             </div>
             <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
+            {isAdmin && <AccountAdjustButton account={acc} />}
           </div>
         ))}
       </div>
@@ -425,17 +441,26 @@ function CicilanView({
 function NumpangView({
   numpang,
   numpangTotal,
+  isAdmin,
 }: {
-  numpang: { _id: string; description?: string; amount: number }[];
+  numpang: Numpang[];
   numpangTotal: number;
+  isAdmin: boolean;
 }) {
-  if (numpangTotal === 0) {
+  if (numpang.length === 0) {
     return (
-      <EmptyState
-        icon={Inbox}
-        title="Tidak ada dana numpang"
-        description="Saat ini tidak ada dana parkir di rekening pribadi."
-      />
+      <div className="space-y-3">
+        {isAdmin && (
+          <div className="flex justify-end">
+            <NumpangCreateButton />
+          </div>
+        )}
+        <EmptyState
+          icon={Inbox}
+          title="Tidak ada dana numpang"
+          description="Saat ini tidak ada dana parkir di rekening pribadi."
+        />
+      </div>
     );
   }
   return (
@@ -448,20 +473,25 @@ function NumpangView({
           {formatRupiah(numpangTotal)}
         </span>
       }
+      action={isAdmin ? <NumpangCreateButton /> : undefined}
     >
       <div className="space-y-1.5">
         {numpang.map((n) => (
           <div
             key={n._id}
-            className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
+            className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2"
           >
-            <div>
-              <span className="text-sm capitalize">{n._id.replace(/_/g, " ")}</span>
-              {n.description && n.description !== n._id && (
-                <p className="text-xs text-muted-foreground">{n.description}</p>
-              )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{n.description}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Parkir di {n.parked_in?.replace(/_/g, " ").toUpperCase()}
+                {n.notes && <> · {n.notes}</>}
+              </p>
             </div>
-            <span className="text-sm font-semibold tabular-nums">{formatRupiah(n.amount)}</span>
+            <span className="text-sm font-semibold tabular-nums">
+              {formatRupiah(n.amount)}
+            </span>
+            {isAdmin && <NumpangRowActions numpang={n} />}
           </div>
         ))}
       </div>
