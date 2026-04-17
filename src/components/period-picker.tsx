@@ -32,11 +32,19 @@ export function PeriodPicker({
   months?: number;
   extraParams?: Record<string, string>;
 }) {
-  const now = new Date();
+  // WITA (Asia/Makassar) reference — Vercel containers run UTC so naive new Date() skews the month
+  // during the 16:00–23:59 UTC window (00:00–08:00 WITA next day).
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Makassar",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+  const witaYear = Number(parts.find((p) => p.type === "year")?.value);
+  const witaMonth = Number(parts.find((p) => p.type === "month")?.value);
   const periods: string[] = [];
   for (let i = 0; i < months; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    periods.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    const d = new Date(Date.UTC(witaYear, witaMonth - 1 - i, 1));
+    periods.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
   }
 
   function hrefFor(period?: string) {

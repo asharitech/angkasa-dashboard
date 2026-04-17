@@ -65,8 +65,14 @@ export default async function PribadiPage({
     return s + (r.total_out > 0 ? r.total_out : r.total_in > 0 ? r.total_in : r.total);
   }, 0);
 
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const witaParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Makassar",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+  const witaYear = witaParts.find((p) => p.type === "year")?.value ?? "1970";
+  const witaMonth = witaParts.find((p) => p.type === "month")?.value ?? "01";
+  const currentMonth = `${witaYear}-${witaMonth}`;
   let cicilanBulanIni = 0;
   let totalRemainingDebt = 0;
   for (const loan of data.loans) {

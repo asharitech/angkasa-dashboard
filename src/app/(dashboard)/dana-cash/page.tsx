@@ -33,15 +33,15 @@ export default async function DanaCashPage({
   const totalTerpakai = period
     ? pengeluaran.reduce((s, e) => s + e.amount, 0)
     : summary.totalTerpakai;
-  const displayTerpakai = Math.abs(totalTerpakai);
-  const totalAvailable = saldoAwal + Math.max(0, saldoSisa - saldoAwal);
-  const pctTerpakai = totalAvailable > 0 ? Math.round((displayTerpakai / totalAvailable) * 100) : 0;
+  // Saldo awal + top-up = max(saldoAwal, saldoSisa + totalTerpakai) covers cash injection cases.
+  const totalAvailable = Math.max(saldoAwal, saldoSisa + totalTerpakai);
+  const pctTerpakai = totalAvailable > 0 ? Math.round((totalTerpakai / totalAvailable) * 100) : 0;
 
   const kpis: KpiItem[] = [
     { label: "Saldo Awal", value: formatRupiah(saldoAwal), icon: Wallet, tone: "info" },
     {
       label: "Terpakai",
-      value: formatRupiah(displayTerpakai),
+      value: formatRupiah(totalTerpakai),
       icon: TrendingDown,
       tone: "danger",
       hint: `${pctTerpakai}% dari awal`,
@@ -67,7 +67,7 @@ export default async function DanaCashPage({
         <CardContent className="py-3">
           <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
             <span>
-              Terpakai <span className="font-semibold">{formatRupiah(displayTerpakai)}</span>
+              Terpakai <span className="font-semibold">{formatRupiah(totalTerpakai)}</span>
             </span>
             <span>
               Sisa <span className="font-semibold">{formatRupiah(saldoSisa)}</span>

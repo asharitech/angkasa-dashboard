@@ -48,8 +48,8 @@ export default async function DashboardPage() {
   const activeCount = sewaLocations.filter((l) => l.status === "active").length;
   const cashSisa = data.cashYayasan.sisa;
 
-  const netPosition = danaEfektif - totalKewajiban;
-  const healthRatio = danaEfektif > 0 ? netPosition / danaEfektif : 0;
+  // dana_efektif is already saldo − kewajiban per ledger schema. Do not subtract again.
+  const healthRatio = saldo > 0 ? danaEfektif / saldo : 0;
   const health = (() => {
     if (healthRatio >= 0.8) return { label: "Sangat Sehat", tone: "success" as const };
     if (healthRatio >= 0.5) return { label: "Sehat", tone: "success" as const };
@@ -76,7 +76,10 @@ export default async function DashboardPage() {
       value: formatRupiah(danaEfektif),
       icon: Landmark,
       tone: "info",
-      hint: `Net ${formatRupiah(netPosition)}`,
+      hint:
+        totalKewajiban > 0
+          ? `Saldo ${formatRupiah(saldo)} − kewajiban ${formatRupiah(totalKewajiban)}`
+          : `Saldo ${formatRupiah(saldo)}`,
     },
     {
       label: "Saldo BTN",

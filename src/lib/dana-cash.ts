@@ -8,7 +8,7 @@ export async function getDanaCashSummary(opts: { period?: string } = {}) {
   const entryFilter: Record<string, unknown> = { account: "cash_yayasan", direction: "out" };
   if (opts.period) entryFilter.month = opts.period;
 
-  const [account, pengeluaran, pengajuan] = await Promise.all([
+  const [account, pengeluaran, totalAgg, pengajuan] = await Promise.all([
     // Saldo cash yayasan
     db.collection("accounts").findOne({ _id: "cash_yayasan" } as unknown as Filter<Document>) as unknown as Promise<Account | null>,
 
@@ -18,6 +18,15 @@ export async function getDanaCashSummary(opts: { period?: string } = {}) {
       .find(entryFilter as Filter<Document>)
       .sort({ date: -1 })
       .toArray() as unknown as Promise<Entry[]>,
+
+    // All-time total terpakai — derived from sum(out entries) so cash injections don't flip sign.
+    db
+      .collection("entries")
+      .aggregate([
+        { $match: { account: "cash_yayasan", direction: "out" } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ])
+      .toArray() as unknown as Promise<{ total: number }[]>,
 
     // Pengajuan yang bersumber dari cash_yayasan (bulan berjalan)
     db
@@ -29,7 +38,7 @@ export async function getDanaCashSummary(opts: { period?: string } = {}) {
 
   const saldoAwal = (account as unknown as { meta?: { initial_amount?: number } })?.meta?.initial_amount ?? 0;
   const saldoSisa = (account as unknown as { balance?: number })?.balance ?? 0;
-  const totalTerpakai = saldoAwal - saldoSisa;
+  const totalTerpakai = totalAgg[0]?.total ?? 0;
 
   return {
     account: account as unknown as Account,
