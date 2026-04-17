@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
@@ -13,13 +12,8 @@ function monthLabel(period: string): string {
 }
 
 /**
- * Server-rendered period picker. Generates a chip for "Semua" + N most recent months
+ * Server-rendered period picker. Generates "Semua" + N most recent months
  * including the current month, linking to the same path with ?period=YYYY-MM.
- *
- * @param basePath  page path (e.g. "/aktivitas")
- * @param current   currently selected period or undefined for "Semua"
- * @param months    number of recent months to expose (default 4)
- * @param extraParams query params to preserve (e.g. type/domain)
  */
 export function PeriodPicker({
   basePath,
@@ -54,36 +48,14 @@ export function PeriodPicker({
     return s ? `${basePath}?${s}` : basePath;
   }
 
-  return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-      <Link
-        href={hrefFor(undefined)}
-        className={cn(
-          "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
-          !current
-            ? "bg-foreground text-background border-foreground"
-            : "bg-background text-muted-foreground border-border hover:text-foreground",
-        )}
-      >
-        Semua
-      </Link>
-      {periods.map((p) => {
-        const active = p === current;
-        return (
-          <Link
-            key={p}
-            href={hrefFor(p)}
-            className={cn(
-              "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
-              active
-                ? "bg-foreground text-background border-foreground"
-                : "bg-background text-muted-foreground border-border hover:text-foreground",
-            )}
-          >
-            {monthLabel(p)}
-          </Link>
-        );
-      })}
-    </div>
-  );
+  const tabs: FilterTab[] = [
+    { label: "Semua", href: hrefFor(undefined), active: !current },
+    ...periods.map((p) => ({
+      label: monthLabel(p),
+      href: hrefFor(p),
+      active: p === current,
+    })),
+  ];
+
+  return <FilterTabs tabs={tabs} size="sm" />;
 }

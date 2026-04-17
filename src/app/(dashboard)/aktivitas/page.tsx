@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";
-import { FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -132,9 +132,11 @@ export default async function AktivitasPage({
         </div>
       </PageHeader>
 
-      <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
-      <FilterTabs tabs={typeTabs} />
-      <FilterTabs tabs={domainTabs} />
+      <FilterBar>
+        <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
+        <FilterTabs tabs={typeTabs} size="sm" />
+        <FilterTabs tabs={domainTabs} size="sm" />
+      </FilterBar>
 
       {events.length === 0 ? (
         <EmptyState

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getObligations, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort } from "@/lib/format";
@@ -7,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { EmptyState } from "@/components/empty-state";
+import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { PengajuanCreateButton, PengajuanRowActions } from "@/components/pengajuan-row-actions";
 import { BuktiButton } from "@/components/bukti-button";
 import { Badge } from "@/components/ui/badge";
@@ -241,27 +241,25 @@ export default async function PengajuanPage({
     return `/pengajuan?${qs.toString()}`;
   }
 
-  const months = [
-    { key: "2026-04", label: "April 2026" },
-    { key: "2026-03", label: "Maret 2026" },
+  const monthTabs: FilterTab[] = [
+    { label: "April 2026", href: buildHref("2026-04"), active: monthView === "2026-04" },
+    { label: "Maret 2026", href: buildHref("2026-03"), active: monthView === "2026-03" },
   ];
 
-  const statuses = [
+  const statusTabs: FilterTab[] = [
     {
-      key: "pending",
-      label: "pending",
+      label: "Pending",
+      href: buildHref(monthView, "pending"),
+      active: statusView === "pending",
       count: pendingItems.length,
-      active: "bg-amber-100 text-amber-900 ring-amber-200",
-      idle: "text-muted-foreground hover:bg-amber-50 hover:text-amber-800",
     },
     {
-      key: "lunas",
-      label: "lunas",
+      label: "Lunas",
+      href: buildHref(monthView, "lunas"),
+      active: statusView === "lunas",
       count: lunasItems.length,
-      active: "bg-emerald-100 text-emerald-900 ring-emerald-200",
-      idle: "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-800",
     },
-  ] as const;
+  ];
 
   return (
     <div className="space-y-5">
@@ -276,45 +274,10 @@ export default async function PengajuanPage({
 
       <KpiStrip items={kpis} cols={4} />
 
-      <div className="space-y-2.5">
-        <div className="flex flex-wrap gap-2">
-          {months.map((m) => (
-            <Link
-              key={m.key}
-              href={buildHref(m.key)}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
-                monthView === m.key
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              {m.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {statuses.map((s) => {
-            const isActive = statusView === s.key;
-            return (
-              <Link
-                key={s.key}
-                href={buildHref(monthView, s.key)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition-colors",
-                  isActive ? s.active : cn("ring-border/60", s.idle),
-                )}
-              >
-                <span>{s.label}</span>
-                {s.count > 0 ? (
-                  <span className="tabular-nums opacity-80">({s.count})</span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      <FilterBar>
+        <FilterTabs tabs={monthTabs} />
+        <FilterTabs tabs={statusTabs} size="sm" />
+      </FilterBar>
 
       <SectionCard
         icon={Receipt}
