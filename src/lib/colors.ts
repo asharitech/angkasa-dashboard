@@ -65,19 +65,3 @@ export function entryDirectionTone(direction: "in" | "out"): Tone {
 export function severityTone(severity: "error" | "warn" | "info"): Tone {
   return severity === "error" ? "danger" : severity === "warn" ? "warning" : "info";
 }
-
-export function sewaStageTone(stage: string): Tone {
-  switch (stage) {
-    case "diterima":
-    case "received":
-      return "success";
-    case "transit":
-    case "transfer":
-      return "info";
-    case "belum":
-    case "pending":
-      return "warning";
-    default:
-      return "neutral";
-  }
-}

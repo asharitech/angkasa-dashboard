@@ -16,13 +16,19 @@ const REQUESTOR_NAME_MAP: Record<string, string> = {
   // Pattern: snake_case identifier -> "Proper Name"
 };
 
-// Mapping for fund source identifiers
+// Mapping for fund source identifiers (canonical values from schema)
 const FUND_SOURCE_MAP: Record<string, string> = {
   'CASH_YAYASAN': 'Cash Yayasan',
+  'CASH_FAHMI': 'Cash Fahmi',
+  'CASH_PATWAR': 'Cash Patwar',
+  'CASH_GAFFAR': 'Cash Gaffar',
   'BRI_ANGKASA': 'BRI Angkasa',
   'BTN_YAYASAN': 'BTN Yayasan',
+  'SEABANK_NANA': 'SeaBank Nana',
   'DANA_SEWA': 'Dana Sewa',
 };
+
+export const FUND_SOURCE_VALUES = Object.keys(FUND_SOURCE_MAP);
 
 /**
  * Convert requestor database identifier to human-readable name

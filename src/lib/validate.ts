@@ -2,6 +2,8 @@
 // Atlas free tier blocks collMod $jsonSchema, so invariants live here.
 // Call validateObligation / validateEntry before insert or update operations.
 
+import { FUND_SOURCE_VALUES } from "./names";
+
 export class ValidationError extends Error {
   constructor(msg: string) {
     super(msg);
@@ -18,6 +20,7 @@ const VALID_DANA_SUMBER = new Set<string | null | undefined>([
   "sewa", "operasional", null, undefined,
 ]);
 const VALID_NUMPANG_STATUS = new Set(["active", "settled"]);
+const VALID_SUMBER_DANA = new Set(FUND_SOURCE_VALUES);
 
 function require(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new ValidationError(msg);
@@ -44,7 +47,13 @@ export function validateObligation(doc: Record<string, unknown>): void {
 
   if (t === "pengajuan" && status === "pending") {
     require(doc.sumber_dana != null,
-      "pengajuan pending requires sumber_dana (BRI_ANGKASA, BCA_ANGKASA, BTN_YAYASAN, ...)");
+      `pengajuan pending requires sumber_dana (${[...VALID_SUMBER_DANA].join(", ")})`);
+  }
+
+  if (doc.sumber_dana != null) {
+    const sd = doc.sumber_dana as string;
+    require(VALID_SUMBER_DANA.has(sd),
+      `obligation.sumber_dana invalid: ${sd}. Allowed: ${[...VALID_SUMBER_DANA].join(", ")}`);
   }
 }
 

@@ -1,6 +1,7 @@
 import { getObligations, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort } from "@/lib/format";
+import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";
 import { formatRequestorName, formatFundSource, formatStatusLabel } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
@@ -22,12 +23,6 @@ type SP = {
   monthView?: string;
   statusView?: string;
 };
-
-function monthLabel(month: string) {
-  if (month === "2026-04") return "April 2026";
-  if (month === "2026-03") return "Maret 2026";
-  return month;
-}
 
 function groupByRequestor(items: Obligation[]) {
   const grouped = items.reduce<Record<string, Obligation[]>>((acc, item) => {
@@ -63,6 +58,8 @@ function itemDate(o: Obligation) {
   return formatDateShort(o.created_at);
 }
 
+const PREVIEW_LIMIT = 3;
+
 function PengajuanRow({
   o,
   index,
@@ -74,6 +71,11 @@ function PengajuanRow({
   isAdmin: boolean;
   yayasanAccounts: Account[];
 }) {
+  const details = o.detail ?? [];
+  const hasDetails = details.length > 0;
+  const preview = details.slice(0, PREVIEW_LIMIT);
+  const remainder = details.length - preview.length;
+
   return (
     <details className="group py-3 [&_summary::-webkit-details-marker]:hidden">
       <summary className="cursor-pointer list-none">
@@ -103,18 +105,34 @@ function PengajuanRow({
               <span aria-hidden>·</span>
               <span>{itemDate(o)}</span>
             </div>
+            {hasDetails && (
+              <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground group-open:hidden">
+                {preview.map((d, i) => (
+                  <li key={`${o._id}-pv-${i}`} className="flex items-start gap-2">
+                    <span className="text-muted-foreground/60">•</span>
+                    <span className="min-w-0 flex-1 truncate">{d.item}</span>
+                    <span className="shrink-0 tabular-nums">{formatRupiah(d.amount)}</span>
+                  </li>
+                ))}
+                {remainder > 0 && (
+                  <li className="text-[11px] italic text-muted-foreground/70">
+                    +{remainder} item lainnya — klik untuk lihat semua
+                  </li>
+                )}
+              </ul>
+            )}
           </div>
         </div>
       </summary>
 
       <div className="mt-3 space-y-3 pl-8 text-sm">
-        {o.detail && o.detail.length > 0 ? (
+        {hasDetails ? (
           <div>
             <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Rincian
             </p>
             <ul className="space-y-1">
-              {o.detail.map((d, i) => (
+              {details.map((d, i) => (
                 <li
                   key={`${o._id}-${i}`}
                   className="flex items-start justify-between gap-3 text-sm"
@@ -220,7 +238,7 @@ export default async function PengajuanPage({
   searchParams: Promise<SP>;
 }) {
   const params = await searchParams;
-  const monthView = params.monthView ?? params.period ?? "2026-04";
+  const monthView = params.monthView ?? params.period ?? currentWitaMonth();
   const statusView = params.statusView ?? "pending";
 
   const [allInScope, session, accounts] = await Promise.all([
@@ -277,10 +295,14 @@ export default async function PengajuanPage({
     return `/pengajuan?${qs.toString()}`;
   }
 
-  const monthTabs: FilterTab[] = [
-    { label: "April 2026", href: buildHref("2026-04"), active: monthView === "2026-04" },
-    { label: "Maret 2026", href: buildHref("2026-03"), active: monthView === "2026-03" },
-  ];
+  const monthChoices = recentMonths(4);
+  if (!monthChoices.includes(monthView)) monthChoices.push(monthView);
+  monthChoices.sort().reverse();
+  const monthTabs: FilterTab[] = monthChoices.map((m) => ({
+    label: monthLabel(m, "long"),
+    href: buildHref(m),
+    active: monthView === m,
+  }));
 
   const statusTabs: FilterTab[] = [
     {
@@ -317,7 +339,7 @@ export default async function PengajuanPage({
 
       <SectionCard
         icon={Receipt}
-        title={`Pengajuan ${monthLabel(monthView)}`}
+        title={`Pengajuan ${monthLabel(monthView, "long")}`}
         badge={
           <span className="ml-1 text-xs text-muted-foreground tabular-nums">
             {formatRupiah(activeTotal)}
@@ -328,7 +350,7 @@ export default async function PengajuanPage({
           <EmptyState
             icon={Inbox}
             title={`Tidak ada ${statusView}`}
-            description={`Belum ada pengajuan ${statusView} pada ${monthLabel(monthView)}.`}
+            description={`Belum ada pengajuan ${statusView} pada ${monthLabel(monthView, "long")}.`}
           />
         ) : (
           <div className="space-y-7">
