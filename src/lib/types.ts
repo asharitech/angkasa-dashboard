@@ -37,6 +37,7 @@ export interface Obligation {
   status: string;
   bukti_type?: string;
   bukti_ref?: string | null;
+  bukti_url?: string | null;
   resolved_at?: string | null;
   resolved_by?: string | null;
   resolved_via?: string | null;

@@ -11,7 +11,6 @@ import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { toneBadge, type Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 import {
@@ -174,7 +173,7 @@ export default async function SewaPage({
                   </span>
                 }
               >
-                <div className="space-y-1.5">
+                <div className="divide-y divide-border/60">
                   {locations.map((loc) => {
                     const stage = loc.pipeline?.stage ? stageMap[loc.pipeline.stage] : null;
                     const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
@@ -182,7 +181,7 @@ export default async function SewaPage({
                     return (
                       <div
                         key={loc.code}
-                        className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2.5"
+                        className="flex items-center justify-between gap-3 py-2.5"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold">{loc.code}</p>
@@ -265,11 +264,11 @@ export default async function SewaPage({
                 className="border-none shadow-none"
               />
             ) : (
-              <div className="space-y-1.5">
+              <div className="divide-y divide-border/60">
                 {danaSewa.pengeluaranSewa.map((e) => (
                   <div
                     key={e._id}
-                    className="flex items-center justify-between gap-3 rounded-md bg-rose-50/60 px-3 py-2"
+                    className="flex items-center justify-between gap-3 py-2.5"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{e.counterparty}</p>
@@ -311,7 +310,7 @@ export default async function SewaPage({
               className="border-none shadow-none"
             />
           ) : (
-            <div className="space-y-1.5">
+            <div className="divide-y divide-border/60">
               {sewaHistory.map((h) => {
                 const code = h.period_code ?? h.period;
                 const href = h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`;
@@ -321,10 +320,10 @@ export default async function SewaPage({
                     key={h._id}
                     href={href}
                     className={cn(
-                      "flex items-center justify-between rounded-md p-3 transition-colors",
+                      "flex items-center justify-between px-2 py-2.5 transition-colors -mx-2 rounded-md",
                       isActive
-                        ? "border border-primary/20 bg-primary/10"
-                        : "bg-muted/40 hover:bg-muted/70",
+                        ? "bg-primary/10"
+                        : "hover:bg-accent",
                     )}
                   >
                     <div>
@@ -385,21 +384,19 @@ export default async function SewaPage({
 
 function MoneyTile({ label, value, tone }: { label: string; value: number; tone: Tone }) {
   const colorMap: Record<Tone, string> = {
-    success: "bg-emerald-50 text-emerald-700",
-    danger: "bg-rose-50 text-rose-600",
-    warning: "bg-amber-50 text-amber-700",
-    info: "bg-blue-50 text-blue-700",
-    primary: "bg-primary/10 text-primary",
-    neutral: "bg-slate-50 text-slate-700",
-    muted: "bg-muted text-muted-foreground",
+    success: "text-emerald-700",
+    danger: "text-rose-600",
+    warning: "text-amber-700",
+    info: "text-blue-700",
+    primary: "text-primary",
+    neutral: "text-slate-700",
+    muted: "text-muted-foreground",
   };
   return (
-    <Card className="border-none shadow-none">
-      <CardContent className={cn("rounded-lg p-3 text-center", colorMap[tone])}>
-        <p className="text-xs opacity-70">{label}</p>
-        <p className="text-sm font-bold tabular-nums">{formatRupiah(value)}</p>
-      </CardContent>
-    </Card>
+    <div className="text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={cn("text-sm font-bold tabular-nums", colorMap[tone])}>{formatRupiah(value)}</p>
+    </div>
   );
 }
 

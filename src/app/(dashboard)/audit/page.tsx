@@ -91,13 +91,13 @@ export default async function AuditPage() {
                   </span>
                 }
               >
-                <ul className="space-y-1.5">
+                <ul className="divide-y divide-border/60">
                   {list.map((issue, idx) => {
                     const t = toneIcon[tone];
                     return (
                       <li
                         key={`${issue.kind}-${idx}`}
-                        className="flex items-start gap-3 rounded-md bg-muted/40 px-3 py-2"
+                        className="flex items-start gap-3 py-2.5"
                       >
                         <span
                           className={cn(

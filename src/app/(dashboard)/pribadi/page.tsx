@@ -14,7 +14,6 @@ import {
 } from "@/components/numpang-manager";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   User,
@@ -217,7 +216,7 @@ function RingkasanView({
           </span>
         }
       >
-        <div className="space-y-1.5">
+        <div className="divide-y divide-border/60">
           <KvRow label={`Cicilan (${currentMonth})`} value={cicilanBulanIni} />
           <KvRow label="Pengeluaran Rutin" value={recurringTotal} />
           <KvRow label="Total Kewajiban/Bulan" value={totalBulanan} highlight />
@@ -235,15 +234,12 @@ function RingkasanView({
             </span>
           }
         >
-          <div className="space-y-1.5">
+          <div className="divide-y divide-border/60">
             {savingsTotal.map((s) => {
               const displayAmount =
                 s.total_out > 0 ? s.total_out : s.total_in > 0 ? s.total_in : s.total;
               return (
-                <div
-                  key={s._id}
-                  className="flex items-center justify-between rounded-md bg-violet-50/50 px-3 py-2"
-                >
+                <div key={s._id} className="flex items-center justify-between py-2.5">
                   <div>
                     <span className="text-sm font-medium capitalize">{s._id}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{s.count} setoran</span>
@@ -257,15 +253,12 @@ function RingkasanView({
           </div>
           {savings.length > 0 && (
             <>
-              <p className="mt-3 px-1 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="mt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Riwayat Terakhir
               </p>
-              <div className="space-y-0.5">
+              <div className="divide-y divide-border/60">
                 {savings.slice(0, 8).map((entry) => (
-                  <div
-                    key={entry._id}
-                    className="flex items-center justify-between rounded-md px-2 py-1.5"
-                  >
+                  <div key={entry._id} className="flex items-center justify-between py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm">{entry.description}</p>
                       <p className="text-xs text-muted-foreground">
@@ -295,12 +288,9 @@ function AkunView({
 }) {
   return (
     <SectionCard icon={Wallet} title="Rekening Pribadi" tone="info">
-      <div className="space-y-1.5">
+      <div className="divide-y divide-border/60">
         {accounts.map((acc) => (
-          <div
-            key={acc._id}
-            className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2.5"
-          >
+          <div key={acc._id} className="flex items-center justify-between gap-2 py-3">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{acc.bank}</p>
               <p className="truncate text-xs text-muted-foreground">
@@ -341,7 +331,7 @@ function CicilanView({
             </span>
           }
         >
-          <div className="space-y-4">
+          <div className="space-y-5">
             {loans.map((loan) => {
               const schedule = loan.schedule ?? [];
               const paid = schedule.filter((s) => s.status === "lunas");
@@ -349,9 +339,9 @@ function CicilanView({
               const lastMonth = loan.final_month ?? remaining[remaining.length - 1]?.month;
               const remainingAmount = remaining.reduce((s, r) => s + r.amount, 0);
               return (
-                <div key={loan._id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                <div key={loan._id}>
+                  <div className="flex items-start justify-between gap-3 pb-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold">{loan.item}</span>
                       {lastMonth && (
                         <Badge variant="outline" className="text-xs">
@@ -366,12 +356,12 @@ function CicilanView({
                       </Badge>
                     )}
                   </div>
-                  <div className="px-1 text-xs text-muted-foreground">
+                  <p className="pb-2 text-xs text-muted-foreground">
                     Sisa: {formatRupiah(remainingAmount)} · {remaining.length} bulan lagi
-                  </div>
-                  <div className="space-y-1">
+                  </p>
+                  <div className="divide-y divide-border/60 border-y border-border/60">
                     {paid.length > 0 && (
-                      <div className="flex items-center justify-between rounded-md bg-emerald-50/60 px-3 py-2">
+                      <div className="flex items-center justify-between py-2">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                           <span className="text-sm text-muted-foreground">
@@ -384,10 +374,7 @@ function CicilanView({
                       </div>
                     )}
                     {remaining.map((s) => (
-                      <div
-                        key={s.month}
-                        className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-                      >
+                      <div key={s.month} className="flex items-center justify-between py-2">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium">{s.month}</span>
@@ -418,12 +405,9 @@ function CicilanView({
             </span>
           }
         >
-          <div className="space-y-1.5">
+          <div className="divide-y divide-border/60">
             {piutangByMonth.map((p) => (
-              <div
-                key={p._id ?? "lain"}
-                className="flex items-center justify-between rounded-md bg-amber-50/50 px-3 py-2"
-              >
+              <div key={p._id ?? "lain"} className="flex items-center justify-between py-2.5">
                 <div>
                   <span className="text-sm font-medium">{p._id ?? "Lainnya"}</span>
                   <span className="ml-2 text-xs text-muted-foreground">{p.count} item</span>
@@ -475,12 +459,9 @@ function NumpangView({
       }
       action={isAdmin ? <NumpangCreateButton /> : undefined}
     >
-      <div className="space-y-1.5">
+      <div className="divide-y divide-border/60">
         {numpang.map((n) => (
-          <div
-            key={n._id}
-            className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2"
-          >
+          <div key={n._id} className="flex items-center justify-between gap-2 py-2.5">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{n.description}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -530,13 +511,10 @@ function PengeluaranView({
             </span>
           }
         >
-          <div className="space-y-1.5">
+          <div className="divide-y divide-border/60">
             {recurring.map((r) => (
-              <div
-                key={r._id}
-                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-              >
-                <div>
+              <div key={r._id} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold">{r.item}</p>
                   <Badge variant="outline" className="mt-1">
                     {r.category.replace(/_/g, " ")}
@@ -553,7 +531,7 @@ function PengeluaranView({
 
       {spending.length > 0 ? (
         <SectionCard icon={ShoppingBag} title="Pengeluaran Terakhir" tone="muted">
-          <ul className="divide-y divide-border/40">
+          <ul className="divide-y divide-border/60">
             {spending.slice(0, 25).map((entry) => (
               <li key={entry._id} className="flex items-center justify-between py-2.5">
                 <div className="flex min-w-0 items-center gap-3">
@@ -592,12 +570,7 @@ function KvRow({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between rounded-md px-3 py-2",
-        highlight ? "border border-primary/10 bg-primary/5" : "bg-muted/40",
-      )}
-    >
+    <div className="flex items-center justify-between py-2.5">
       <span className={cn("text-sm", highlight && "font-semibold")}>{label}</span>
       <span
         className={cn(
@@ -610,6 +583,3 @@ function KvRow({
     </div>
   );
 }
-
-void Card;
-void CardContent;

@@ -5,7 +5,6 @@ import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { DataTable } from "@/components/data-table";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   FileText,
   TrendingUp,
@@ -91,7 +90,7 @@ export default async function LaporanOpPage() {
           <p className="mb-2 text-xs text-muted-foreground">
             Snapshot Laporan Op vs hitungan live (account: btn_yayasan).
           </p>
-          <div className="space-y-1.5">
+          <div className="divide-y divide-amber-200/60">
             <ReconRow
               label="Masuk"
               ledger={recon.ledgerMasuk}
@@ -125,16 +124,20 @@ export default async function LaporanOpPage() {
           </span>
         }
       >
-        <div className="space-y-1.5">
-          {kRows.map(([label, val]) => (
-            <div
-              key={label}
-              className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-            >
-              <span className="text-sm text-muted-foreground">{label}</span>
-              <span className="text-sm font-semibold tabular-nums">{formatRupiah(val)}</span>
-            </div>
-          ))}
+        <div className="divide-y divide-border/60">
+          {kRows.map(([label, val]) => {
+            const isTotal = label === "Total";
+            return (
+              <div key={label} className="flex items-center justify-between py-2.5">
+                <span className={isTotal ? "text-sm font-semibold" : "text-sm text-muted-foreground"}>
+                  {label}
+                </span>
+                <span className={isTotal ? "text-base font-bold tabular-nums" : "text-sm font-semibold tabular-nums"}>
+                  {formatRupiah(val)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </SectionCard>
 
@@ -222,28 +225,26 @@ function ReconRow({
   diff: number;
 }) {
   return (
-    <Card className="border-none bg-white/60 shadow-none">
-      <CardContent className="grid grid-cols-4 gap-2 py-2 text-xs">
-        <div className="font-semibold">{label}</div>
-        <div className="text-right">
-          <p className="text-[10px] uppercase text-muted-foreground">Ledger</p>
-          <p className="tabular-nums">{formatRupiah(ledger)}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] uppercase text-muted-foreground">Entries</p>
-          <p className="tabular-nums">{formatRupiah(entries)}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] uppercase text-muted-foreground">Selisih</p>
-          <p
-            className={`font-bold tabular-nums ${diff !== 0 ? "text-amber-700" : "text-emerald-700"}`}
-          >
-            {diff > 0 ? "+" : ""}
-            {formatRupiah(diff)}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-4 gap-2 py-2.5 text-xs">
+      <div className="font-semibold">{label}</div>
+      <div className="text-right">
+        <p className="text-[10px] uppercase text-muted-foreground">Ledger</p>
+        <p className="tabular-nums">{formatRupiah(ledger)}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-[10px] uppercase text-muted-foreground">Entries</p>
+        <p className="tabular-nums">{formatRupiah(entries)}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-[10px] uppercase text-muted-foreground">Selisih</p>
+        <p
+          className={`font-bold tabular-nums ${diff !== 0 ? "text-amber-700" : "text-emerald-700"}`}
+        >
+          {diff > 0 ? "+" : ""}
+          {formatRupiah(diff)}
+        </p>
+      </div>
+    </div>
   );
 }
 

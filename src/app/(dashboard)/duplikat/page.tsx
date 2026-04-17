@@ -63,11 +63,11 @@ export default async function DuplikatPage({
                 </Badge>
               }
             >
-              <ul className="space-y-1.5">
+              <ul className="divide-y divide-border/60">
                 {group.entries.map((e) => (
                   <li
                     key={e._id}
-                    className="rounded-md bg-muted/40 px-3 py-2 text-sm"
+                    className="py-2.5 text-sm"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <p className="flex-1 truncate font-medium">{e.description}</p>

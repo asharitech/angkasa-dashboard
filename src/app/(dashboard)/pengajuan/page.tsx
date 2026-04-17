@@ -1,48 +1,182 @@
 import Link from "next/link";
-import { getObligations, validateObligationData, getAccounts } from "@/lib/data";
+import { getObligations, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { formatRequestorName, formatFundSource, formatStatusLabel } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
-import { PeriodPicker } from "@/components/period-picker";
-import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { SectionCard } from "@/components/section-card";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { EmptyState } from "@/components/empty-state";
-import { DataTable, type Column } from "@/components/data-table";
-import {
-  PengajuanCreateButton,
-  PengajuanRowActions,
-} from "@/components/pengajuan-row-actions";
+import { PengajuanCreateButton, PengajuanRowActions } from "@/components/pengajuan-row-actions";
+import { BuktiButton } from "@/components/bukti-button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { obligationStatusTone, toneBadge } from "@/lib/colors";
 import { cn } from "@/lib/utils";
-import {
-  Receipt,
-  AlertTriangle,
-  Search,
-  Inbox,
-  ListChecks,
-  Wallet,
-  Users,
-} from "lucide-react";
-import type { Obligation } from "@/lib/types";
+import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
+import type { Obligation, Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "pending", label: "Pending" },
-  { value: "lunas", label: "Selesai" },
-  { value: "all", label: "Semua" },
-];
-
 type SP = {
-  status?: string;
-  requestor?: string;
-  q?: string;
   period?: string;
+  monthView?: string;
+  statusView?: string;
 };
+
+function monthLabel(month: string) {
+  if (month === "2026-04") return "April 2026";
+  if (month === "2026-03") return "Maret 2026";
+  return month;
+}
+
+function groupByRequestor(items: Obligation[]) {
+  return Object.entries(
+    items
+      .sort((a, b) => {
+        const ad = new Date(a.created_at || 0).getTime();
+        const bd = new Date(b.created_at || 0).getTime();
+        return bd - ad;
+      })
+      .reduce<Record<string, Obligation[]>>((acc, item) => {
+        const key = formatRequestorName(item.requestor);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+        return acc;
+      }, {}),
+  ).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+}
+
+function itemDate(o: Obligation) {
+  if (o.status === "lunas" && o.resolved_at) return formatDateShort(o.resolved_at);
+  if (o.date_spent) return formatDateShort(o.date_spent);
+  return formatDateShort(o.created_at);
+}
+
+function PengajuanRow({
+  o,
+  index,
+  isAdmin,
+  yayasanAccounts,
+}: {
+  o: Obligation;
+  index: number;
+  isAdmin: boolean;
+  yayasanAccounts: Account[];
+}) {
+  return (
+    <details className="group py-3 [&_summary::-webkit-details-marker]:hidden">
+      <summary className="cursor-pointer list-none">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 w-5 shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
+            {index + 1}.
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 text-[15px] font-semibold leading-snug text-foreground">
+                {o.item}
+              </p>
+              <p className="shrink-0 text-[15px] font-semibold tabular-nums text-foreground">
+                {o.amount ? formatRupiah(o.amount) : "—"}
+              </p>
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <Badge className={cn("h-5 px-2 font-medium", toneBadge[obligationStatusTone(o.status)])}>
+                {formatStatusLabel(o.status)}
+              </Badge>
+              {o.category ? (
+                <span className="rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  {o.category.replace(/_/g, " ")}
+                </span>
+              ) : null}
+              <span>{formatFundSource(o.sumber_dana) || "—"}</span>
+              <span aria-hidden>·</span>
+              <span>{itemDate(o)}</span>
+            </div>
+          </div>
+        </div>
+      </summary>
+
+      <div className="mt-3 space-y-3 pl-8 text-sm">
+        {o.detail && o.detail.length > 0 ? (
+          <div>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Rincian
+            </p>
+            <ul className="space-y-1">
+              {o.detail.map((d, i) => (
+                <li
+                  key={`${o._id}-${i}`}
+                  className="flex items-start justify-between gap-3 text-sm"
+                >
+                  <span className="min-w-0 text-muted-foreground">
+                    <span className="mr-2 tabular-nums">{i + 1}.</span>
+                    {d.item}
+                  </span>
+                  <span className="shrink-0 font-medium tabular-nums">
+                    {formatRupiah(d.amount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>Dibuat {formatDateShort(o.created_at)}</span>
+            {o.resolved_at ? <span>• Selesai {formatDateShort(o.resolved_at)}</span> : null}
+          </div>
+          {isAdmin ? (
+            <div className="flex items-center gap-1">
+              <BuktiButton
+                obligationId={o._id}
+                buktiUrl={o.bukti_url}
+                buktiType={o.bukti_type}
+                itemLabel={o.item}
+              />
+              <PengajuanRowActions obligation={o} accounts={yayasanAccounts} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function RequestorGroup({
+  requestorName,
+  items,
+  isAdmin,
+  yayasanAccounts,
+}: {
+  requestorName: string;
+  items: Obligation[];
+  isAdmin: boolean;
+  yayasanAccounts: Account[];
+}) {
+  const total = items.reduce((s, o) => s + (o.amount ?? 0), 0);
+  return (
+    <section>
+      <div className="flex items-baseline justify-between gap-3 pb-2">
+        <h3 className="text-base font-semibold tracking-tight text-foreground">{requestorName}</h3>
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {items.length} item · {formatRupiah(total)}
+        </p>
+      </div>
+      <div className="divide-y divide-border/60 border-y border-border/60">
+        {items.map((o, index) => (
+          <PengajuanRow
+            key={o._id}
+            o={o}
+            index={index}
+            isAdmin={isAdmin}
+            yayasanAccounts={yayasanAccounts}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default async function PengajuanPage({
   searchParams,
@@ -50,190 +184,91 @@ export default async function PengajuanPage({
   searchParams: Promise<SP>;
 }) {
   const params = await searchParams;
-  const status = params.status ?? "pending";
-  const requestor = params.requestor ?? "all";
-  const q = params.q?.trim() ?? "";
-  const period = params.period;
+  const monthView = params.monthView ?? params.period ?? "2026-04";
+  const statusView = params.statusView ?? "pending";
 
-  const baseFilter: Record<string, unknown> = { type: "pengajuan" };
-  if (period) baseFilter.month = period;
-
-  const [allInScope, qualityReport, session, accounts] = await Promise.all([
-    getObligations(baseFilter),
-    validateObligationData(period ? { month: period } : {}),
+  const [allInScope, session, accounts] = await Promise.all([
+    getObligations({ type: "pengajuan", month: monthView }),
     getSession(),
     getAccounts(),
   ]);
+
   const isAdmin = session?.role === "admin";
   const yayasanAccounts = accounts.filter((a) => a.type === "yayasan");
 
-  const requestors = Array.from(
-    new Set(allInScope.map((o) => o.requestor).filter(Boolean)),
-  ) as string[];
-  requestors.sort();
+  const pendingItems = allInScope.filter((o) => o.status === "pending");
+  const lunasItems = allInScope.filter((o) => o.status === "lunas");
+  const activeItems = statusView === "lunas" ? lunasItems : pendingItems;
+  const totalScope = allInScope.reduce((s, o) => s + (o.amount ?? 0), 0);
+  const activeTotal = activeItems.reduce((s, o) => s + (o.amount ?? 0), 0);
 
-  const filtered = allInScope.filter((o) => {
-    if (status !== "all" && o.status !== status) return false;
-    if (requestor !== "all" && o.requestor !== requestor) return false;
-    if (q) {
-      const t = q.toLowerCase();
-      const hit =
-        o.item?.toLowerCase().includes(t) ||
-        o.requestor?.toLowerCase().includes(t) ||
-        o.category?.toLowerCase().includes(t) ||
-        o.sumber_dana?.toLowerCase().includes(t);
-      if (!hit) return false;
-    }
-    return true;
-  });
-
-  const counts = {
-    pending: allInScope.filter((o) => o.status === "pending").length,
-    lunas: allInScope.filter((o) => o.status === "lunas").length,
-    all: allInScope.length,
-  };
-
-  const pending = allInScope.filter((o) => o.status === "pending");
-  const pendingTotal = pending.reduce((s, o) => s + (o.amount ?? 0), 0);
-  const filteredTotal = filtered.reduce((s, o) => s + (o.amount ?? 0), 0);
-
-  function buildHref(next: Partial<SP>) {
-    const qs = new URLSearchParams();
-    const s = next.status ?? status;
-    const r = next.requestor ?? requestor;
-    const query = next.q ?? q;
-    const p = next.period ?? period;
-    if (s !== "pending") qs.set("status", s);
-    if (r !== "all") qs.set("requestor", r);
-    if (query) qs.set("q", query);
-    if (p) qs.set("period", p);
-    const out = qs.toString();
-    return out ? `/pengajuan?${out}` : "/pengajuan";
-  }
-
-  const periodExtra: Record<string, string> = {};
-  if (status !== "pending") periodExtra.status = status;
-  if (requestor !== "all") periodExtra.requestor = requestor;
-  if (q) periodExtra.q = q;
-
-  const statusTabs: FilterTab[] = STATUS_OPTIONS.map((o) => ({
-    label: o.label,
-    href: buildHref({ status: o.value, requestor: "all" }),
-    active: o.value === status,
-    count: counts[o.value as keyof typeof counts],
-  }));
+  const groupedActive = groupByRequestor(activeItems);
 
   const kpis: KpiItem[] = [
     {
       label: "Pending",
-      value: String(counts.pending),
+      value: String(pendingItems.length),
       icon: ListChecks,
       tone: "warning",
-      hint: formatRupiah(pendingTotal),
+      hint: formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0)),
     },
     {
       label: "Selesai",
-      value: String(counts.lunas),
+      value: String(lunasItems.length),
       icon: Receipt,
       tone: "success",
+      hint: formatRupiah(lunasItems.reduce((s, o) => s + (o.amount ?? 0), 0)),
     },
     {
       label: "Requestor",
-      value: String(requestors.length),
+      value: String(groupByRequestor(allInScope).length),
       icon: Users,
       tone: "info",
     },
     {
       label: "Total Scope",
-      value: formatRupiah(allInScope.reduce((s, o) => s + (o.amount ?? 0), 0)),
+      value: formatRupiah(totalScope),
       icon: Wallet,
       tone: "primary",
     },
   ];
 
-  const columns: Column<Obligation>[] = [
-    {
-      key: "item",
-      header: "Item",
-      cell: (o) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium">{o.item}</p>
-          {o.category && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {o.category.replace(/_/g, " ")}
-            </p>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "requestor",
-      header: "Requestor",
-      cell: (o) => (
-        <span className="text-sm">{formatRequestorName(o.requestor)}</span>
-      ),
-    },
-    {
-      key: "date",
-      header: "Tanggal",
-      cell: (o) => (
-        <span className="text-xs text-muted-foreground">
-          {o.date_spent ? formatDateShort(o.date_spent) : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "source",
-      header: "Sumber",
-      cell: (o) => (
-        <span className="text-xs text-muted-foreground">
-          {formatFundSource(o.sumber_dana) || "—"}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      align: "center",
-      cell: (o) => (
-        <Badge className={cn("text-xs", toneBadge[obligationStatusTone(o.status)])}>
-          {formatStatusLabel(o.status)}
-        </Badge>
-      ),
-    },
-    {
-      key: "amount",
-      header: "Jumlah",
-      align: "right",
-      cell: (o) => (
-        <span className="font-semibold">
-          {o.amount ? formatRupiah(o.amount) : "—"}
-        </span>
-      ),
-    },
-    ...(isAdmin
-      ? ([
-          {
-            key: "actions",
-            header: "",
-            align: "right",
-            cell: (o: Obligation) => (
-              <PengajuanRowActions obligation={o} accounts={yayasanAccounts} />
-            ),
-          },
-        ] as Column<Obligation>[])
-      : []),
+  function buildHref(nextMonth: string, nextStatus = statusView) {
+    const qs = new URLSearchParams();
+    qs.set("monthView", nextMonth);
+    qs.set("period", nextMonth);
+    qs.set("statusView", nextStatus);
+    return `/pengajuan?${qs.toString()}`;
+  }
+
+  const months = [
+    { key: "2026-04", label: "April 2026" },
+    { key: "2026-03", label: "Maret 2026" },
   ];
 
-  const hasQualityIssues =
-    qualityReport.duplicateCount > 0 || qualityReport.missingFieldCount > 0;
+  const statuses = [
+    {
+      key: "pending",
+      label: "pending",
+      count: pendingItems.length,
+      active: "bg-amber-100 text-amber-900 ring-amber-200",
+      idle: "text-muted-foreground hover:bg-amber-50 hover:text-amber-800",
+    },
+    {
+      key: "lunas",
+      label: "lunas",
+      count: lunasItems.length,
+      active: "bg-emerald-100 text-emerald-900 ring-emerald-200",
+      idle: "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-800",
+    },
+  ] as const;
 
   return (
     <div className="space-y-5">
       <PageHeader icon={Receipt} title="Pengajuan">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className={cn("font-semibold", toneBadge.warning)}>
-            {pending.length} pending · {formatRupiah(pendingTotal)}
+            {pendingItems.length} pending · {formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0))}
           </Badge>
           {isAdmin && <PengajuanCreateButton />}
         </div>
@@ -241,149 +276,73 @@ export default async function PengajuanPage({
 
       <KpiStrip items={kpis} cols={4} />
 
-      <PeriodPicker basePath="/pengajuan" current={period} extraParams={periodExtra} />
-
-      {hasQualityIssues && (
-        <SectionCard
-          icon={AlertTriangle}
-          tone="warning"
-          title="Isu Kualitas Data"
-          badge={
-            <Badge variant="outline" className="ml-1 text-xs">
-              {qualityReport.duplicateCount + qualityReport.missingFieldCount}
-            </Badge>
-          }
-          action={
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap gap-2">
+          {months.map((m) => (
             <Link
-              href="/audit"
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              Lihat audit →
-            </Link>
-          }
-        >
-          <ul className="space-y-1 text-xs text-amber-700">
-            {qualityReport.duplicateCount > 0 && (
-              <li>· {qualityReport.duplicateCount} duplikasi terdeteksi</li>
-            )}
-            {qualityReport.missingFieldCount > 0 && (
-              <li>· {qualityReport.missingFieldCount} field tidak lengkap</li>
-            )}
-          </ul>
-        </SectionCard>
-      )}
-
-      <FilterTabs tabs={statusTabs} />
-
-      <form
-        action="/pengajuan"
-        method="get"
-        className="flex flex-col gap-2 sm:flex-row sm:items-center"
-      >
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            name="q"
-            defaultValue={q}
-            placeholder="Cari item, requestor, kategori, sumber dana…"
-            className="pl-9"
-          />
-        </div>
-        {status !== "pending" && <input type="hidden" name="status" value={status} />}
-        {requestor !== "all" && (
-          <input type="hidden" name="requestor" value={requestor} />
-        )}
-        {period && <input type="hidden" name="period" value={period} />}
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="rounded-md bg-foreground px-3 py-2 text-xs font-semibold text-background hover:opacity-90"
-          >
-            Cari
-          </button>
-          {q && (
-            <Link
-              href={buildHref({ q: "" })}
-              className="rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
-            >
-              Reset
-            </Link>
-          )}
-        </div>
-      </form>
-
-      {requestors.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Requestor
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            <Link
-              href={buildHref({ requestor: "all" })}
+              key={m.key}
+              href={buildHref(m.key)}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                requestor === "all"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-background text-muted-foreground hover:text-foreground",
+                "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+                monthView === m.key
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
-              Semua
+              {m.label}
             </Link>
-            {requestors.map((r) => {
-              const active = r === requestor;
-              return (
-                <Link
-                  key={r}
-                  href={buildHref({ requestor: r })}
-                  className={cn(
-                    "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {formatRequestorName(r)}
-                </Link>
-              );
-            })}
-          </div>
+          ))}
         </div>
-      )}
+
+        <div className="flex flex-wrap gap-2">
+          {statuses.map((s) => {
+            const isActive = statusView === s.key;
+            return (
+              <Link
+                key={s.key}
+                href={buildHref(monthView, s.key)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition-colors",
+                  isActive ? s.active : cn("ring-border/60", s.idle),
+                )}
+              >
+                <span>{s.label}</span>
+                {s.count > 0 ? (
+                  <span className="tabular-nums opacity-80">({s.count})</span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
       <SectionCard
         icon={Receipt}
-        title={`${filtered.length} ${filtered.length === 1 ? "submission" : "submissions"}`}
+        title={`Pengajuan ${monthLabel(monthView)}`}
         badge={
           <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-            {formatRupiah(filteredTotal)}
+            {formatRupiah(activeTotal)}
           </span>
         }
-        bodyClassName="p-0"
       >
-        {filtered.length === 0 ? (
-          <div className="p-4">
-            <EmptyState
-              icon={Inbox}
-              title="Tidak ada pengajuan"
-              description={
-                q || requestor !== "all" || status !== "pending"
-                  ? "Coba ubah filter atau hapus pencarian."
-                  : "Belum ada pengajuan pada periode ini."
-              }
-              action={
-                q || requestor !== "all" || status !== "pending"
-                  ? { label: "Reset filter", href: "/pengajuan" }
-                  : undefined
-              }
-            />
-          </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            rows={filtered}
-            rowKey={(o) => o._id}
-            minWidth={720}
+        {groupedActive.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title={`Tidak ada ${statusView}`}
+            description={`Belum ada pengajuan ${statusView} pada ${monthLabel(monthView)}.`}
           />
+        ) : (
+          <div className="space-y-7">
+            {groupedActive.map(([requestorName, items]) => (
+              <RequestorGroup
+                key={`${statusView}-${requestorName}`}
+                requestorName={requestorName}
+                items={items}
+                isAdmin={isAdmin}
+                yayasanAccounts={yayasanAccounts}
+              />
+            ))}
+          </div>
         )}
       </SectionCard>
     </div>

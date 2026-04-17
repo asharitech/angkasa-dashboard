@@ -178,16 +178,13 @@ export default async function DashboardPage() {
           action={<NavChevron href="/pengajuan" />}
         >
           {data.pengajuanByRequestor.length > 0 ? (
-            <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
+            <div className="divide-y divide-border/60">
               {data.pengajuanByRequestor.map((r) => (
-                <div
-                  key={r._id}
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-2.5 py-1.5"
-                >
-                  <span className="truncate text-xs font-medium text-muted-foreground">
+                <div key={r._id} className="flex items-center justify-between py-2">
+                  <span className="truncate text-sm font-medium text-muted-foreground">
                     {formatRequestorName(r._id) || "—"}
                   </span>
-                  <span className="ml-2 text-xs font-semibold tabular-nums">
+                  <span className="ml-2 text-sm font-semibold tabular-nums">
                     {formatRupiah(r.total)}
                   </span>
                 </div>
@@ -210,12 +207,9 @@ export default async function DashboardPage() {
           }
           action={<NavChevron href="/sewa" />}
         >
-          <div className="space-y-1.5">
+          <div className="divide-y divide-border/60">
             {pendingTransfers.pending.slice(0, 5).map((loc) => (
-              <div
-                key={loc.code}
-                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-              >
+              <div key={loc.code} className="flex items-center justify-between py-2.5">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{loc.code}</p>
                   {loc.pipeline?.holder && (
@@ -230,7 +224,7 @@ export default async function DashboardPage() {
               </div>
             ))}
             {pendingTransfers.pending.length > 5 && (
-              <p className="pt-1 text-center text-xs text-muted-foreground">
+              <p className="pt-2 text-center text-xs text-muted-foreground">
                 +{pendingTransfers.pending.length - 5} lainnya
               </p>
             )}
@@ -251,12 +245,9 @@ export default async function DashboardPage() {
           }
           action={<NavChevron href="/laporan-op" />}
         >
-          <div className="space-y-1.5">
+          <div className="divide-y divide-border/60">
             {kewajibanRows(op.kewajiban).map(([label, val]) => (
-              <div
-                key={label}
-                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-              >
+              <div key={label} className="flex items-center justify-between py-2.5">
                 <span className="text-sm text-muted-foreground">{label}</span>
                 <span className="text-sm font-semibold tabular-nums">{formatRupiah(val)}</span>
               </div>
@@ -269,12 +260,9 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {yayasanAccounts.length > 0 && (
           <SectionCard icon={Wallet} title="Rekening Yayasan" tone="info">
-            <div className="space-y-1.5">
+            <div className="divide-y divide-border/60">
               {yayasanAccounts.map((acc) => (
-                <div
-                  key={acc._id}
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-                >
+                <div key={acc._id} className="flex items-center justify-between py-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{acc.bank}</p>
                     <p className="truncate text-xs text-muted-foreground">
@@ -306,13 +294,10 @@ export default async function DashboardPage() {
             }
             action={<NavChevron href="/sewa" />}
           >
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="divide-y divide-border/60">
               {sewaLocations.slice(0, 8).map((loc) => (
-                <div
-                  key={loc.code}
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-2.5 py-1.5"
-                >
-                  <span className="truncate text-xs font-semibold">{loc.code}</span>
+                <div key={loc.code} className="flex items-center justify-between py-2">
+                  <span className="truncate text-sm font-semibold">{loc.code}</span>
                   <StatusBadge status={loc.status} size="sm" />
                 </div>
               ))}
