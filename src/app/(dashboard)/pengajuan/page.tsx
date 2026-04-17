@@ -1,544 +1,369 @@
-"use client";
-
+import Link from "next/link";
 import { getObligations, validateObligationData } from "@/lib/data";
 import { formatRupiah, formatDateShort } from "@/lib/format";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/page-header";
-import { StatusBadge } from "@/components/status-badge";
-import { ObligationSearch } from "@/components/obligation-search";
-import { DataExport } from "@/components/data-export";
-import { Receipt, AlertTriangle, Calendar, DollarSign, User, FileText } from "lucide-react";
 import { formatRequestorName, formatFundSource, formatStatusLabel } from "@/lib/names";
+import { PageHeader } from "@/components/page-header";
+import { PeriodPicker } from "@/components/period-picker";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { SectionCard } from "@/components/section-card";
+import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import { EmptyState } from "@/components/empty-state";
+import { DataTable, type Column } from "@/components/data-table";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { obligationStatusTone, toneBadge } from "@/lib/colors";
+import { cn } from "@/lib/utils";
+import {
+  Receipt,
+  AlertTriangle,
+  Search,
+  Inbox,
+  ListChecks,
+  Wallet,
+  Users,
+} from "lucide-react";
+import type { Obligation } from "@/lib/types";
 
-import { useState, useEffect } from "react";
-import { Obligation } from "@/lib/types";
+export const dynamic = "force-dynamic";
 
-const MONTH_LABELS: Record<string, string> = {
-  "2026-03": "Maret",
-  "2026-04": "April",
-  "2026-05": "Mei",
-  "2026-06": "Juni",
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "pending", label: "Pending" },
+  { value: "lunas", label: "Selesai" },
+  { value: "all", label: "Semua" },
+];
+
+type SP = {
+  status?: string;
+  requestor?: string;
+  q?: string;
+  period?: string;
 };
 
-function monthLabel(m: string) {
-  return MONTH_LABELS[m] ?? m;
-}
+export default async function PengajuanPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
+  const params = await searchParams;
+  const status = params.status ?? "pending";
+  const requestor = params.requestor ?? "all";
+  const q = params.q?.trim() ?? "";
+  const period = params.period;
 
-export default function PengajuanPage() {
-  const [obligations, setObligations] = useState<Obligation[]>([]);
-  const [filteredObligations, setFilteredObligations] = useState<Obligation[]>([]);
-  const [qualityReport, setQualityReport] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const baseFilter: Record<string, unknown> = { type: "pengajuan" };
+  if (period) baseFilter.month = period;
 
-  // Local filters
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [requestorFilter, setRequestorFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"cards" | "compact">("compact");
+  const [allInScope, qualityReport] = await Promise.all([
+    getObligations(baseFilter),
+    validateObligationData(period ? { month: period } : {}),
+  ]);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [allObligations, report] = await Promise.all([
-          fetch("/api/obligations").then(res => res.json()),
-          fetch("/api/obligations/quality").then(res => res.json())
-        ]);
+  const requestors = Array.from(
+    new Set(allInScope.map((o) => o.requestor).filter(Boolean)),
+  ) as string[];
+  requestors.sort();
 
-        const pengajuanData = allObligations.filter((o: Obligation) => o.type === "pengajuan");
-        setObligations(pengajuanData);
-        setFilteredObligations(pengajuanData);
-        setQualityReport(report);
-      } catch (error) {
-        console.error("Failed to load obligations:", error);
-      } finally {
-        setLoading(false);
-      }
+  const filtered = allInScope.filter((o) => {
+    if (status !== "all" && o.status !== status) return false;
+    if (requestor !== "all" && o.requestor !== requestor) return false;
+    if (q) {
+      const t = q.toLowerCase();
+      const hit =
+        o.item?.toLowerCase().includes(t) ||
+        o.requestor?.toLowerCase().includes(t) ||
+        o.category?.toLowerCase().includes(t) ||
+        o.sumber_dana?.toLowerCase().includes(t);
+      if (!hit) return false;
     }
+    return true;
+  });
 
-    loadData();
-  }, []);
+  const counts = {
+    pending: allInScope.filter((o) => o.status === "pending").length,
+    lunas: allInScope.filter((o) => o.status === "lunas").length,
+    all: allInScope.length,
+  };
 
-  // Apply local filters
-  useEffect(() => {
-    let filtered = [...obligations];
+  const pending = allInScope.filter((o) => o.status === "pending");
+  const pendingTotal = pending.reduce((s, o) => s + (o.amount ?? 0), 0);
+  const filteredTotal = filtered.reduce((s, o) => s + (o.amount ?? 0), 0);
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(o =>
-        o.item?.toLowerCase().includes(term) ||
-        o.requestor?.toLowerCase().includes(term) ||
-        o.category?.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(o => o.status === statusFilter);
-    }
-
-    if (requestorFilter !== "all") {
-      filtered = filtered.filter(o => o.requestor === requestorFilter);
-    }
-
-    setFilteredObligations(filtered);
-  }, [obligations, searchTerm, statusFilter, requestorFilter]);
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader icon={Receipt} title="Pengajuan">
-          <Badge className="bg-gray-100 text-gray-600 animate-pulse">
-            Loading...
-          </Badge>
-        </PageHeader>
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
-        </div>
-      </div>
-    );
+  function buildHref(next: Partial<SP>) {
+    const qs = new URLSearchParams();
+    const s = next.status ?? status;
+    const r = next.requestor ?? requestor;
+    const query = next.q ?? q;
+    const p = next.period ?? period;
+    if (s !== "pending") qs.set("status", s);
+    if (r !== "all") qs.set("requestor", r);
+    if (query) qs.set("q", query);
+    if (p) qs.set("period", p);
+    const out = qs.toString();
+    return out ? `/pengajuan?${out}` : "/pengajuan";
   }
 
-  const pending = filteredObligations.filter(o => o.status === "pending");
-  const resolved = filteredObligations.filter(o => o.status !== "pending");
-  const pendingTotal = pending.reduce((s, o) => s + (o.amount ?? 0), 0);
+  const periodExtra: Record<string, string> = {};
+  if (status !== "pending") periodExtra.status = status;
+  if (requestor !== "all") periodExtra.requestor = requestor;
+  if (q) periodExtra.q = q;
 
-  // Get unique requestors for filter
-  const uniqueRequestors = Array.from(new Set(obligations.map(o => o.requestor).filter(Boolean))) as string[];
+  const statusTabs: FilterTab[] = STATUS_OPTIONS.map((o) => ({
+    label: o.label,
+    href: buildHref({ status: o.value, requestor: "all" }),
+    active: o.value === status,
+    count: counts[o.value as keyof typeof counts],
+  }));
 
-  // Summary stats per requestor
-  const requestorStats = uniqueRequestors.map(requestor => {
-    const items = pending.filter(o => o.requestor === requestor);
-    const total = items.reduce((s, o) => s + (o.amount ?? 0), 0);
-    return { requestor, count: items.length, total };
-  }).sort((a, b) => b.total - a.total);
+  const kpis: KpiItem[] = [
+    {
+      label: "Pending",
+      value: String(counts.pending),
+      icon: ListChecks,
+      tone: "warning",
+      hint: formatRupiah(pendingTotal),
+    },
+    {
+      label: "Selesai",
+      value: String(counts.lunas),
+      icon: Receipt,
+      tone: "success",
+    },
+    {
+      label: "Requestor",
+      value: String(requestors.length),
+      icon: Users,
+      tone: "info",
+    },
+    {
+      label: "Total Scope",
+      value: formatRupiah(allInScope.reduce((s, o) => s + (o.amount ?? 0), 0)),
+      icon: Wallet,
+      tone: "primary",
+    },
+  ];
+
+  const columns: Column<Obligation>[] = [
+    {
+      key: "item",
+      header: "Item",
+      cell: (o) => (
+        <div className="min-w-0">
+          <p className="truncate font-medium">{o.item}</p>
+          {o.category && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {o.category.replace(/_/g, " ")}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "requestor",
+      header: "Requestor",
+      cell: (o) => (
+        <span className="text-sm">{formatRequestorName(o.requestor)}</span>
+      ),
+    },
+    {
+      key: "date",
+      header: "Tanggal",
+      cell: (o) => (
+        <span className="text-xs text-muted-foreground">
+          {o.date_spent ? formatDateShort(o.date_spent) : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "source",
+      header: "Sumber",
+      cell: (o) => (
+        <span className="text-xs text-muted-foreground">
+          {formatFundSource(o.sumber_dana) || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "center",
+      cell: (o) => (
+        <Badge className={cn("text-xs", toneBadge[obligationStatusTone(o.status)])}>
+          {formatStatusLabel(o.status)}
+        </Badge>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Jumlah",
+      align: "right",
+      cell: (o) => (
+        <span className="font-semibold">
+          {o.amount ? formatRupiah(o.amount) : "—"}
+        </span>
+      ),
+    },
+  ];
+
+  const hasQualityIssues =
+    qualityReport.duplicateCount > 0 || qualityReport.missingFieldCount > 0;
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
+    <div className="space-y-5">
       <PageHeader icon={Receipt} title="Pengajuan">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1.5">
+          <Badge className={cn("font-semibold", toneBadge.warning)}>
             {pending.length} pending · {formatRupiah(pendingTotal)}
           </Badge>
-          {resolved.length > 0 && (
-            <Badge className="bg-green-50 text-green-700 border-green-200 font-semibold px-3 py-1.5">
-              {resolved.length} selesai
-            </Badge>
-          )}
-          {qualityReport && qualityReport.duplicateCount > 0 && (
-            <Badge className="bg-red-50 text-red-700 border-red-200 font-semibold px-3 py-1.5">
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              {qualityReport.duplicateCount} duplikasi
-            </Badge>
-          )}
         </div>
       </PageHeader>
 
-      {/* Summary Cards */}
-      {requestorStats.length > 0 && (
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {requestorStats.map(({ requestor, count, total }) => (
-            <Card
-              key={requestor}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                requestorFilter === requestor
-                  ? 'ring-2 ring-blue-500 bg-blue-50'
-                  : 'hover:bg-gray-50'
-              }`}
-              onClick={() => setRequestorFilter(requestorFilter === requestor ? "all" : requestor)}
+      <KpiStrip items={kpis} cols={4} />
+
+      <PeriodPicker basePath="/pengajuan" current={period} extraParams={periodExtra} />
+
+      {hasQualityIssues && (
+        <SectionCard
+          icon={AlertTriangle}
+          tone="warning"
+          title="Isu Kualitas Data"
+          badge={
+            <Badge variant="outline" className="ml-1 text-xs">
+              {qualityReport.duplicateCount + qualityReport.missingFieldCount}
+            </Badge>
+          }
+          action={
+            <Link
+              href="/audit"
+              className="text-xs font-medium text-primary hover:underline"
             >
-              <CardContent className="p-2">
-                <div className="flex items-center gap-1 mb-1">
-                  <div className="p-1 bg-blue-100 rounded shrink-0">
-                    <User className="h-2.5 w-2.5 text-blue-600" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-700 leading-tight truncate">
-                    {formatRequestorName(requestor)}
-                  </span>
-                </div>
-                <p className="text-sm font-bold text-gray-900 tabular-nums mb-0.5 break-words" title={formatRupiah(total)}>
-                  {formatRupiah(total)}
-                </p>
-                <div className="flex items-center gap-1">
-                  <FileText className="h-2.5 w-2.5 text-gray-400 shrink-0" />
-                  <span className="text-xs text-gray-500">
-                    {count} item{count > 1 ? 's' : ''}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Filters */}
-      <Card className="border-gray-200">
-        <CardContent className="p-3">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex-1 min-w-[250px]">
-              <div className="relative">
-                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search items, requestors, categories..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value || "all")}>
-                <SelectTrigger className="w-[130px] h-10 border-gray-300">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">{formatStatusLabel("pending")}</SelectItem>
-                  <SelectItem value="lunas">{formatStatusLabel("lunas")}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={requestorFilter} onValueChange={(value) => setRequestorFilter(value || "all")}>
-                <SelectTrigger className="w-[150px] h-10 border-gray-300">
-                  <SelectValue placeholder="Requestor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Requestors</SelectItem>
-                  {uniqueRequestors.map(requestor => (
-                    <SelectItem key={requestor} value={requestor}>
-                      {formatRequestorName(requestor)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <button
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                    viewMode === 'compact'
-                      ? 'bg-white shadow-sm text-gray-900'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setViewMode('compact')}
-                >
-                  Table
-                </button>
-                <button
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                    viewMode === 'cards'
-                      ? 'bg-white shadow-sm text-gray-900'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setViewMode('cards')}
-                >
-                  Cards
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Active filters display */}
-          {(searchTerm || statusFilter !== 'all' || requestorFilter !== 'all') && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200">
-              <span className="text-xs text-gray-500 font-medium">Active filters:</span>
-              {searchTerm && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                  Search: "{searchTerm}"
-                  <button onClick={() => setSearchTerm('')} className="ml-1 text-blue-600 hover:text-blue-800">×</button>
-                </span>
-              )}
-              {statusFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                  Status: {statusFilter}
-                  <button onClick={() => setStatusFilter('all')} className="ml-1 text-blue-600 hover:text-blue-800">×</button>
-                </span>
-              )}
-              {requestorFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                  Requestor: {formatRequestorName(requestorFilter)}
-                  <button onClick={() => setRequestorFilter('all')} className="ml-1 text-blue-600 hover:text-blue-800">×</button>
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                  setRequestorFilter('all');
-                }}
-                className="text-xs text-gray-500 hover:text-gray-700 font-medium"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Data Quality Warning */}
-      {qualityReport && (qualityReport.duplicateCount > 0 || qualityReport.missingFieldCount > 0) && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="p-2">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-              <div>
-                <h3 className="text-sm font-semibold text-amber-800">Data Quality Issues</h3>
-                <div className="mt-2 space-y-1 text-xs text-amber-700">
-                  {qualityReport.duplicateCount > 0 && (
-                    <p>• {qualityReport.duplicateCount} duplicate submissions detected</p>
-                  )}
-                  {qualityReport.missingFieldCount > 0 && (
-                    <p>• {qualityReport.missingFieldCount} incomplete records found</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Main Content */}
-      <div className="space-y-3">
-        {/* Table Header Actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {filteredObligations.length} {filteredObligations.length === 1 ? 'submission' : 'submissions'}
-            </h2>
-            {(searchTerm || statusFilter !== 'all' || requestorFilter !== 'all') && (
-              <span className="text-sm text-muted-foreground">
-                ({obligations.length} total)
-              </span>
+              Lihat audit →
+            </Link>
+          }
+        >
+          <ul className="space-y-1 text-xs text-amber-700">
+            {qualityReport.duplicateCount > 0 && (
+              <li>· {qualityReport.duplicateCount} duplikasi terdeteksi</li>
             )}
-          </div>
+            {qualityReport.missingFieldCount > 0 && (
+              <li>· {qualityReport.missingFieldCount} field tidak lengkap</li>
+            )}
+          </ul>
+        </SectionCard>
+      )}
 
-          <div className="flex items-center gap-3">
-            <DataExport obligations={filteredObligations} />
-          </div>
+      <FilterTabs tabs={statusTabs} />
+
+      <form
+        action="/pengajuan"
+        method="get"
+        className="flex flex-col gap-2 sm:flex-row sm:items-center"
+      >
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            name="q"
+            defaultValue={q}
+            placeholder="Cari item, requestor, kategori, sumber dana…"
+            className="pl-9"
+          />
         </div>
-
-        {/* Main Data Display */}
-        {filteredObligations.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
-              <h3 className="text-xl font-semibold mb-3 text-gray-900">No submissions found</h3>
-              <p className="text-muted-foreground mb-6">
-                {searchTerm || statusFilter !== "all" || requestorFilter !== "all"
-                  ? "No submissions match your current filters. Try adjusting your search criteria."
-                  : "No submissions have been created yet."}
-              </p>
-              {(searchTerm || statusFilter !== "all" || requestorFilter !== "all") && (
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setRequestorFilter('all');
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Clear all filters
-                </button>
-              )}
-            </CardContent>
-          </Card>
-        ) : viewMode === 'compact' ? (
-          <CompactList items={filteredObligations} />
-        ) : (
-          <div className="space-y-4">
-            {filteredObligations.map(item => (
-              <EnhancedPengajuanCard key={item._id} item={item} />
-            ))}
-          </div>
+        {status !== "pending" && <input type="hidden" name="status" value={status} />}
+        {requestor !== "all" && (
+          <input type="hidden" name="requestor" value={requestor} />
         )}
-      </div>
-    </div>
-  );
-}
+        {period && <input type="hidden" name="period" value={period} />}
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="rounded-md bg-foreground px-3 py-2 text-xs font-semibold text-background hover:opacity-90"
+          >
+            Cari
+          </button>
+          {q && (
+            <Link
+              href={buildHref({ q: "" })}
+              className="rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
+            >
+              Reset
+            </Link>
+          )}
+        </div>
+      </form>
 
-// Modern table view with clean design
-function CompactList({ items }: { items: Obligation[] }) {
-  return (
-    <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px]">
-          <thead>
-            <tr className="border-b bg-gray-50/80">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Item
-              </th>
-              <th className="text-left px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Date
-              </th>
-              <th className="text-left px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Requestor
-              </th>
-              <th className="text-center px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Status
-              </th>
-              <th className="text-left px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Source
-              </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Amount
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {items.map((item, index) => (
-              <tr
-                key={item._id}
-                className={`hover:bg-blue-50/50 transition-colors ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                }`}
-              >
-                <td className="px-4 py-4">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 leading-snug">{item.item}</p>
-                    {item.category && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 mt-1">
-                        {item.category.replace(/_/g, " ")}
-                      </span>
-                    )}
-                  </div>
-                </td>
-
-                <td className="px-3 py-4">
-                  <div className="text-sm">
-                    {item.date_spent ? (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-gray-700">
-                          {formatDateShort(item.date_spent)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">No date</span>
-                    )}
-                  </div>
-                </td>
-
-                <td className="px-3 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1 bg-blue-100 rounded">
-                      <User className="h-3 w-3 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">
-                      {formatRequestorName(item.requestor)}
-                    </span>
-                  </div>
-                </td>
-
-                <td className="px-3 py-4 text-center">
-                  <StatusBadge status={item.status} size="sm" />
-                </td>
-
-                <td className="px-3 py-4">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-3 w-3 text-green-600" />
-                    <span className="text-sm text-gray-600">
-                      {formatFundSource(item.sumber_dana) || "-"}
-                    </span>
-                  </div>
-                </td>
-
-                <td className="px-4 py-4 text-right">
-                  <span className="text-sm font-bold text-gray-900 tabular-nums">
-                    {item.amount ? formatRupiah(item.amount) : "-"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {items.length === 0 && (
-        <div className="text-center py-8">
-          <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">No items found</p>
+      {requestors.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Requestor
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            <Link
+              href={buildHref({ requestor: "all" })}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                requestor === "all"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Semua
+            </Link>
+            {requestors.map((r) => {
+              const active = r === requestor;
+              return (
+                <Link
+                  key={r}
+                  href={buildHref({ requestor: r })}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    active
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {formatRequestorName(r)}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      <SectionCard
+        icon={Receipt}
+        title={`${filtered.length} ${filtered.length === 1 ? "submission" : "submissions"}`}
+        badge={
+          <span className="ml-1 text-xs text-muted-foreground tabular-nums">
+            {formatRupiah(filteredTotal)}
+          </span>
+        }
+        bodyClassName="p-0"
+      >
+        {filtered.length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon={Inbox}
+              title="Tidak ada pengajuan"
+              description={
+                q || requestor !== "all" || status !== "pending"
+                  ? "Coba ubah filter atau hapus pencarian."
+                  : "Belum ada pengajuan pada periode ini."
+              }
+              action={
+                q || requestor !== "all" || status !== "pending"
+                  ? { label: "Reset filter", href: "/pengajuan" }
+                  : undefined
+              }
+            />
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={filtered}
+            rowKey={(o) => o._id}
+            minWidth={720}
+          />
+        )}
+      </SectionCard>
     </div>
-  );
-}
-
-// Enhanced card view for detailed information
-function EnhancedPengajuanCard({ item }: { item: Obligation }) {
-  return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <FileText className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold leading-tight">{item.item}</h3>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                  {item.requestor && (
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      <span>{formatRequestorName(item.requestor)}</span>
-                    </div>
-                  )}
-                  {item.date_spent && (
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDateShort(item.date_spent)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={item.status} />
-              <Badge variant="outline" className="text-xs">
-                {item.category?.replace(/_/g, " ")}
-              </Badge>
-              {item.sumber_dana && (
-                <Badge variant="outline" className="text-xs">
-                  <DollarSign className="h-3 w-3 mr-1" />
-                  {formatFundSource(item.sumber_dana)}
-                </Badge>
-              )}
-            </div>
-
-            {item.detail && item.detail.length > 0 && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-                  Breakdown
-                </h4>
-                <div className="space-y-1.5">
-                  {item.detail.map((d, i) => (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{d.item}</span>
-                      <span className="font-medium tabular-nums">{formatRupiah(d.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="text-right shrink-0">
-            <span className="text-xl font-bold tabular-nums">
-              {item.amount ? formatRupiah(item.amount) : "-"}
-            </span>
-            {item.month && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {monthLabel(item.month)}
-              </p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

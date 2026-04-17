@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -20,9 +22,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
-import { Plus, Pencil, Trash2, Shield, Eye, Users, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Shield,
+  Eye,
+  Users,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { SectionCard } from "@/components/section-card";
+import { EmptyState } from "@/components/empty-state";
+import { toneBadge } from "@/lib/colors";
+import { cn } from "@/lib/utils";
 
 interface User {
   _id: string;
@@ -40,8 +54,11 @@ export default function UsersPage() {
     userId: string;
     role: string;
   } | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     const [usersRes, meRes] = await Promise.all([
@@ -60,8 +77,27 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    let cancelled = false;
+    (async () => {
+      const [usersRes, meRes] = await Promise.all([
+        fetch("/api/users"),
+        fetch("/api/auth/me"),
+      ]);
+      if (cancelled) return;
+      if (usersRes.ok) {
+        const data = await usersRes.json();
+        if (!cancelled) setUsers(data.users);
+      }
+      if (meRes.ok) {
+        const data = await meRes.json();
+        if (!cancelled) setCurrentUser(data.user);
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isAdmin = currentUser?.role === "admin";
 
@@ -90,21 +126,34 @@ export default function UsersPage() {
     );
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Yakin hapus user ini?")) return;
-    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
-    if (res.ok) fetchUsers();
-    else {
-      const data = await res.json();
-      alert(data.error);
+  async function confirmDelete() {
+    if (!deletingUser) return;
+    setDeletePending(true);
+    setDeleteError(null);
+    const res = await fetch(`/api/users/${deletingUser._id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setDeletingUser(null);
+      fetchUsers();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error || "Gagal menghapus user");
     }
+    setDeletePending(false);
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader icon={Users} title="Manajemen User">
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingUser(null); }}>
-          <DialogTrigger render={<Button />}>
+        <Dialog
+          open={formOpen}
+          onOpenChange={(open) => {
+            setFormOpen(open);
+            if (!open) setEditingUser(null);
+          }}
+        >
+          <DialogTrigger render={<Button size="sm" />}>
             <Plus className="mr-1.5 h-4 w-4" /> Tambah
           </DialogTrigger>
           <DialogContent>
@@ -116,7 +165,7 @@ export default function UsersPage() {
             <UserForm
               user={editingUser}
               onSuccess={() => {
-                setDialogOpen(false);
+                setFormOpen(false);
                 setEditingUser(null);
                 fetchUsers();
               }}
@@ -125,52 +174,154 @@ export default function UsersPage() {
         </Dialog>
       </PageHeader>
 
-      <div className="space-y-3">
-        {users.map((user) => (
-          <Card key={user._id} className="shadow-sm">
-            <CardContent className="flex items-center justify-between p-5">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2.5">
-                  <p className="text-base font-semibold">{user.name}</p>
-                  <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                    {user.role === "admin" ? (
-                      <><Shield className="mr-1 h-3 w-3" /> Admin</>
-                    ) : (
-                      <><Eye className="mr-1 h-3 w-3" /> Viewer</>
-                    )}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mt-0.5">@{user.username}</p>
-                {user.phone && (
-                  <p className="text-sm text-muted-foreground">{user.phone}</p>
-                )}
-              </div>
-              <div className="flex gap-1.5">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setEditingUser(user);
-                    setDialogOpen(true);
-                  }}
+      <SectionCard
+        icon={Users}
+        title={`${users.length} user`}
+        bodyClassName="p-0"
+      >
+        {users.length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon={Users}
+              title="Belum ada user"
+              description="Tambahkan admin atau viewer untuk mulai menggunakan dashboard."
+            />
+          </div>
+        ) : (
+          <ul className="divide-y divide-border/50">
+            {users.map((user) => {
+              const isSelf = user._id === currentUser?.userId;
+              return (
+                <li
+                  key={user._id}
+                  className="flex items-center gap-3 px-4 py-3"
                 >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                {user._id !== currentUser?.userId && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive"
-                    onClick={() => handleDelete(user._id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-semibold">
+                        {user.name}
+                      </p>
+                      <Badge
+                        className={cn(
+                          "text-xs",
+                          user.role === "admin"
+                            ? toneBadge.primary
+                            : toneBadge.neutral,
+                        )}
+                      >
+                        {user.role === "admin" ? (
+                          <>
+                            <Shield className="mr-1 h-3 w-3" /> Admin
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="mr-1 h-3 w-3" /> Viewer
+                          </>
+                        )}
+                      </Badge>
+                      {isSelf && (
+                        <Badge variant="outline" className="text-xs">
+                          Kamu
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      @{user.username}
+                      {user.phone && <> · {user.phone}</>}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => {
+                        setEditingUser(user);
+                        setFormOpen(true);
+                      }}
+                      aria-label="Edit"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    {!isSelf && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setDeletingUser(user);
+                          setDeleteError(null);
+                        }}
+                        aria-label="Hapus"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </SectionCard>
+
+      <Dialog
+        open={!!deletingUser}
+        onOpenChange={(open) => {
+          if (!open && !deletePending) {
+            setDeletingUser(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                <AlertTriangle className="h-4 w-4" />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <DialogTitle>Hapus user?</DialogTitle>
+            </div>
+            <DialogDescription>
+              {deletingUser ? (
+                <>
+                  User <span className="font-semibold">{deletingUser.name}</span>{" "}
+                  (@{deletingUser.username}) akan dihapus permanen. Aksi ini
+                  tidak bisa dibatalkan.
+                </>
+              ) : (
+                "User ini akan dihapus permanen."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && (
+            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              {deleteError}
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeletingUser(null);
+                setDeleteError(null);
+              }}
+              disabled={deletePending}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deletePending}
+            >
+              {deletePending && (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              )}
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -200,7 +351,12 @@ function UserForm({
     const url = user ? `/api/users/${user._id}` : "/api/users";
     const method = user ? "PUT" : "POST";
     const body = user
-      ? { name: form.name, role: form.role, phone: form.phone, ...(form.password ? { password: form.password } : {}) }
+      ? {
+          name: form.name,
+          role: form.role,
+          phone: form.phone,
+          ...(form.password ? { password: form.password } : {}),
+        }
       : form;
 
     const res = await fetch(url, {
@@ -220,9 +376,9 @@ function UserForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {!user && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label>Username</Label>
           <Input
             value={form.username}
@@ -231,7 +387,7 @@ function UserForm({
           />
         </div>
       )}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label>Nama</Label>
         <Input
           value={form.name}
@@ -239,8 +395,10 @@ function UserForm({
           required
         />
       </div>
-      <div className="space-y-2">
-        <Label>{user ? "Password Baru (kosongkan jika tidak ganti)" : "Password"}</Label>
+      <div className="space-y-1.5">
+        <Label>
+          {user ? "Password Baru (kosongkan jika tidak ganti)" : "Password"}
+        </Label>
         <Input
           type="password"
           value={form.password}
@@ -248,9 +406,14 @@ function UserForm({
           required={!user}
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label>Role</Label>
-        <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as "admin" | "viewer" })}>
+        <Select
+          value={form.role}
+          onValueChange={(v) =>
+            setForm({ ...form, role: v as "admin" | "viewer" })
+          }
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -260,7 +423,7 @@ function UserForm({
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label>No. HP (opsional)</Label>
         <Input
           value={form.phone}
@@ -268,7 +431,8 @@ function UserForm({
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" size="lg" disabled={saving}>
+      <Button type="submit" className="w-full" disabled={saving}>
+        {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
         {user ? "Simpan Perubahan" : "Tambah User"}
       </Button>
     </form>

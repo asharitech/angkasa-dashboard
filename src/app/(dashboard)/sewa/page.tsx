@@ -2,25 +2,45 @@ import Link from "next/link";
 import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MiniSummaryCard } from "@/components/summary-card";
 import { PageHeader } from "@/components/page-header";
+import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import { SectionCard } from "@/components/section-card";
+import { EmptyState } from "@/components/empty-state";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { toneBadge, type Tone } from "@/lib/colors";
+import { cn } from "@/lib/utils";
 import {
-  Building2, MapPin, Calendar, DollarSign, StickyNote,
-  History, ArrowUpRight, Wallet, BookOpen, AlertTriangle,
+  Building2,
+  MapPin,
+  Calendar,
+  DollarSign,
+  StickyNote,
+  History,
+  ArrowUpRight,
+  Wallet,
+  BookOpen,
+  AlertTriangle,
+  Inbox,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const regionColors: Record<string, string> = {
-  TOPILAUT: "bg-blue-50/60",
-  "Rangas Beach": "bg-amber-50/60",
-  ANGKASA: "bg-emerald-50/60",
+const regionAccent: Record<string, Tone> = {
+  TOPILAUT: "info",
+  "Rangas Beach": "warning",
+  ANGKASA: "success",
 };
 
-// code = real ledgers.sewa.locations[].code in DB. bgn = abbreviation as used in BGN PDFs.
+const stageMap: Record<string, { label: string; tone: Tone }> = {
+  belum_diterima: { label: "Belum Diterima", tone: "danger" },
+  di_intermediate: { label: "Di Intermediate", tone: "warning" },
+  transfer_yayasan: { label: "Transfer ke Yayasan", tone: "info" },
+  tercatat: { label: "Tercatat", tone: "success" },
+};
+
 const LOCATION_REFERENCE: { code: string; bgn: string; name: string; region: string; holder: string }[] = [
   { code: "SIMBORO", bgn: "RB", name: "Simboro", region: "TOPILAUT", holder: "Patta Wellang" },
   { code: "DIPO", bgn: "DP", name: "Dipo", region: "TOPILAUT", holder: "Patta Wellang" },
@@ -35,19 +55,13 @@ const LOCATION_REFERENCE: { code: string; bgn: string; name: string; region: str
   { code: "SUMARE", bgn: "SMR", name: "Sumare", region: "ANGKASA", holder: "—" },
 ];
 
-const stageLabels: Record<string, { label: string; cls: string }> = {
-  belum_diterima: { label: "Belum Diterima", cls: "bg-rose-50 text-rose-700 border-rose-200" },
-  di_intermediate: { label: "Di Intermediate", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  transfer_yayasan: { label: "Transfer ke Yayasan", cls: "bg-blue-50 text-blue-700 border-blue-200" },
-  tercatat: { label: "Tercatat", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-};
-
 export default async function SewaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tahap?: string }>;
+  searchParams: Promise<{ tahap?: string; view?: string }>;
 }) {
-  const { tahap } = await searchParams;
+  const { tahap, view } = await searchParams;
+  const activeView = view ?? "lokasi";
   const [requestedLedger, currentLedger, sewaHistory] = await Promise.all([
     tahap ? getLedgerByCode("sewa", tahap) : getLedger("sewa"),
     getLedger("sewa"),
@@ -60,17 +74,18 @@ export default async function SewaPage({
 
   if (!ledger?.sewa) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <PageHeader icon={Building2} title="Sewa Dapur" />
-        <p className="text-muted-foreground text-center py-10">
-          Data sewa belum tersedia.
-        </p>
+        <EmptyState
+          icon={Inbox}
+          title="Data sewa belum tersedia"
+          description="Belum ada ledger sewa di-publish."
+        />
       </div>
     );
   }
 
   const { sewa } = ledger;
-
   const byRegion = new Map<string, typeof sewa.locations>();
   for (const loc of sewa.locations) {
     if (!byRegion.has(loc.region)) byRegion.set(loc.region, []);
@@ -78,264 +93,275 @@ export default async function SewaPage({
   }
 
   const activeCount = sewa.locations.filter((l) => l.status === "active").length;
-  const sisaPct = danaSewa.totalMasuk > 0
-    ? Math.round((danaSewa.sisaDana / danaSewa.totalMasuk) * 100)
-    : 100;
+  const sisaPct =
+    danaSewa.totalMasuk > 0 ? Math.round((danaSewa.sisaDana / danaSewa.totalMasuk) * 100) : 100;
+
+  const kpis: KpiItem[] = [
+    {
+      label: "Total Sewa",
+      value: formatRupiah(sewa.total),
+      icon: DollarSign,
+      tone: "success",
+    },
+    {
+      label: "Lokasi Aktif",
+      value: `${activeCount}/${sewa.locations.length}`,
+      icon: MapPin,
+      tone: "info",
+    },
+    {
+      label: "Rate/Hari",
+      value: formatRupiah(sewa.rate_per_day),
+      icon: Calendar,
+      tone: "primary",
+    },
+  ];
+
+  const tahapTabs: FilterTab[] = sewaHistory.map((h) => {
+    const code = h.period_code ?? h.period;
+    return {
+      label: code,
+      href: h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`,
+      active: code === activeTahap,
+    };
+  });
+
+  const viewTabs: FilterTab[] = [
+    { label: "Lokasi", href: hrefFor("lokasi", tahap), active: activeView === "lokasi" },
+    { label: "Operasional", href: hrefFor("operasional", tahap), active: activeView === "operasional" },
+    { label: "Riwayat", href: hrefFor("riwayat", tahap), active: activeView === "riwayat" },
+    { label: "Referensi", href: hrefFor("referensi", tahap), active: activeView === "referensi" },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader icon={Building2} title="Sewa Dapur">
-        <Badge variant="secondary" className="font-semibold px-3 py-1.5">
-          {ledger.period_code ?? formatDateRange(ledger.period)}
-        </Badge>
-        {isHistorical && (
-          <Link
-            href="/sewa"
-            className="text-xs text-muted-foreground hover:text-foreground underline ml-2"
-          >
-            ← kembali ke aktif
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="font-semibold">
+            {ledger.period_code ?? formatDateRange(ledger.period)}
+          </Badge>
+          {isHistorical && (
+            <Link href="/sewa" className="text-xs text-muted-foreground underline hover:text-foreground">
+              ← aktif
+            </Link>
+          )}
+        </div>
       </PageHeader>
 
-      {/* Tahap selector */}
-      {sewaHistory.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
-          {sewaHistory.map((h) => {
-            const code = h.period_code ?? h.period;
-            const isActive = code === activeTahap;
+      {sewaHistory.length > 1 && <FilterTabs tabs={tahapTabs} />}
+
+      <KpiStrip items={kpis} cols={3} />
+
+      <FilterTabs tabs={viewTabs} />
+
+      {activeView === "lokasi" && (
+        <div className="space-y-4">
+          {Array.from(byRegion.entries()).map(([region, locations]) => {
+            const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
+            const tone = regionAccent[region] ?? "neutral";
             return (
-              <Link
-                key={h._id}
-                href={h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-                }`}
+              <SectionCard
+                key={region}
+                title={region}
+                tone={tone}
+                badge={
+                  <span className="ml-1 text-xs text-muted-foreground tabular-nums">
+                    {formatRupiah(regionTotal)} · {locations.length} lokasi
+                  </span>
+                }
               >
-                {code}
-                {h.is_current && <span className="ml-1 opacity-70">·</span>}
-              </Link>
+                <div className="space-y-1.5">
+                  {locations.map((loc) => {
+                    const stage = loc.pipeline?.stage ? stageMap[loc.pipeline.stage] : null;
+                    const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
+                    const regionMismatch = ref && ref.region !== loc.region;
+                    return (
+                      <div
+                        key={loc.code}
+                        className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2.5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{loc.code}</p>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                            {loc.days != null && loc.days > 0 && (
+                              <span className="tabular-nums">
+                                {loc.days}h · {formatRupiah(loc.amount ?? 0)}
+                              </span>
+                            )}
+                            {loc.pipeline?.holder && (
+                              <span className="truncate">
+                                via {formatRequestorName(loc.pipeline.holder)}
+                              </span>
+                            )}
+                          </div>
+                          {regionMismatch && ref && (
+                            <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700">
+                              <AlertTriangle className="h-3 w-3" />
+                              ref: {ref.name} / {ref.region}
+                            </p>
+                          )}
+                        </div>
+                        {stage ? (
+                          <Badge className={cn("text-xs", toneBadge[stage.tone])}>{stage.label}</Badge>
+                        ) : (
+                          <StatusBadge status={loc.status} size="sm" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </SectionCard>
             );
           })}
         </div>
       )}
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <MiniSummaryCard
-          title="Total Sewa"
-          value={formatRupiah(sewa.total)}
-          icon={<DollarSign className="h-5 w-5" />}
-          iconColor="text-emerald-600"
-          iconBg="bg-emerald-50"
-          valueColor="text-emerald-600"
-        />
-        <MiniSummaryCard
-          title="Lokasi Aktif"
-          value={`${activeCount}/${sewa.locations.length}`}
-          icon={<MapPin className="h-5 w-5" />}
-          iconColor="text-blue-600"
-          iconBg="bg-blue-50"
-        />
-        <MiniSummaryCard
-          title="Rate/Hari/Lok"
-          value={formatRupiah(sewa.rate_per_day)}
-          icon={<Calendar className="h-5 w-5" />}
-          iconColor="text-violet-600"
-          iconBg="bg-violet-50"
-        />
-      </div>
-
-      {/* Lokasi per region */}
-      {Array.from(byRegion.entries()).map(([region, locations]) => {
-        const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
-        const bg = regionColors[region] ?? "bg-muted/50";
-        return (
-          <Card key={region} className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between text-base">
-                <span className="font-semibold">{region}</span>
-                <span className="text-sm font-semibold text-muted-foreground tabular-nums">
-                  {formatRupiah(regionTotal)}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {locations.map((loc) => {
-                const stage = loc.pipeline?.stage;
-                const stageCfg = stage ? stageLabels[stage] : null;
-                const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
-                const regionMismatch = ref && ref.region !== loc.region;
-                return (
-                  <div
-                    key={loc.code}
-                    className={`flex items-center justify-between gap-3 rounded-xl ${bg} p-4`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{loc.code}</p>
-                      {loc.days !== null && loc.days > 0 && (
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {loc.days} hari = {formatRupiah(loc.amount ?? 0)}
-                        </p>
-                      )}
-                      {loc.pipeline?.holder && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          via {formatRequestorName(loc.pipeline.holder)}
-                        </p>
-                      )}
-                      {regionMismatch && ref && (
-                        <p className="text-xs text-amber-700 mt-0.5 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          ref: {ref.name} / {ref.region}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {stageCfg ? (
-                        <Badge className={`text-xs border ${stageCfg.cls}`}>
-                          {stageCfg.label}
-                        </Badge>
-                      ) : (
-                        <StatusBadge status={loc.status} />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      {/* Dana Operasional dari Sewa */}
-      <Card className="shadow-sm border-orange-100">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-orange-500" />
-            Dana Operasional dari Sewa
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Summary bar */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-emerald-50 p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Masuk</p>
-              <p className="text-sm font-bold text-emerald-700 tabular-nums">
-                {formatRupiah(danaSewa.totalMasuk)}
-              </p>
-            </div>
-            <div className="rounded-xl bg-red-50 p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Terpakai</p>
-              <p className="text-sm font-bold text-red-600 tabular-nums">
-                {formatRupiah(danaSewa.totalTerpakai)}
-              </p>
-            </div>
-            <div className="rounded-xl bg-blue-50 p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Sisa ({sisaPct}%)</p>
-              <p className="text-sm font-bold text-blue-700 tabular-nums">
-                {formatRupiah(danaSewa.sisaDana)}
-              </p>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          {danaSewa.totalMasuk > 0 && (
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-red-400 h-2 rounded-full transition-all"
-                style={{
-                  width: `${Math.min(100, Math.round((danaSewa.totalTerpakai / danaSewa.totalMasuk) * 100))}%`,
-                }}
+      {activeView === "operasional" && (
+        <div className="space-y-4">
+          <SectionCard icon={Wallet} title="Dana Operasional dari Sewa" tone="warning">
+            <div className="grid grid-cols-3 gap-2">
+              <MoneyTile label="Masuk" value={danaSewa.totalMasuk} tone="success" />
+              <MoneyTile label="Terpakai" value={danaSewa.totalTerpakai} tone="danger" />
+              <MoneyTile
+                label={`Sisa (${sisaPct}%)`}
+                value={danaSewa.sisaDana}
+                tone="info"
               />
             </div>
-          )}
-
-          {/* Sewa masuk — dihapus, pakai total dari ledger */}
-
-          {/* Pengeluaran dari sewa */}
-          {danaSewa.pengeluaranSewa.length > 0 ? (
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Pengeluaran dari Dana Sewa
-              </p>
-              {danaSewa.pengeluaranSewa.map((e) => (
+            {danaSewa.totalMasuk > 0 && (
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  key={e._id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-red-50/60 p-3"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <ArrowUpRight className="h-4 w-4 text-red-500 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{e.counterparty}</p>
-                      <p className="text-xs text-muted-foreground truncate">{e.description}</p>
+                  className="h-2 rounded-full bg-rose-500/80 transition-all"
+                  style={{
+                    width: `${Math.min(100, Math.round((danaSewa.totalTerpakai / danaSewa.totalMasuk) * 100))}%`,
+                  }}
+                />
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            icon={ArrowUpRight}
+            title="Pengeluaran dari Dana Sewa"
+            tone="danger"
+            badge={
+              <span className="ml-1 text-xs text-muted-foreground tabular-nums">
+                {danaSewa.pengeluaranSewa.length} item
+              </span>
+            }
+          >
+            {danaSewa.pengeluaranSewa.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                title="Belum ada pengeluaran"
+                description="Dana sewa belum dipakai untuk operasional."
+                className="border-none shadow-none"
+              />
+            ) : (
+              <div className="space-y-1.5">
+                {danaSewa.pengeluaranSewa.map((e) => (
+                  <div
+                    key={e._id}
+                    className="flex items-center justify-between gap-3 rounded-md bg-rose-50/60 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{e.counterparty}</p>
+                      <p className="truncate text-xs text-muted-foreground">{e.description}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-semibold text-rose-600 tabular-nums">
+                        −{formatRupiah(e.amount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDateShort(e.date)}</p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-red-600 tabular-nums">
-                      -{formatRupiah(e.amount)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDateShort(e.date)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-2">
-              Belum ada pengeluaran dari dana sewa
-            </p>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </SectionCard>
 
-      {/* Notes */}
-      {sewa.notes && Object.keys(sewa.notes).length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <StickyNote className="h-5 w-5 text-muted-foreground" />
-              Catatan
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {Object.entries(sewa.notes).map(([key, val]) => (
-              <p key={key} className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground capitalize">{key}:</span>{" "}
-                {val}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
+          {sewa.notes && Object.keys(sewa.notes).length > 0 && (
+            <SectionCard icon={StickyNote} title="Catatan">
+              <div className="space-y-1.5 text-sm">
+                {Object.entries(sewa.notes).map(([key, val]) => (
+                  <p key={key} className="text-muted-foreground">
+                    <span className="font-semibold capitalize text-foreground">{key}:</span> {val}
+                  </p>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+        </div>
       )}
 
-      {/* Referensi Kode Lokasi */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
-            Referensi Kode Lokasi
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded-lg border border-border/60">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+      {activeView === "riwayat" && (
+        <SectionCard icon={History} title="Riwayat Tahap">
+          {sewaHistory.length <= 1 ? (
+            <EmptyState
+              icon={Inbox}
+              title="Belum ada riwayat"
+              description="Hanya tahap aktif yang tercatat."
+              className="border-none shadow-none"
+            />
+          ) : (
+            <div className="space-y-1.5">
+              {sewaHistory.map((h) => {
+                const code = h.period_code ?? h.period;
+                const href = h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`;
+                const isActive = code === activeTahap;
+                return (
+                  <Link
+                    key={h._id}
+                    href={href}
+                    className={cn(
+                      "flex items-center justify-between rounded-md p-3 transition-colors",
+                      isActive
+                        ? "border border-primary/20 bg-primary/10"
+                        : "bg-muted/40 hover:bg-muted/70",
+                    )}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {code}
+                        {h.is_current && (
+                          <Badge variant="secondary" className="ml-2 text-xs">
+                            aktif
+                          </Badge>
+                        )}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatDateRange(h.period)} · update {formatDateShort(h.updated_at)}
+                      </p>
+                    </div>
+                    <span className="text-sm font-bold tabular-nums">
+                      {formatRupiah(h.sewa?.total ?? 0)}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </SectionCard>
+      )}
+
+      {activeView === "referensi" && (
+        <SectionCard icon={BookOpen} title="Referensi Kode Lokasi" bodyClassName="px-0 md:px-4">
+          <div className="-mx-4 overflow-x-auto md:mx-0">
+            <table className="w-full text-sm" style={{ minWidth: "560px" }}>
+              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold">Kode DB</th>
-                  <th className="px-3 py-2 text-left font-semibold">BGN</th>
-                  <th className="px-3 py-2 text-left font-semibold">Nama</th>
-                  <th className="px-3 py-2 text-left font-semibold">Region</th>
-                  <th className="px-3 py-2 text-left font-semibold">Via</th>
+                  <th className="px-3 py-2 text-left font-medium">Kode DB</th>
+                  <th className="px-3 py-2 text-left font-medium">BGN</th>
+                  <th className="px-3 py-2 text-left font-medium">Nama</th>
+                  <th className="px-3 py-2 text-left font-medium">Region</th>
+                  <th className="px-3 py-2 text-left font-medium">Via</th>
                 </tr>
               </thead>
-              <tbody>
-                {LOCATION_REFERENCE.map((l, i) => (
-                  <tr key={l.code} className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}>
-                    <td className="px-3 py-2 font-semibold tabular-nums">{l.code}</td>
-                    <td className="px-3 py-2 text-muted-foreground tabular-nums">{l.bgn}</td>
+              <tbody className="divide-y">
+                {LOCATION_REFERENCE.map((l) => (
+                  <tr key={l.code} className="hover:bg-muted/30">
+                    <td className="px-3 py-2 font-semibold">{l.code}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.bgn}</td>
                     <td className="px-3 py-2">{l.name}</td>
                     <td className="px-3 py-2 text-muted-foreground">{l.region}</td>
                     <td className="px-3 py-2 text-muted-foreground">{l.holder}</td>
@@ -344,53 +370,36 @@ export default async function SewaPage({
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Riwayat Tahap */}
-      {sewaHistory.length > 1 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <History className="h-5 w-5 text-muted-foreground" />
-              Riwayat Tahap
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {sewaHistory.map((h) => {
-              const code = h.period_code ?? h.period;
-              const href = h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`;
-              const isActive = code === activeTahap;
-              return (
-                <Link
-                  key={h._id}
-                  href={href}
-                  className={`flex items-center justify-between rounded-xl p-4 transition-colors ${
-                    isActive
-                      ? "bg-primary/10 border border-primary/20"
-                      : "bg-muted/50 hover:bg-muted"
-                  }`}
-                >
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {code}
-                      {h.is_current && (
-                        <Badge variant="secondary" className="ml-2 text-xs">aktif</Badge>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatDateRange(h.period)} · update {formatDateShort(h.updated_at)}
-                    </p>
-                  </div>
-                  <span className="text-sm font-bold tabular-nums">
-                    {formatRupiah(h.sewa?.total ?? 0)}
-                  </span>
-                </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
+        </SectionCard>
       )}
     </div>
   );
+}
+
+function MoneyTile({ label, value, tone }: { label: string; value: number; tone: Tone }) {
+  const colorMap: Record<Tone, string> = {
+    success: "bg-emerald-50 text-emerald-700",
+    danger: "bg-rose-50 text-rose-600",
+    warning: "bg-amber-50 text-amber-700",
+    info: "bg-blue-50 text-blue-700",
+    primary: "bg-primary/10 text-primary",
+    neutral: "bg-slate-50 text-slate-700",
+    muted: "bg-muted text-muted-foreground",
+  };
+  return (
+    <Card className="border-none shadow-none">
+      <CardContent className={cn("rounded-lg p-3 text-center", colorMap[tone])}>
+        <p className="text-xs opacity-70">{label}</p>
+        <p className="text-sm font-bold tabular-nums">{formatRupiah(value)}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function hrefFor(view: string, tahap?: string): string {
+  const qs = new URLSearchParams();
+  if (view !== "lokasi") qs.set("view", view);
+  if (tahap) qs.set("tahap", tahap);
+  const s = qs.toString();
+  return s ? `/sewa?${s}` : "/sewa";
 }

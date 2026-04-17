@@ -1,11 +1,15 @@
 import { getPribadiSummary } from "@/lib/data";
+import type { Obligation } from "@/lib/types";
 import { formatRupiah, formatDateShort } from "@/lib/format";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { SummaryCard } from "@/components/summary-card";
 import { PageHeader } from "@/components/page-header";
+import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import { SectionCard } from "@/components/section-card";
+import { EmptyState } from "@/components/empty-state";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { TransactionIcon, AmountText } from "@/components/transaction-item";
-import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   User,
   Wallet,
@@ -20,14 +24,34 @@ import {
   ShoppingBag,
   TrendingDown,
   Target,
+  Inbox,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function PribadiPage() {
+const VIEWS = ["ringkasan", "akun", "cicilan", "numpang", "pengeluaran"] as const;
+type View = (typeof VIEWS)[number];
+
+const VIEW_LABEL: Record<View, string> = {
+  ringkasan: "Ringkasan",
+  akun: "Akun",
+  cicilan: "Cicilan & Piutang",
+  numpang: "Numpang",
+  pengeluaran: "Pengeluaran",
+};
+
+export default async function PribadiPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
+  const { view } = await searchParams;
+  const activeView: View = (VIEWS as readonly string[]).includes(view ?? "")
+    ? (view as View)
+    : "ringkasan";
+
   const data = await getPribadiSummary();
 
-  // Live derivation: BRI kas = bri_angkasa.balance − sum(active numpang)
   const bcaAccount = data.personalAccounts.find((a) => a._id === "bca_angkasa");
   const briAccount = data.personalAccounts.find((a) => a._id === "bri_angkasa");
   const bcaBalance = bcaAccount?.balance ?? 0;
@@ -35,45 +59,67 @@ export default async function PribadiPage() {
   const numpangTotal = data.numpang.reduce((s, n) => s + n.amount, 0);
   const briKas = briEstatement - numpangTotal;
   const cashTotal = bcaBalance + briKas;
-
-  // Piutang from live pengajuan
   const piutangTotal = data.piutangByMonth.reduce((s, p) => s + p.total, 0);
 
-  // Savings total — angkasa records as out (spending from his account), eba as in
   const totalSavings = data.savingsTotal.reduce((s, r) => {
-    // Use directional totals: angkasa saves = out, eba saves = in
     return s + (r.total_out > 0 ? r.total_out : r.total_in > 0 ? r.total_in : r.total);
   }, 0);
 
-  // Cicilan current month + remaining debt
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   let cicilanBulanIni = 0;
-  let paidCount = 0;
-  let totalScheduled = 0;
   let totalRemainingDebt = 0;
-
   for (const loan of data.loans) {
     for (const s of loan.schedule ?? []) {
       if (s.status !== "lunas") totalRemainingDebt += s.amount;
-      if (s.month === currentMonth) {
-        totalScheduled++;
-        cicilanBulanIni += s.amount;
-        if (s.status === "lunas") paidCount++;
-      }
+      if (s.month === currentMonth) cicilanBulanIni += s.amount;
     }
   }
-
   const recurringTotal = data.recurring.reduce((s, r) => s + (r.amount ?? 0), 0);
-
-  // Net position = kas + piutang - remaining debt
   const netPosition = cashTotal + piutangTotal - totalRemainingDebt;
-
-  // Monthly projection: total outflow this month
   const totalBulanan = cicilanBulanIni + recurringTotal;
 
+  const kpis: KpiItem[] = [
+    {
+      label: "Posisi Bersih",
+      value: formatRupiah(netPosition),
+      icon: Target,
+      tone: netPosition >= 0 ? "info" : "danger",
+      hint: "Kas + piutang − hutang",
+      valueTone: netPosition >= 0 ? undefined : "danger",
+    },
+    {
+      label: "Cash Total",
+      value: formatRupiah(cashTotal),
+      icon: Wallet,
+      tone: "primary",
+      hint: `BCA ${formatRupiah(bcaBalance)} · BRI ${formatRupiah(briKas)}`,
+    },
+    {
+      label: "Piutang",
+      value: formatRupiah(piutangTotal),
+      icon: HandCoins,
+      tone: "warning",
+      hint: "Belum diganti yayasan",
+    },
+    {
+      label: "Sisa Cicilan",
+      value: formatRupiah(totalRemainingDebt),
+      icon: TrendingDown,
+      tone: "danger",
+      hint: `${data.loans.length} cicilan aktif`,
+      valueTone: "danger",
+    },
+  ];
+
+  const viewTabs: FilterTab[] = VIEWS.map((v) => ({
+    label: VIEW_LABEL[v],
+    href: v === "ringkasan" ? "/pribadi" : `/pribadi?view=${v}`,
+    active: v === activeView,
+  }));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader icon={User} title="Keuangan Pribadi">
         {briAccount?.balance_as_of && (
           <span className="text-xs text-muted-foreground">
@@ -82,130 +128,106 @@ export default async function PribadiPage() {
         )}
       </PageHeader>
 
-      {/* Top summary */}
-      <div className="grid grid-cols-2 gap-3">
-        <SummaryCard
-          title="BCA"
-          value={formatRupiah(bcaBalance)}
-          subtitle={bcaAccount?.balance_as_of ? `per ${formatDateShort(bcaAccount.balance_as_of)}` : "murni"}
-          icon={<Wallet className="h-5 w-5" />}
-          iconColor="text-blue-600"
-          iconBg="bg-blue-50"
-        />
-        <SummaryCard
-          title="BRI Kas"
-          value={formatRupiah(briKas)}
-          subtitle="dari Lembar2"
-          icon={<Banknote className="h-5 w-5" />}
-          iconColor="text-emerald-600"
-          iconBg="bg-emerald-50"
-        />
-        <SummaryCard
-          title="Piutang"
-          value={formatRupiah(piutangTotal)}
-          subtitle="Belum diganti yayasan"
-          icon={<HandCoins className="h-5 w-5" />}
-          iconColor="text-amber-600"
-          iconBg="bg-amber-50"
-        />
-        <SummaryCard
-          title="Sisa Cicilan"
-          value={formatRupiah(totalRemainingDebt)}
-          subtitle={`${data.loans.length} cicilan aktif`}
-          icon={<TrendingDown className="h-5 w-5" />}
-          iconColor="text-rose-600"
-          iconBg="bg-rose-50"
-          valueColor="text-rose-600"
-        />
-        <SummaryCard
-          title="Posisi Bersih"
-          value={formatRupiah(netPosition)}
-          subtitle="Kas + piutang − hutang"
-          icon={<Target className="h-5 w-5" />}
-          iconColor={netPosition >= 0 ? "text-blue-600" : "text-rose-600"}
-          iconBg={netPosition >= 0 ? "bg-blue-50" : "bg-rose-50"}
-          valueColor={netPosition >= 0 ? undefined : "text-rose-600"}
-        />
-      </div>
+      <KpiStrip items={kpis} cols={4} />
 
-      {/* Monthly projection */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-muted-foreground" />
-            Proyeksi Bulanan
-            <span className="ml-auto text-sm font-bold tabular-nums text-rose-600">
-              {formatRupiah(totalBulanan)}/bln
+      <FilterTabs tabs={viewTabs} />
+
+      {activeView === "ringkasan" && (
+        <RingkasanView
+          currentMonth={currentMonth}
+          cicilanBulanIni={cicilanBulanIni}
+          recurringTotal={recurringTotal}
+          totalBulanan={totalBulanan}
+          totalSavings={totalSavings}
+          savingsTotal={data.savingsTotal}
+          savings={data.savings}
+        />
+      )}
+
+      {activeView === "akun" && <AkunView accounts={data.personalAccounts} />}
+
+      {activeView === "cicilan" && (
+        <CicilanView
+          loans={data.loans}
+          totalRemainingDebt={totalRemainingDebt}
+          piutangByMonth={data.piutangByMonth}
+          piutangTotal={piutangTotal}
+        />
+      )}
+
+      {activeView === "numpang" && (
+        <NumpangView numpang={data.numpang} numpangTotal={numpangTotal} />
+      )}
+
+      {activeView === "pengeluaran" && (
+        <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
+      )}
+    </div>
+  );
+}
+
+type SavingsAggregate = { _id: string; count: number; total: number; total_in: number; total_out: number };
+type SavingEntry = { _id: string; description: string; date: string; owner: string; amount: number };
+
+function RingkasanView({
+  currentMonth,
+  cicilanBulanIni,
+  recurringTotal,
+  totalBulanan,
+  totalSavings,
+  savingsTotal,
+  savings,
+}: {
+  currentMonth: string;
+  cicilanBulanIni: number;
+  recurringTotal: number;
+  totalBulanan: number;
+  totalSavings: number;
+  savingsTotal: SavingsAggregate[];
+  savings: SavingEntry[];
+}) {
+  return (
+    <div className="space-y-4">
+      <SectionCard
+        icon={CalendarDays}
+        title="Proyeksi Bulanan"
+        tone="danger"
+        badge={
+          <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
+            {formatRupiah(totalBulanan)}/bln
+          </span>
+        }
+      >
+        <div className="space-y-1.5">
+          <KvRow label={`Cicilan (${currentMonth})`} value={cicilanBulanIni} />
+          <KvRow label="Pengeluaran Rutin" value={recurringTotal} />
+          <KvRow label="Total Kewajiban/Bulan" value={totalBulanan} highlight />
+        </div>
+      </SectionCard>
+
+      {savingsTotal.length > 0 && (
+        <SectionCard
+          icon={PiggyBank}
+          title="Tabungan"
+          tone="info"
+          badge={
+            <span className="ml-1 text-sm font-bold tabular-nums text-violet-700">
+              {formatRupiah(totalSavings)}
             </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-            <span className="text-sm">Cicilan ({currentMonth})</span>
-            <span className="text-sm font-semibold tabular-nums">{formatRupiah(cicilanBulanIni)}</span>
-          </div>
-          <div className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-            <span className="text-sm">Pengeluaran Rutin</span>
-            <span className="text-sm font-semibold tabular-nums">{formatRupiah(recurringTotal)}</span>
-          </div>
-          <div className="flex justify-between items-center rounded-lg bg-primary/5 px-4 py-3.5 border border-primary/10">
-            <span className="text-sm font-semibold">Total Kewajiban/Bulan</span>
-            <span className="text-base font-bold tabular-nums text-primary">{formatRupiah(totalBulanan)}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Personal accounts */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-muted-foreground" />
-            Rekening Pribadi
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {data.personalAccounts.map((acc) => (
-            <div
-              key={acc._id}
-              className="flex items-center justify-between rounded-xl bg-muted/50 p-4"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-semibold">{acc.bank}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {acc.holder}
-                  {acc.balance_as_of && (
-                    <> · per {formatDateShort(acc.balance_as_of)}</>
-                  )}
-                </p>
-              </div>
-              <p className="text-base font-bold tabular-nums">
-                {formatRupiah(acc.balance)}
-              </p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Tabungan */}
-      {data.savingsTotal.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <PiggyBank className="h-5 w-5 text-muted-foreground" />
-              Tabungan
-              <span className="ml-auto text-sm font-bold tabular-nums text-violet-700">
-                {formatRupiah(totalSavings)}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {data.savingsTotal.map((s) => {
-              const displayAmount = s.total_out > 0 ? s.total_out : s.total_in > 0 ? s.total_in : s.total;
+          }
+        >
+          <div className="space-y-1.5">
+            {savingsTotal.map((s) => {
+              const displayAmount =
+                s.total_out > 0 ? s.total_out : s.total_in > 0 ? s.total_in : s.total;
               return (
-                <div key={s._id} className="flex justify-between items-center rounded-lg bg-violet-50/50 px-4 py-3">
+                <div
+                  key={s._id}
+                  className="flex items-center justify-between rounded-md bg-violet-50/50 px-3 py-2"
+                >
                   <div>
                     <span className="text-sm font-medium capitalize">{s._id}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{s.count} setoran</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{s.count} setoran</span>
                   </div>
                   <span className="text-sm font-semibold tabular-nums">
                     {formatRupiah(displayAmount)}
@@ -213,19 +235,20 @@ export default async function PribadiPage() {
                 </div>
               );
             })}
-            {/* Recent savings entries inline */}
-            {data.savings.length > 0 && (
-              <div className="pt-2 space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-1">
-                  Riwayat Terakhir
-                </p>
-                {data.savings.slice(0, 10).map((entry) => (
+          </div>
+          {savings.length > 0 && (
+            <>
+              <p className="mt-3 px-1 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Riwayat Terakhir
+              </p>
+              <div className="space-y-0.5">
+                {savings.slice(0, 8).map((entry) => (
                   <div
                     key={entry._id}
-                    className="flex items-center justify-between rounded-lg px-2 py-2"
+                    className="flex items-center justify-between rounded-md px-2 py-1.5"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm truncate">{entry.description}</p>
+                      <p className="truncate text-sm">{entry.description}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatDateShort(entry.date)} · {entry.owner}
                       </p>
@@ -236,81 +259,68 @@ export default async function PribadiPage() {
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </>
+          )}
+        </SectionCard>
       )}
+    </div>
+  );
+}
 
-      {/* Dana Numpang */}
-      {numpangTotal > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-muted-foreground" />
-              Dana Numpang di BRI
-              <span className="ml-auto text-sm font-bold tabular-nums text-muted-foreground">
-                {formatRupiah(numpangTotal)}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {data.numpang.map((n) => (
-              <div key={n._id} className="flex justify-between items-center rounded-lg bg-muted/50 px-4 py-3">
-                <div>
-                  <span className="text-sm capitalize">{n._id.replace(/_/g, " ")}</span>
-                  {n.description && n.description !== n._id && (
-                    <p className="text-xs text-muted-foreground">{n.description}</p>
-                  )}
-                </div>
-                <span className="text-sm font-semibold tabular-nums">{formatRupiah(n.amount)}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+function AkunView({
+  accounts,
+}: {
+  accounts: { _id: string; bank: string; holder: string; balance: number; balance_as_of?: string }[];
+}) {
+  return (
+    <SectionCard icon={Wallet} title="Rekening Pribadi" tone="info">
+      <div className="space-y-1.5">
+        {accounts.map((acc) => (
+          <div
+            key={acc._id}
+            className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2.5"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{acc.bank}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {acc.holder}
+                {acc.balance_as_of && <> · per {formatDateShort(acc.balance_as_of)}</>}
+              </p>
+            </div>
+            <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
 
-      {/* Piutang breakdown */}
-      {data.piutangByMonth.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <HandCoins className="h-5 w-5 text-muted-foreground" />
-              Hutang Yayasan ke Saya
-              <span className="ml-auto text-sm font-bold tabular-nums text-amber-700">
-                {formatRupiah(piutangTotal)}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {data.piutangByMonth.map((p) => (
-              <div key={p._id} className="flex justify-between items-center rounded-lg bg-amber-50/50 px-4 py-3">
-                <div>
-                  <span className="text-sm font-medium">{p._id ?? "Lainnya"}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{p.count} item</span>
-                </div>
-                <span className="text-sm font-semibold tabular-nums">
-                  {formatRupiah(p.total)}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Cicilan with milestones */}
-      {data.loans.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-              Cicilan
-              <span className="ml-auto text-sm font-bold tabular-nums text-rose-600">
-                sisa {formatRupiah(totalRemainingDebt)}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {data.loans.map((loan) => {
+function CicilanView({
+  loans,
+  totalRemainingDebt,
+  piutangByMonth,
+  piutangTotal,
+}: {
+  loans: Obligation[];
+  totalRemainingDebt: number;
+  piutangByMonth: { _id: string | null; count: number; total: number }[];
+  piutangTotal: number;
+}) {
+  return (
+    <div className="space-y-4">
+      {loans.length > 0 ? (
+        <SectionCard
+          icon={CreditCard}
+          title="Cicilan"
+          tone="danger"
+          badge={
+            <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
+              sisa {formatRupiah(totalRemainingDebt)}
+            </span>
+          }
+        >
+          <div className="space-y-4">
+            {loans.map((loan) => {
               const schedule = loan.schedule ?? [];
               const paid = schedule.filter((s) => s.status === "lunas");
               const remaining = schedule.filter((s) => s.status !== "lunas");
@@ -328,115 +338,242 @@ export default async function PribadiPage() {
                       )}
                     </div>
                     {loan.due_day && (
-                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      <Badge variant="outline" className="flex items-center gap-1 text-xs">
                         <CalendarDays className="h-3 w-3" />
                         Tgl {loan.due_day}
                       </Badge>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground px-1">
+                  <div className="px-1 text-xs text-muted-foreground">
                     Sisa: {formatRupiah(remainingAmount)} · {remaining.length} bulan lagi
                   </div>
-                  <div className="space-y-1.5">
-                    {/* Collapsed paid summary */}
+                  <div className="space-y-1">
                     {paid.length > 0 && (
-                      <div className="flex items-center justify-between rounded-lg bg-emerald-50/50 px-4 py-2.5">
+                      <div className="flex items-center justify-between rounded-md bg-emerald-50/60 px-3 py-2">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                           <span className="text-sm text-muted-foreground">
                             {paid.length} bulan lunas
                           </span>
                         </div>
-                        <span className="text-sm text-muted-foreground tabular-nums">
+                        <span className="text-sm tabular-nums text-muted-foreground">
                           {formatRupiah(paid.reduce((s, p) => s + p.amount, 0))}
                         </span>
                       </div>
                     )}
-                    {/* Remaining months */}
                     {remaining.map((s) => (
                       <div
                         key={s.month}
-                        className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-2.5"
+                        className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
                       >
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium">{s.month}</span>
                         </div>
-                        <span className="text-sm font-semibold tabular-nums">{formatRupiah(s.amount)}</span>
+                        <span className="text-sm font-semibold tabular-nums">
+                          {formatRupiah(s.amount)}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
+      ) : (
+        <EmptyState icon={Inbox} title="Tidak ada cicilan aktif" />
       )}
 
-      {/* Recurring */}
-      {data.recurring.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Repeat className="h-5 w-5 text-muted-foreground" />
-              Pengeluaran Rutin
-              <span className="ml-auto text-sm font-bold tabular-nums text-muted-foreground">
-                {formatRupiah(recurringTotal)}/bln
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {data.recurring.map((r) => (
-              <div key={r._id} className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+      {piutangByMonth.length > 0 && (
+        <SectionCard
+          icon={HandCoins}
+          title="Hutang Yayasan ke Saya"
+          tone="warning"
+          badge={
+            <span className="ml-1 text-sm font-bold tabular-nums text-amber-700">
+              {formatRupiah(piutangTotal)}
+            </span>
+          }
+        >
+          <div className="space-y-1.5">
+            {piutangByMonth.map((p) => (
+              <div
+                key={p._id ?? "lain"}
+                className="flex items-center justify-between rounded-md bg-amber-50/50 px-3 py-2"
+              >
+                <div>
+                  <span className="text-sm font-medium">{p._id ?? "Lainnya"}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{p.count} item</span>
+                </div>
+                <span className="text-sm font-semibold tabular-nums">{formatRupiah(p.total)}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      )}
+    </div>
+  );
+}
+
+function NumpangView({
+  numpang,
+  numpangTotal,
+}: {
+  numpang: { _id: string; description?: string; amount: number }[];
+  numpangTotal: number;
+}) {
+  if (numpangTotal === 0) {
+    return (
+      <EmptyState
+        icon={Inbox}
+        title="Tidak ada dana numpang"
+        description="Saat ini tidak ada dana parkir di rekening pribadi."
+      />
+    );
+  }
+  return (
+    <SectionCard
+      icon={Banknote}
+      title="Dana Numpang di BRI"
+      tone="muted"
+      badge={
+        <span className="ml-1 text-sm font-bold tabular-nums text-muted-foreground">
+          {formatRupiah(numpangTotal)}
+        </span>
+      }
+    >
+      <div className="space-y-1.5">
+        {numpang.map((n) => (
+          <div
+            key={n._id}
+            className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
+          >
+            <div>
+              <span className="text-sm capitalize">{n._id.replace(/_/g, " ")}</span>
+              {n.description && n.description !== n._id && (
+                <p className="text-xs text-muted-foreground">{n.description}</p>
+              )}
+            </div>
+            <span className="text-sm font-semibold tabular-nums">{formatRupiah(n.amount)}</span>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+type SpendEntry = {
+  _id: string;
+  description: string;
+  date: string;
+  amount: number;
+  direction: "in" | "out";
+  category?: string;
+};
+
+function PengeluaranView({
+  recurring,
+  recurringTotal,
+  spending,
+}: {
+  recurring: Obligation[];
+  recurringTotal: number;
+  spending: SpendEntry[];
+}) {
+  return (
+    <div className="space-y-4">
+      {recurring.length > 0 && (
+        <SectionCard
+          icon={Repeat}
+          title="Pengeluaran Rutin"
+          tone="info"
+          badge={
+            <span className="ml-1 text-sm font-bold tabular-nums text-muted-foreground">
+              {formatRupiah(recurringTotal)}/bln
+            </span>
+          }
+        >
+          <div className="space-y-1.5">
+            {recurring.map((r) => (
+              <div
+                key={r._id}
+                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
+              >
                 <div>
                   <p className="text-sm font-semibold">{r.item}</p>
                   <Badge variant="outline" className="mt-1">
                     {r.category.replace(/_/g, " ")}
                   </Badge>
                 </div>
-                <span className="text-sm font-bold tabular-nums">{formatRupiah(r.amount ?? 0)}</span>
+                <span className="text-sm font-bold tabular-nums">
+                  {formatRupiah(r.amount ?? 0)}
+                </span>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
       )}
 
-      {/* Recent personal spending */}
-      {data.spending.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-              Pengeluaran Terakhir
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {data.spending.slice(0, 20).map((entry) => (
-                <div
-                  key={entry._id}
-                  className="flex items-center justify-between rounded-lg px-2 py-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <TransactionIcon direction={entry.direction} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{entry.description}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDateShort(entry.date)} · {entry.category?.replace(/_/g, " ")}
-                      </p>
-                    </div>
+      {spending.length > 0 ? (
+        <SectionCard icon={ShoppingBag} title="Pengeluaran Terakhir" tone="muted">
+          <ul className="divide-y divide-border/40">
+            {spending.slice(0, 25).map((entry) => (
+              <li key={entry._id} className="flex items-center justify-between py-2.5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <TransactionIcon direction={entry.direction} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{entry.description}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatDateShort(entry.date)}
+                      {entry.category && <> · {entry.category.replace(/_/g, " ")}</>}
+                    </p>
                   </div>
-                  <AmountText
-                    amount={entry.amount}
-                    direction={entry.direction}
-                    formatter={formatRupiah}
-                  />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <AmountText
+                  amount={entry.amount}
+                  direction={entry.direction}
+                  formatter={formatRupiah}
+                />
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      ) : (
+        <EmptyState icon={Inbox} title="Belum ada pengeluaran" />
       )}
     </div>
   );
 }
+
+function KvRow({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between rounded-md px-3 py-2",
+        highlight ? "border border-primary/10 bg-primary/5" : "bg-muted/40",
+      )}
+    >
+      <span className={cn("text-sm", highlight && "font-semibold")}>{label}</span>
+      <span
+        className={cn(
+          "text-sm font-semibold tabular-nums",
+          highlight && "text-base font-bold text-primary",
+        )}
+      >
+        {formatRupiah(value)}
+      </span>
+    </div>
+  );
+}
+
+void Card;
+void CardContent;
