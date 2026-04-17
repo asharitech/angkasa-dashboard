@@ -30,20 +30,31 @@ function monthLabel(month: string) {
 }
 
 function groupByRequestor(items: Obligation[]) {
-  return Object.entries(
-    items
-      .sort((a, b) => {
-        const ad = new Date(a.created_at || 0).getTime();
-        const bd = new Date(b.created_at || 0).getTime();
-        return bd - ad;
-      })
-      .reduce<Record<string, Obligation[]>>((acc, item) => {
-        const key = formatRequestorName(item.requestor);
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(item);
-        return acc;
-      }, {}),
-  ).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  const grouped = items.reduce<Record<string, Obligation[]>>((acc, item) => {
+    const key = formatRequestorName(item.requestor);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a, b) => {
+      const ac = a.category ?? "";
+      const bc = b.category ?? "";
+      if (ac !== bc) {
+        if (!ac) return 1;
+        if (!bc) return -1;
+        return ac.localeCompare(bc);
+      }
+      const ad = new Date(a.created_at || 0).getTime();
+      const bd = new Date(b.created_at || 0).getTime();
+      return bd - ad;
+    });
+  }
+
+  return Object.entries(grouped).sort(
+    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
+  );
 }
 
 function itemDate(o: Obligation) {
