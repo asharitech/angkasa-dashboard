@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AgendaRowActions, AgendaReopenButton, KATEGORI_CONFIG } from "./agenda-manager";
+import { AgendaRowActions, AgendaReopenButton } from "./agenda-manager";
 import type { AgendaDoc } from "./agenda-manager";
-import type { AgendaKategori } from "@/lib/actions/agenda";
+import { KATEGORI_CONFIG } from "@/lib/agenda-config";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {

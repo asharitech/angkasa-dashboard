@@ -5,10 +5,10 @@ import { PageHeader } from "@/components/page-header";
 import { FilterTabs } from "@/components/filter-bar";
 import {
   AgendaCreateButton,
-  KATEGORI_CONFIG,
   type AgendaDoc,
 } from "@/components/agenda-manager";
 import { AgendaCard } from "@/components/agenda-card";
+import { KATEGORI_CONFIG } from "@/lib/agenda-config";
 import { cn } from "@/lib/utils";
 import type { AgendaKategori } from "@/lib/actions/agenda";
 import { CalendarCheck2, ListChecks, AlertCircle, Flame } from "lucide-react";

@@ -14,19 +14,25 @@ export function formatShortRupiah(amount: number): string {
   return `Rp ${amount}`;
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date(date));
+  }).format(d);
 }
 
-export function formatDateShort(date: string | Date): string {
+export function formatDateShort(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "short",
-  }).format(new Date(date));
+  }).format(d);
 }
 
 export function formatRelativeTime(date: string | Date): string {
@@ -44,7 +50,8 @@ export function formatRelativeTime(date: string | Date): string {
   return formatDateShort(date);
 }
 
-export function formatDateRange(period: string): string {
+export function formatDateRange(period: string | null | undefined): string {
+  if (!period) return "—";
   // Handle raw period strings like "2026-03-30_2026-04-07"
   if (period.includes('_') && period.includes('-')) {
     const [startDate, endDate] = period.split('_');
