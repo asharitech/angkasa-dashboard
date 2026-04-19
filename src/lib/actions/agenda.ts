@@ -9,14 +9,23 @@ type ActionResult = { ok: true; id?: string } | { error: string };
 
 export type AgendaPriority = "tinggi" | "sedang" | "rendah";
 export type AgendaStatus = "belum" | "selesai";
+export type AgendaKategori =
+  | "yayasan"
+  | "keuangan"
+  | "pribadi"
+  | "operasional"
+  | "rapat"
+  | "perjalanan"
+  | "lainnya";
 
 export interface AgendaInput {
   title: string;
   description?: string | null;
   due_date: string;           // ISO date string YYYY-MM-DD
   priority?: AgendaPriority;
+  kategori?: AgendaKategori;
   tags?: string[];
-  reminder_at?: string | null; // ISO datetime for reminder
+  reminder_at?: string | null;
 }
 
 export async function createAgendaAction(input: AgendaInput): Promise<ActionResult> {
@@ -33,6 +42,7 @@ export async function createAgendaAction(input: AgendaInput): Promise<ActionResu
       description: input.description?.trim() ?? null,
       due_date: input.due_date,
       priority: input.priority ?? "sedang",
+      kategori: input.kategori ?? "lainnya",
       status: "belum" as AgendaStatus,
       tags: input.tags ?? [],
       reminder_at: input.reminder_at ?? null,
