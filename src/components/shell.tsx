@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   CalendarCheck2,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const yayasanNav: NavItem[] = [
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
+  { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
 ];
 
 // Personal domain (consolidated — dana-pribadi & transaksi removed)
@@ -51,6 +53,7 @@ const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
+  { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
   { href: "/audit", label: "Audit Data", icon: ShieldCheck },
