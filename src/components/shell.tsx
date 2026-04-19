@@ -17,6 +17,7 @@ import {
   Banknote,
   AlertTriangle,
   ShieldCheck,
+  CalendarCheck2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const yayasanNav: NavItem[] = [
 // Personal domain (consolidated — dana-pribadi & transaksi removed)
 const pribadiNav: NavItem[] = [
   { href: "/pribadi", label: "Pribadi", icon: User },
+  { href: "/agenda", label: "Agenda", icon: CalendarCheck2 },
 ];
 
 // Mobile: 4 primary items shown directly
@@ -41,7 +43,7 @@ const mobilePrimary: NavItem[] = [
   { href: "/", label: "Yayasan", icon: Landmark },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
   { href: "/pribadi", label: "Pribadi", icon: User },
-  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
+  { href: "/agenda", label: "Agenda", icon: CalendarCheck2 },
 ];
 
 // Mobile: overflow items under "Lainnya"
@@ -49,6 +51,7 @@ const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
+  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
   { href: "/audit", label: "Audit Data", icon: ShieldCheck },
   { href: "/users", label: "Users", icon: Users },
