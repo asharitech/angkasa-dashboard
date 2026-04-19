@@ -191,11 +191,20 @@ export default async function AgendaPage({
   const kategoriFilter = params.kategori ?? null;
 
   const db = await getDb();
-  const all = (await db
+  const rawDocs = await db
     .collection("agenda")
     .find({ owner: "angkasa" })
     .sort({ due_date: 1, created_at: -1 })
-    .toArray()) as unknown as (AgendaDoc & { completed_at?: string | null })[];
+    .toArray();
+
+  // Serialize MongoDB Date objects → ISO strings so they can be passed to client components
+  const all = rawDocs.map((d) => ({
+    ...d,
+    _id: d._id.toString(),
+    created_at: d.created_at instanceof Date ? d.created_at.toISOString() : (d.created_at ?? null),
+    updated_at: d.updated_at instanceof Date ? d.updated_at.toISOString() : (d.updated_at ?? null),
+    completed_at: d.completed_at instanceof Date ? d.completed_at.toISOString() : (d.completed_at ?? null),
+  })) as unknown as (AgendaDoc & { completed_at?: string | null })[];
 
   const belum = all.filter((a) => a.status === "belum");
   const selesai = all.filter((a) => a.status === "selesai");
