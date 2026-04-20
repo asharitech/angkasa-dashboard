@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toneIcon, type Tone } from "@/lib/colors";
@@ -16,10 +15,12 @@ export function EmptyState({
   title: string;
   description?: string;
   tone?: Tone;
-  action?: { label: string; href: string };
+  action?: React.ReactNode | { label: string; href: string };
   className?: string;
 }) {
   const t = toneIcon[tone];
+  // Determine if action is a legacy {label, href} object or a ReactNode
+  const isLegacyAction = action && typeof action === "object" && !!(action as { label?: string }).label && !!(action as { href?: string }).href;
   return (
     <Card className={cn("shadow-sm", className)}>
       <CardContent className="flex flex-col items-center justify-center gap-3 py-10 text-center">
@@ -33,14 +34,27 @@ export function EmptyState({
           )}
         </div>
         {action && (
-          <Link
-            href={action.href}
-            className="mt-1 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-accent"
-          >
-            {action.label}
-          </Link>
+          isLegacyAction ? (
+            // Legacy: render as a link
+            <LegacyActionLink action={action as { label: string; href: string }} />
+          ) : (
+            // ReactNode: render directly
+            <div className="mt-1">{action as React.ReactNode}</div>
+          )
         )}
       </CardContent>
     </Card>
+  );
+}
+
+import Link from "next/link";
+function LegacyActionLink({ action }: { action: { label: string; href: string } }) {
+  return (
+    <Link
+      href={action.href}
+      className="mt-1 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-accent"
+    >
+      {action.label}
+    </Link>
   );
 }

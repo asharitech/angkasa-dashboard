@@ -7,6 +7,17 @@ export function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
+export function formatRupiahCompact(amount: number): string {
+  if (amount >= 1_000_000_000) return `Rp ${(amount / 1_000_000_000).toFixed(1).replace(".", ",")}m`;
+  if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1).replace(".", ",")}jt`;
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export function formatShortRupiah(amount: number): string {
   if (amount >= 1_000_000_000) return `Rp ${(amount / 1_000_000_000).toFixed(1)}M`;
   if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}jt`;

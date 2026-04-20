@@ -7,6 +7,7 @@ import {
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
@@ -76,63 +77,84 @@ export default async function DashboardPage() {
 
   const kpis: KpiItem[] = [
     {
-      label: "Dana Efektif",
-      value: formatRupiah(danaEfektif),
-      icon: Landmark,
-      tone: "info",
-      hint:
-        totalKewajiban > 0
-          ? `Saldo ${formatRupiah(saldo)} − kewajiban ${formatRupiah(totalKewajiban)}`
-          : `Saldo ${formatRupiah(saldo)}`,
-    },
-    {
       label: "Saldo BTN",
       value: formatRupiah(saldo),
+      rawAmount: saldo,
       icon: FileText,
       tone: "primary",
       hint: "Per Laporan Op",
       href: "/laporan-op",
+      compact: true,
     },
     {
       label: "Sewa Aktif",
       value: formatRupiah(sewaTotal),
+      rawAmount: sewaTotal,
       icon: Building2,
       tone: "success",
       hint: `${activeCount}/${sewaLocations.length} lokasi`,
       href: "/sewa",
+      compact: true,
     },
     {
       label: "Cash Yayasan",
       value: formatRupiah(cashSisa),
+      rawAmount: cashSisa,
       icon: Banknote,
       tone: "warning",
       hint: `Terpakai ${formatRupiah(data.cashYayasan.terpakai)}`,
       href: "/dana-cash",
+      compact: true,
+    },
+    {
+      label: "Pengajuan",
+      value: String(data.pengajuanPending),
+      icon: Receipt,
+      tone: "danger",
+      hint: data.pengajuanTotalAmount > 0 ? formatRupiah(data.pengajuanTotalAmount) : "Tidak ada pending",
+      href: "/pengajuan",
     },
   ];
 
   return (
     <div className="space-y-5">
-      <PageHeader icon={Landmark} title="Yayasan YRBB">
-        <div className="flex items-center gap-2">
-          <Badge
-            className={
-              health.tone === "success"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : health.tone === "warning"
-                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                  : "bg-rose-50 text-rose-700 border-rose-200"
-            }
-          >
-            {health.label}
-          </Badge>
-          {displayDate && (
-            <span className="hidden text-xs text-muted-foreground md:inline">
-              per {formatDate(displayDate)}
+      <PageHeader icon={Landmark} title="Yayasan YRBB" />
+
+      {/* Hero tile — Dana Efektif */}
+      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/5 to-transparent p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-muted-foreground">Dana Efektif</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums md:text-4xl">
+              {formatRupiah(danaEfektif)}
+            </p>
+            {displayDate && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                per {formatDate(displayDate)}
+              </p>
+            )}
+          </div>
+          <div className="shrink-0">
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold",
+                health.tone === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : health.tone === "warning"
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-rose-200 bg-rose-50 text-rose-700",
+              )}
+            >
+              {health.label}
             </span>
-          )}
+          </div>
         </div>
-      </PageHeader>
+        {totalKewajiban > 0 && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Saldo {formatRupiah(saldo)} − kewajiban {formatRupiah(totalKewajiban)}
+          </p>
+        )}
+      </div>
 
       {/* Combined alert strip — integrity + reconciliation */}
       {(errorCount > 0 || warnCount > 0 || reconHasDiff) && (

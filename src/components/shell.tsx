@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   CalendarCheck2,
   FolderOpen,
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -104,7 +105,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
           active
-            ? "bg-primary/10 text-primary shadow-sm"
+            ? "border-l-2 border-primary bg-primary/15 text-primary shadow-sm"
             : "text-muted-foreground hover:bg-accent hover:text-foreground"
         )}
       >
@@ -119,9 +120,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {/* Mobile top header */}
       <header className="fixed inset-x-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border/60 bg-card/95 px-4 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Landmark className="h-3.5 w-3.5" />
-          </div>
+          {!mobilePrimary.some((item) => isActive(item.href)) ? (
+            <button
+              onClick={() => router.back()}
+              className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          ) : (
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Landmark className="h-3.5 w-3.5" />
+            </div>
+          )}
           <span className="text-sm font-semibold tracking-tight">Angkasa</span>
         </div>
         <span className="text-sm font-medium text-muted-foreground">{currentPageTitle}</span>
@@ -139,7 +149,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-3">
-          <p className="px-3 pb-1.5 pt-1 text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+          <p className="px-3 pb-1.5 pt-1 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
             Yayasan
           </p>
           <div className="space-y-0.5">
@@ -148,7 +158,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
 
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
             Pribadi
           </p>
           <div className="space-y-0.5">
@@ -157,7 +167,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
 
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
             Monitor
           </p>
           <div className="space-y-0.5">
@@ -166,7 +176,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
 
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
             Admin
           </p>
           <div className="space-y-0.5">
@@ -194,13 +204,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile "More" overlay */}
-      {moreOpen && (
-        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMoreOpen(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-card pb-20 pt-3 px-4 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <div
+        className={cn(
+          "fixed inset-0 z-40 md:hidden transition-opacity duration-300",
+          moreOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        )}
+        onClick={() => setMoreOpen(false)}
+      >
+        <div className="absolute inset-0 bg-black/40" />
+        <div
+          className={cn(
+            "absolute inset-x-0 bottom-0 rounded-t-2xl bg-card pb-20 pt-3 px-4 shadow-xl transition-transform duration-300 ease-out",
+            moreOpen ? "translate-y-0" : "translate-y-full"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
             <div className="flex items-center justify-between mb-3 px-1">
               <p className="text-sm font-semibold">Lainnya</p>
               <button
@@ -242,7 +260,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-      )}
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden pb-[env(safe-area-inset-bottom)]">

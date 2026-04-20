@@ -3,15 +3,18 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toneIcon, toneText, type Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
+import { formatRupiahCompact } from "@/lib/format";
 
 export type KpiItem = {
   label: string;
   value: string;
+  rawAmount?: number;
   icon: LucideIcon;
   tone?: Tone;
   hint?: string;
   href?: string;
   valueTone?: Tone;
+  compact?: boolean;
 };
 
 export function KpiStrip({
@@ -70,7 +73,9 @@ function KpiCard({ item }: { item: KpiItem }) {
             item.valueTone && toneText[item.valueTone],
           )}
         >
-          {item.value}
+          {item.compact && item.rawAmount !== undefined
+            ? formatRupiahCompact(item.rawAmount)
+            : item.value}
         </p>
         {item.hint && (
           <p className="mt-1 truncate text-[11px] text-muted-foreground md:text-xs">

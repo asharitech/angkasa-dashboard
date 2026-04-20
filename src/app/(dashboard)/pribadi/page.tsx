@@ -6,13 +6,13 @@ import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
-import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { TransactionIcon, AmountText } from "@/components/transaction-item";
 import {
   NumpangCreateButton,
   NumpangRowActions,
 } from "@/components/numpang-manager";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
+import { PribadiTabs } from "@/components/pribadi-tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -34,26 +34,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const VIEWS = ["ringkasan", "akun", "cicilan", "numpang", "pengeluaran"] as const;
-type View = (typeof VIEWS)[number];
-
-const VIEW_LABEL: Record<View, string> = {
-  ringkasan: "Ringkasan",
-  akun: "Akun",
-  cicilan: "Cicilan & Piutang",
-  numpang: "Numpang",
-  pengeluaran: "Pengeluaran",
-};
-
-export default async function PribadiPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string }>;
-}) {
-  const { view } = await searchParams;
-  const activeView: View = (VIEWS as readonly string[]).includes(view ?? "")
-    ? (view as View)
-    : "ringkasan";
+export default async function PribadiPage() {
 
   const [data, session] = await Promise.all([getPribadiSummary(), getSession()]);
   const isAdmin = session?.role === "admin";
@@ -124,12 +105,6 @@ export default async function PribadiPage({
     },
   ];
 
-  const viewTabs: FilterTab[] = VIEWS.map((v) => ({
-    label: VIEW_LABEL[v],
-    href: v === "ringkasan" ? "/pribadi" : `/pribadi?view=${v}`,
-    active: v === activeView,
-  }));
-
   return (
     <div className="space-y-5">
       <PageHeader icon={User} title="Keuangan Pribadi">
@@ -142,44 +117,48 @@ export default async function PribadiPage({
 
       <KpiStrip items={kpis} cols={4} />
 
-      <FilterTabs tabs={viewTabs} />
+      <PribadiTabs>
+        {(activeView) => (
+          <>
+            {activeView === "ringkasan" && (
+              <RingkasanView
+                currentMonth={currentMonth}
+                cicilanBulanIni={cicilanBulanIni}
+                recurringTotal={recurringTotal}
+                totalBulanan={totalBulanan}
+                totalSavings={totalSavings}
+                savingsTotal={data.savingsTotal}
+                savings={data.savings}
+              />
+            )}
 
-      {activeView === "ringkasan" && (
-        <RingkasanView
-          currentMonth={currentMonth}
-          cicilanBulanIni={cicilanBulanIni}
-          recurringTotal={recurringTotal}
-          totalBulanan={totalBulanan}
-          totalSavings={totalSavings}
-          savingsTotal={data.savingsTotal}
-          savings={data.savings}
-        />
-      )}
+            {activeView === "akun" && (
+              <AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />
+            )}
 
-      {activeView === "akun" && (
-        <AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />
-      )}
+            {activeView === "cicilan" && (
+              <CicilanView
+                loans={data.loans}
+                totalRemainingDebt={totalRemainingDebt}
+                piutangByMonth={data.piutangByMonth}
+                piutangTotal={piutangTotal}
+              />
+            )}
 
-      {activeView === "cicilan" && (
-        <CicilanView
-          loans={data.loans}
-          totalRemainingDebt={totalRemainingDebt}
-          piutangByMonth={data.piutangByMonth}
-          piutangTotal={piutangTotal}
-        />
-      )}
+            {activeView === "numpang" && (
+              <NumpangView
+                numpang={data.numpang}
+                numpangTotal={numpangTotal}
+                isAdmin={isAdmin}
+              />
+            )}
 
-      {activeView === "numpang" && (
-        <NumpangView
-          numpang={data.numpang}
-          numpangTotal={numpangTotal}
-          isAdmin={isAdmin}
-        />
-      )}
-
-      {activeView === "pengeluaran" && (
-        <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
-      )}
+            {activeView === "pengeluaran" && (
+              <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
+            )}
+          </>
+        )}
+      </PribadiTabs>
     </div>
   );
 }

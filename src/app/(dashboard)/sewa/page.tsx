@@ -8,6 +8,7 @@ import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { SewaTabs } from "@/components/sewa-tabs";
 import { StatusBadge } from "@/components/status-badge";
 import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { Badge } from "@/components/ui/badge";
@@ -61,8 +62,7 @@ export default async function SewaPage({
 }: {
   searchParams: Promise<{ tahap?: string; view?: string }>;
 }) {
-  const { tahap, view } = await searchParams;
-  const activeView = view ?? "lokasi";
+  const { tahap } = await searchParams;
   const [requestedLedger, currentLedger, sewaHistory, session] = await Promise.all([
     tahap ? getLedgerByCode("sewa", tahap) : getLedger("sewa"),
     getLedger("sewa"),
@@ -129,14 +129,7 @@ export default async function SewaPage({
     };
   });
 
-  const viewTabs: FilterTab[] = [
-    { label: "Lokasi", href: hrefFor("lokasi", tahap), active: activeView === "lokasi" },
-    { label: "Operasional", href: hrefFor("operasional", tahap), active: activeView === "operasional" },
-    { label: "Riwayat", href: hrefFor("riwayat", tahap), active: activeView === "riwayat" },
-    { label: "Referensi", href: hrefFor("referensi", tahap), active: activeView === "referensi" },
-  ];
-
-  return (
+return (
     <div className="space-y-5">
       <PageHeader icon={Building2} title="Sewa Dapur">
         <div className="flex items-center gap-2">
@@ -155,7 +148,9 @@ export default async function SewaPage({
 
       <KpiStrip items={kpis} cols={3} />
 
-      <FilterTabs tabs={viewTabs} />
+      <SewaTabs>
+        {(activeView) => (
+          <>
 
       {activeView === "lokasi" && (
         <div className="space-y-4">
@@ -378,6 +373,9 @@ export default async function SewaPage({
           </div>
         </SectionCard>
       )}
+          </>
+        )}
+      </SewaTabs>
     </div>
   );
 }
@@ -400,10 +398,3 @@ function MoneyTile({ label, value, tone }: { label: string; value: number; tone:
   );
 }
 
-function hrefFor(view: string, tahap?: string): string {
-  const qs = new URLSearchParams();
-  if (view !== "lokasi") qs.set("view", view);
-  if (tahap) qs.set("tahap", tahap);
-  const s = qs.toString();
-  return s ? `/sewa?${s}` : "/sewa";
-}
