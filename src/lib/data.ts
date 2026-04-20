@@ -128,6 +128,23 @@ export async function updateAccount(id: string, data: Record<string, unknown>): 
   );
 }
 
+// Serialize any Date objects in a plain object to ISO date strings (YYYY-MM-DD).
+// Applied before returning data that will be passed to React components to prevent
+// "Objects with toJSON are not supported" errors from Next.js serialization.
+function serializeDates<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (obj instanceof Date) return obj.toISOString().slice(0, 10) as unknown as T;
+  if (Array.isArray(obj)) return obj.map(serializeDates) as unknown as T;
+  if (typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      result[key] = serializeDates(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
 export async function getPribadiSummary() {
   const db = await getDb();
 
@@ -161,7 +178,7 @@ export async function getPribadiSummary() {
   // Personal accounts only
   const personalAccounts = accounts.filter((a) => a.type !== "yayasan");
 
-  return {
+  return serializeDates({
     personalAccounts,
     spending,
     savings,
@@ -170,7 +187,7 @@ export async function getPribadiSummary() {
     recurring,
     piutangByMonth: piutangByMonth as { _id: string; count: number; total: number }[],
     numpang,
-  };
+  });
 }
 
 export async function getDashboardSummary() {

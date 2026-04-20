@@ -117,48 +117,38 @@ export default async function PribadiPage() {
 
       <KpiStrip items={kpis} cols={4} />
 
-      <PribadiTabs>
-        {(activeView) => (
-          <>
-            {activeView === "ringkasan" && (
-              <RingkasanView
-                currentMonth={currentMonth}
-                cicilanBulanIni={cicilanBulanIni}
-                recurringTotal={recurringTotal}
-                totalBulanan={totalBulanan}
-                totalSavings={totalSavings}
-                savingsTotal={data.savingsTotal}
-                savings={data.savings}
-              />
-            )}
-
-            {activeView === "akun" && (
-              <AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />
-            )}
-
-            {activeView === "cicilan" && (
-              <CicilanView
-                loans={data.loans}
-                totalRemainingDebt={totalRemainingDebt}
-                piutangByMonth={data.piutangByMonth}
-                piutangTotal={piutangTotal}
-              />
-            )}
-
-            {activeView === "numpang" && (
-              <NumpangView
-                numpang={data.numpang}
-                numpangTotal={numpangTotal}
-                isAdmin={isAdmin}
-              />
-            )}
-
-            {activeView === "pengeluaran" && (
-              <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
-            )}
-          </>
-        )}
-      </PribadiTabs>
+      <PribadiTabs
+        ringkasan={
+          <RingkasanView
+            currentMonth={currentMonth}
+            cicilanBulanIni={cicilanBulanIni}
+            recurringTotal={recurringTotal}
+            totalBulanan={totalBulanan}
+            totalSavings={totalSavings}
+            savingsTotal={data.savingsTotal}
+            savings={data.savings}
+          />
+        }
+        akun={<AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />}
+        cicilan={
+          <CicilanView
+            loans={data.loans}
+            totalRemainingDebt={totalRemainingDebt}
+            piutangByMonth={data.piutangByMonth}
+            piutangTotal={piutangTotal}
+          />
+        }
+        numpang={
+          <NumpangView
+            numpang={data.numpang}
+            numpangTotal={numpangTotal}
+            isAdmin={isAdmin}
+          />
+        }
+        pengeluaran={
+          <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
+        }
+      />
     </div>
   );
 }

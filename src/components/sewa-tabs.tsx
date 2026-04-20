@@ -14,11 +14,24 @@ const VIEW_LABEL: Record<SewaView, string> = {
 };
 
 export function SewaTabs({
-  children,
+  lokasi,
+  operasional,
+  riwayat,
+  referensi,
 }: {
-  children: (activeView: SewaView) => React.ReactNode;
+  lokasi: React.ReactNode;
+  operasional: React.ReactNode;
+  riwayat: React.ReactNode;
+  referensi: React.ReactNode;
 }) {
   const [activeView, setActiveView] = useState<SewaView>("lokasi");
+
+  const panels: Record<SewaView, React.ReactNode> = {
+    lokasi,
+    operasional,
+    riwayat,
+    referensi,
+  };
 
   return (
     <>
@@ -43,8 +56,8 @@ export function SewaTabs({
         </div>
       </div>
 
-      {/* Active view content */}
-      {children(activeView)}
+      {/* Active panel */}
+      {panels[activeView]}
     </>
   );
 }

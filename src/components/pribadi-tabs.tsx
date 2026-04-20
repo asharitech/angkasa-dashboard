@@ -15,11 +15,27 @@ const VIEW_LABEL: Record<PribadiView, string> = {
 };
 
 export function PribadiTabs({
-  children,
+  ringkasan,
+  akun,
+  cicilan,
+  numpang,
+  pengeluaran,
 }: {
-  children: (activeView: PribadiView) => React.ReactNode;
+  ringkasan: React.ReactNode;
+  akun: React.ReactNode;
+  cicilan: React.ReactNode;
+  numpang: React.ReactNode;
+  pengeluaran: React.ReactNode;
 }) {
   const [activeView, setActiveView] = useState<PribadiView>("ringkasan");
+
+  const panels: Record<PribadiView, React.ReactNode> = {
+    ringkasan,
+    akun,
+    cicilan,
+    numpang,
+    pengeluaran,
+  };
 
   return (
     <>
@@ -44,8 +60,8 @@ export function PribadiTabs({
         </div>
       </div>
 
-      {/* Active view content */}
-      {children(activeView)}
+      {/* Active panel */}
+      {panels[activeView]}
     </>
   );
 }
