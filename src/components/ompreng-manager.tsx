@@ -54,6 +54,8 @@ function OmprengForm({
     month: initial?.month ?? "2026-04",
     jumlah_ompreng: initial?.jumlah_ompreng?.toString() ?? "",
     jumlah_sasaran: initial?.jumlah_sasaran?.toString() ?? "",
+    kekurangan_ompreng: initial?.kekurangan_ompreng?.toString() ?? "",
+    alasan_tambah: initial?.alasan_tambah ?? "",
     notes: initial?.notes ?? "",
   });
   const [isPending, startTransition] = useTransition();
@@ -73,6 +75,8 @@ function OmprengForm({
         month: form.month,
         jumlah_ompreng: ompreng,
         jumlah_sasaran: sasaran,
+        kekurangan_ompreng: form.kekurangan_ompreng ? parseInt(form.kekurangan_ompreng) : 0,
+        alasan_tambah: form.alasan_tambah,
         notes: form.notes,
       });
       if ("error" in res) { setError(res.error); return; }
@@ -131,6 +135,24 @@ function OmprengForm({
             placeholder="0"
           />
         </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Kekurangan Ompreng <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+        <Input
+          type="number" min={0}
+          value={form.kekurangan_ompreng}
+          onChange={(e) => setForm((f) => ({ ...f, kekurangan_ompreng: e.target.value }))}
+          placeholder="0"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Alasan Tambah Ompreng <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+        <Textarea
+          rows={2}
+          value={form.alasan_tambah}
+          onChange={(e) => setForm((f) => ({ ...f, alasan_tambah: e.target.value }))}
+          placeholder="Misal: panci rusak 3 unit, butuh tambah untuk dapur baru..."
+        />
       </div>
       <div className="space-y-1.5">
         <Label>Catatan <span className="text-muted-foreground text-xs">(opsional)</span></Label>

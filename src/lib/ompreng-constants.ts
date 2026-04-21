@@ -37,6 +37,8 @@ export interface OmprengDoc {
   month: string; // YYYY-MM
   jumlah_ompreng: number;
   jumlah_sasaran: number;
+  kekurangan_ompreng?: number;
+  alasan_tambah?: string;
   notes?: string;
   created_at?: string;
   updated_at?: string;

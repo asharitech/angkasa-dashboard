@@ -13,6 +13,8 @@ export async function upsertOmpreng(data: {
   month: string;
   jumlah_ompreng: number;
   jumlah_sasaran: number;
+  kekurangan_ompreng?: number;
+  alasan_tambah?: string;
   notes?: string;
 }): Promise<ActionResult> {
   try {
@@ -28,6 +30,8 @@ export async function upsertOmpreng(data: {
       $set: {
         jumlah_ompreng: data.jumlah_ompreng,
         jumlah_sasaran: data.jumlah_sasaran,
+        kekurangan_ompreng: data.kekurangan_ompreng ?? 0,
+        alasan_tambah: data.alasan_tambah ?? "",
         notes: data.notes ?? "",
         updated_at: now,
       },

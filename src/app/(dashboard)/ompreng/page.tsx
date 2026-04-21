@@ -44,6 +44,8 @@ export default async function OmprengPage() {
     month: d.month,
     jumlah_ompreng: d.jumlah_ompreng ?? 0,
     jumlah_sasaran: d.jumlah_sasaran ?? 0,
+    kekurangan_ompreng: d.kekurangan_ompreng ?? 0,
+    alasan_tambah: d.alasan_tambah ?? "",
     notes: d.notes ?? "",
     created_at: d.created_at ?? "",
     updated_at: d.updated_at ?? "",
@@ -105,7 +107,8 @@ export default async function OmprengPage() {
                     <th className="py-2 pr-4 text-left font-medium">Dapur</th>
                     <th className="py-2 px-4 text-right font-medium">Ompreng</th>
                     <th className="py-2 px-4 text-right font-medium">Sasaran</th>
-                    <th className="py-2 pl-4 text-left font-medium">Catatan</th>
+                    <th className="py-2 px-4 text-right font-medium">Kekurangan</th>
+                    <th className="py-2 pl-4 text-left font-medium">Alasan Tambah</th>
                     {isAdmin && <th className="py-2 w-16" />}
                   </tr>
                 </thead>
@@ -121,8 +124,13 @@ export default async function OmprengPage() {
                         <td className="py-2 px-4 text-right tabular-nums">
                           {doc ? doc.jumlah_sasaran.toLocaleString("id-ID") : "—"}
                         </td>
-                        <td className="py-2 pl-4 text-muted-foreground text-xs">
-                          {doc?.notes || "—"}
+                        <td className="py-2 px-4 text-right tabular-nums">
+                          {doc?.kekurangan_ompreng ? (
+                            <span className="text-amber-500 font-semibold">{doc.kekurangan_ompreng.toLocaleString("id-ID")}</span>
+                          ) : "—"}
+                        </td>
+                        <td className="py-2 pl-4 text-muted-foreground text-xs max-w-[200px] truncate">
+                          {doc?.alasan_tambah || "—"}
                         </td>
                         {isAdmin && (
                           <td className="py-2 text-right">
@@ -138,7 +146,7 @@ export default async function OmprengPage() {
                     <td className="py-2 pr-4">Total</td>
                     <td className="py-2 px-4 text-right tabular-nums">{mt.total_ompreng.toLocaleString("id-ID")}</td>
                     <td className="py-2 px-4 text-right tabular-nums">{mt.total_sasaran.toLocaleString("id-ID")}</td>
-                    <td colSpan={isAdmin ? 2 : 1} />
+                    <td colSpan={isAdmin ? 3 : 2} />
                   </tr>
                 </tfoot>
               </table>
