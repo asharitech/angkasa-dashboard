@@ -63,16 +63,19 @@ export default async function OmprengPage() {
       label: m.label,
       total_ompreng: monthDocs.reduce((s, d) => s + d.jumlah_ompreng, 0),
       total_sasaran: monthDocs.reduce((s, d) => s + d.jumlah_sasaran, 0),
+      total_kekurangan: monthDocs.reduce((s, d) => s + (d.kekurangan_ompreng ?? 0), 0),
     };
   });
 
   const grandOmpreng = monthTotals.reduce((s, m) => s + m.total_ompreng, 0);
   const grandSasaran = monthTotals.reduce((s, m) => s + m.total_sasaran, 0);
 
+  const grandKekurangan = monthTotals.reduce((s, m) => s + m.total_kekurangan, 0);
+
   const kpis: KpiItem[] = [
     { label: "Total Ompreng (Jan–Apr)", value: grandOmpreng.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "info" },
     { label: "Total Sasaran (Jan–Apr)", value: grandSasaran.toLocaleString("id-ID"), icon: Users, tone: "success" },
-    { label: "Dapur Aktif", value: DAPUR_LOCATIONS.length.toString(), icon: LayoutGrid, tone: "neutral" },
+    { label: "Total Kekurangan (Jan–Apr)", value: grandKekurangan.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "warning" },
     { label: "Entry Tercatat", value: docs.length.toString(), icon: LayoutGrid, tone: "neutral" },
   ];
 
@@ -97,6 +100,9 @@ export default async function OmprengPage() {
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Ompreng: <strong className="text-foreground">{mt.total_ompreng.toLocaleString("id-ID")}</strong></span>
                 <span>Sasaran: <strong className="text-foreground">{mt.total_sasaran.toLocaleString("id-ID")}</strong></span>
+                {mt.total_kekurangan > 0 && (
+                  <span>Kurang: <strong className="text-amber-500">{mt.total_kekurangan.toLocaleString("id-ID")}</strong></span>
+                )}
               </div>
             }
           >
@@ -146,7 +152,10 @@ export default async function OmprengPage() {
                     <td className="py-2 pr-4">Total</td>
                     <td className="py-2 px-4 text-right tabular-nums">{mt.total_ompreng.toLocaleString("id-ID")}</td>
                     <td className="py-2 px-4 text-right tabular-nums">{mt.total_sasaran.toLocaleString("id-ID")}</td>
-                    <td colSpan={isAdmin ? 3 : 2} />
+                    <td className="py-2 px-4 text-right tabular-nums text-amber-500">
+                      {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
+                    </td>
+                    <td colSpan={isAdmin ? 2 : 1} />
                   </tr>
                 </tfoot>
               </table>
