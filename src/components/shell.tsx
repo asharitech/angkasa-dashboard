@@ -20,6 +20,7 @@ import {
   CalendarCheck2,
   FolderOpen,
   ChevronLeft,
+  UtensilsCrossed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const yayasanNav: NavItem[] = [
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
+  { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
 ];
 
 // Personal domain (consolidated — dana-pribadi & transaksi removed)
@@ -55,6 +57,7 @@ const mobileMore: NavItem[] = [
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
+  { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
   { href: "/audit", label: "Audit Data", icon: ShieldCheck },
