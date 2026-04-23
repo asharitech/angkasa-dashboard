@@ -5,25 +5,31 @@ import { SectionCard } from "@/components/section-card";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { OmprengAddButton, OmprengRowActions } from "@/components/ompreng-manager";
 import { DAPUR_LOCATIONS, DAPUR_LABELS, type DapurLocation, type OmprengDoc } from "@/lib/ompreng-constants";
+import { monthsInclusiveRange, monthLabel } from "@/lib/periods";
 import { UtensilsCrossed, LayoutGrid, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const MONTHS = [
-  { value: "2026-01", label: "Jan" },
-  { value: "2026-02", label: "Feb" },
-  { value: "2026-03", label: "Mar" },
-  { value: "2026-04", label: "Apr" },
-];
+/** Report window for ompreng tables (inclusive). */
+const OMPRENG_MONTH_VALUES = monthsInclusiveRange("2026-01", "2026-04");
+const MONTHS = OMPRENG_MONTH_VALUES.map((value) => ({
+  value,
+  labelShort: monthLabel(value, "short"),
+  labelLong: monthLabel(value, "long"),
+}));
 
-const MONTH_LABELS: Record<string, string> = {
-  "2026-01": "Januari 2026",
-  "2026-02": "Februari 2026",
-  "2026-03": "Maret 2026",
-  "2026-04": "April 2026",
-};
+function monthToken(period: string): string {
+  return monthLabel(period, "short").split(/\s+/)[0] ?? period;
+}
+
+const KPI_RANGE_LABEL = (() => {
+  const first = OMPRENG_MONTH_VALUES[0];
+  const last = OMPRENG_MONTH_VALUES[OMPRENG_MONTH_VALUES.length - 1];
+  const y = first.slice(0, 4);
+  return `${monthToken(first)}–${monthToken(last)} ${y}`;
+})();
 
 export default async function OmprengPage() {
   const session = await getSession();
@@ -60,7 +66,7 @@ export default async function OmprengPage() {
     const monthDocs = docs.filter((d) => d.month === m.value);
     return {
       month: m.value,
-      label: m.label,
+      label: m.labelShort,
       total_ompreng: monthDocs.reduce((s, d) => s + d.jumlah_ompreng, 0),
       total_sasaran: monthDocs.reduce((s, d) => s + d.jumlah_sasaran, 0),
       total_kekurangan: monthDocs.reduce((s, d) => s + (d.kekurangan_ompreng ?? 0), 0),
@@ -73,9 +79,9 @@ export default async function OmprengPage() {
   const grandKekurangan = monthTotals.reduce((s, m) => s + m.total_kekurangan, 0);
 
   const kpis: KpiItem[] = [
-    { label: "Total Ompreng (Jan–Apr)", value: grandOmpreng.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "info" },
-    { label: "Total Sasaran (Jan–Apr)", value: grandSasaran.toLocaleString("id-ID"), icon: Users, tone: "success" },
-    { label: "Total Kekurangan (Jan–Apr)", value: grandKekurangan.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "warning" },
+    { label: `Total Ompreng (${KPI_RANGE_LABEL})`, value: grandOmpreng.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "info" },
+    { label: `Total Sasaran (${KPI_RANGE_LABEL})`, value: grandSasaran.toLocaleString("id-ID"), icon: Users, tone: "success" },
+    { label: `Total Kekurangan (${KPI_RANGE_LABEL})`, value: grandKekurangan.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "warning" },
     { label: "Entry Tercatat", value: docs.length.toString(), icon: LayoutGrid, tone: "neutral" },
   ];
 
@@ -94,7 +100,7 @@ export default async function OmprengPage() {
           <SectionCard
             key={m.value}
             icon={UtensilsCrossed}
-            title={MONTH_LABELS[m.value]}
+            title={m.labelLong}
             tone="info"
             badge={
               <div className="flex items-center gap-3 text-xs text-muted-foreground">

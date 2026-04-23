@@ -2,6 +2,8 @@ import { getPribadiSummary } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import type { Obligation, Numpang } from "@/lib/types";
 import { formatRupiah, formatDateShort } from "@/lib/format";
+import { ListSectionTitle } from "@/components/list-section-title";
+import { StatRowRupiah } from "@/components/stat-row";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
@@ -14,7 +16,6 @@ import {
 import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { PribadiTabs } from "@/components/pribadi-tabs";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import {
   User,
   Wallet,
@@ -186,9 +187,9 @@ function RingkasanView({
         }
       >
         <div className="divide-y divide-border/60">
-          <KvRow label={`Cicilan (${currentMonth})`} value={cicilanBulanIni} />
-          <KvRow label="Pengeluaran Rutin" value={recurringTotal} />
-          <KvRow label="Total Kewajiban/Bulan" value={totalBulanan} highlight />
+          <StatRowRupiah label={`Cicilan (${currentMonth})`} amount={cicilanBulanIni} />
+          <StatRowRupiah label="Pengeluaran Rutin" amount={recurringTotal} />
+          <StatRowRupiah label="Total Kewajiban/Bulan" amount={totalBulanan} highlight />
         </div>
       </SectionCard>
 
@@ -222,9 +223,7 @@ function RingkasanView({
           </div>
           {savings.length > 0 && (
             <>
-              <p className="mt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Riwayat Terakhir
-              </p>
+              <ListSectionTitle className="mt-4 pb-2">Riwayat Terakhir</ListSectionTitle>
               <div className="divide-y divide-border/60">
                 {savings.slice(0, 8).map((entry) => (
                   <div key={entry._id} className="flex items-center justify-between py-2">
@@ -529,26 +528,3 @@ function PengeluaranView({
   );
 }
 
-function KvRow({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between py-2.5">
-      <span className={cn("text-sm", highlight && "font-semibold")}>{label}</span>
-      <span
-        className={cn(
-          "text-sm font-semibold tabular-nums",
-          highlight && "text-base font-bold text-primary",
-        )}
-      >
-        {formatRupiah(value)}
-      </span>
-    </div>
-  );
-}

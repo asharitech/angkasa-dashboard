@@ -190,10 +190,19 @@ export async function getPribadiSummary() {
   });
 }
 
+export async function getWajibBulanan(): Promise<Obligation[]> {
+  const db = await getDb();
+  return db
+    .collection("obligations")
+    .find({ type: "recurring", org: "yrbb" })
+    .sort({ category: 1, created_at: -1 })
+    .toArray() as unknown as Obligation[];
+}
+
 export async function getDashboardSummary() {
   const db = await getDb();
 
-  const [accounts, laporanOp, sewa, pengajuanPending, pengajuanTotal, pengajuanByRequestor, cashAccount] =
+  const [accounts, laporanOp, sewa, pengajuanPending, pengajuanTotal, pengajuanByRequestor, cashAccount, wajibBulanan] =
     await Promise.all([
       getAccounts(),
       getLedger("laporan_op"),
@@ -209,6 +218,7 @@ export async function getDashboardSummary() {
         { $sort: { total: -1 } },
       ]).toArray(),
       db.collection("accounts").findOne({ _id: "cash_yayasan" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
+      db.collection("obligations").find({ type: "recurring", org: "yrbb", status: "active" }).toArray(),
     ]);
 
   const cashAwal = (cashAccount as unknown as { meta?: { initial_amount?: number } })?.meta?.initial_amount ?? 0;
@@ -222,6 +232,7 @@ export async function getDashboardSummary() {
     pengajuanTotalAmount: pengajuanTotal[0]?.total ?? 0,
     pengajuanByRequestor: pengajuanByRequestor as { _id: string; count: number; total: number }[],
     cashYayasan: { awal: cashAwal, sisa: cashSisa, terpakai: cashAwal - cashSisa },
+    wajibBulanan: wajibBulanan as unknown as { _id: string; item: string; amount: number; category?: string }[],
   };
 }
 

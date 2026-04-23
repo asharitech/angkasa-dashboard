@@ -38,3 +38,21 @@ export function monthLabel(period: string, style: "short" | "long" = "short"): s
   const names = style === "long" ? MONTH_NAMES_ID : MONTH_NAMES_SHORT;
   return `${names[idx] ?? m} ${y}`;
 }
+
+/** Inclusive `YYYY-MM` range from `from` through `to` (ascending). */
+export function monthsInclusiveRange(from: string, to: string): string[] {
+  const out: string[] = [];
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
+  let y = fy;
+  let m = fm;
+  while (y < ty || (y === ty && m <= tm)) {
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return out;
+}

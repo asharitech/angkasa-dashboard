@@ -2,6 +2,7 @@ import { getObligations, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
 import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";
+import { buildDashboardHref } from "@/lib/dashboard-query";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
@@ -13,6 +14,7 @@ import { PengajuanAccordionRow } from "@/components/pengajuan-accordion";
 import { Badge } from "@/components/ui/badge";
 import { toneBadge } from "@/lib/colors";
 import { cn } from "@/lib/utils";
+import { ListSectionTitle } from "@/components/list-section-title";
 import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
 import type { Obligation, Account } from "@/lib/types";
 
@@ -99,9 +101,7 @@ function RequestorGroup({
       <div className="space-y-4">
         {categoryGroups.map(({ cat, rows }) => (
           <div key={`${requestorName}-${cat}`}>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-              {cat.replace(/_/g, ' ')}
-            </p>
+            <ListSectionTitle>{cat.replace(/_/g, " ")}</ListSectionTitle>
             <div className="divide-y divide-border/60 border-y border-border/60">
               {rows.map(({ o, globalIdx }) => (
                 <PengajuanAccordionRow
@@ -176,11 +176,11 @@ export default async function PengajuanPage({
   ];
 
   function buildHref(nextMonth: string, nextStatus = statusView) {
-    const qs = new URLSearchParams();
-    qs.set("monthView", nextMonth);
-    qs.set("period", nextMonth);
-    qs.set("statusView", nextStatus);
-    return `/pengajuan?${qs.toString()}`;
+    return buildDashboardHref("/pengajuan", {
+      monthView: nextMonth,
+      period: nextMonth,
+      statusView: nextStatus,
+    });
   }
 
   const monthChoices = recentMonths(4);

@@ -38,6 +38,7 @@ export interface Obligation {
   bukti_type?: string;
   bukti_ref?: string | null;
   bukti_url?: string | null;
+  description?: string | null;
   resolved_at?: string | null;
   resolved_by?: string | null;
   resolved_via?: string | null;
@@ -45,6 +46,7 @@ export interface Obligation {
   date_spent?: string | null;
   schedule?: ScheduleItem[] | null;
   due_day?: number | string | null;
+  reminder_days?: number | null;
   final_month?: string | null;
   frequency?: string | null;
   is_active?: boolean;

@@ -9,6 +9,7 @@ import {
 } from "@/components/agenda-manager";
 import { AgendaCard } from "@/components/agenda-card";
 import { KATEGORI_CONFIG } from "@/lib/agenda-config";
+import { MeterBar, agendaMeterFillClass } from "@/components/meter-bar";
 import { cn } from "@/lib/utils";
 import type { AgendaKategori } from "@/lib/actions/agenda";
 import { CalendarCheck2, ListChecks, AlertCircle, Flame } from "lucide-react";
@@ -97,21 +98,11 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
           </span>
         </span>
       </div>
-      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn(
-            "h-full rounded-full transition-all duration-700 ease-out",
-            pct === 100
-              ? "bg-emerald-500"
-              : pct >= 60
-              ? "bg-blue-500"
-              : pct >= 30
-              ? "bg-amber-400"
-              : "bg-rose-500",
-          )}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <MeterBar
+        percent={pct}
+        fillClassName={cn(agendaMeterFillClass(pct), "duration-700 ease-out")}
+        heightClassName="h-2.5"
+      />
     </div>
   );
 }

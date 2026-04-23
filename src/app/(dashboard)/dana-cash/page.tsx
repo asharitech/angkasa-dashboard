@@ -7,6 +7,7 @@ import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { DataTable } from "@/components/data-table";
+import { MeterBarLabeled } from "@/components/meter-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Banknote,
@@ -65,20 +66,20 @@ export default async function DanaCashPage({
       {/* Progress */}
       <Card className="shadow-sm">
         <CardContent className="py-3">
-          <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-            <span>
-              Terpakai <span className="font-semibold">{formatRupiah(totalTerpakai)}</span>
-            </span>
-            <span>
-              Sisa <span className="font-semibold">{formatRupiah(saldoSisa)}</span>
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-2 rounded-full bg-rose-500/80 transition-all"
-              style={{ width: `${Math.min(pctTerpakai, 100)}%` }}
-            />
-          </div>
+          <MeterBarLabeled
+            percent={Math.min(pctTerpakai, 100)}
+            fillClassName="bg-rose-500/80"
+            labelLeft={
+              <span>
+                Terpakai <span className="font-semibold">{formatRupiah(totalTerpakai)}</span>
+              </span>
+            }
+            labelRight={
+              <span>
+                Sisa <span className="font-semibold">{formatRupiah(saldoSisa)}</span>
+              </span>
+            }
+          />
         </CardContent>
       </Card>
 
@@ -101,7 +102,7 @@ export default async function DanaCashPage({
               icon={Inbox}
               title="Belum ada pengeluaran"
               description={period ? "Periode terpilih kosong." : "Cash belum digunakan."}
-              className="border-none shadow-none"
+              embedded
             />
           }
           columns={[

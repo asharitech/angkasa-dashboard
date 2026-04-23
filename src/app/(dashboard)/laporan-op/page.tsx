@@ -1,10 +1,12 @@
 import { getLedger, getLaporanOpReconciliation } from "@/lib/data";
 import { formatRupiah, formatDate } from "@/lib/format";
+import { kewajibanRows } from "@/lib/kewajiban-display";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { DataTable } from "@/components/data-table";
+import { StatRowRupiah } from "@/components/stat-row";
 import {
   FileText,
   TrendingUp,
@@ -69,7 +71,7 @@ export default async function LaporanOpPage() {
     },
   ];
 
-  const kRows = kewajibanRows(kewajiban);
+  const kRows = kewajibanRows(kewajiban, { includeTotal: true });
 
   return (
     <div className="space-y-5">
@@ -125,19 +127,14 @@ export default async function LaporanOpPage() {
         }
       >
         <div className="divide-y divide-border/60">
-          {kRows.map(([label, val]) => {
-            const isTotal = label === "Total";
-            return (
-              <div key={label} className="flex items-center justify-between py-2.5">
-                <span className={isTotal ? "text-sm font-semibold" : "text-sm text-muted-foreground"}>
-                  {label}
-                </span>
-                <span className={isTotal ? "text-base font-bold tabular-nums" : "text-sm font-semibold tabular-nums"}>
-                  {formatRupiah(val)}
-                </span>
-              </div>
-            );
-          })}
+          {kRows.map(([label, val]) => (
+            <StatRowRupiah
+              key={label}
+              label={label}
+              amount={val}
+              variant={label === "Total" ? "total" : "default"}
+            />
+          ))}
         </div>
       </SectionCard>
 
@@ -159,7 +156,7 @@ export default async function LaporanOpPage() {
               icon={Inbox}
               title="Tidak ada transaksi"
               description="Ledger kosong untuk periode ini."
-              className="border-none shadow-none"
+              embedded
             />
           }
           columns={[
@@ -248,26 +245,3 @@ function ReconRow({
   );
 }
 
-function kewajibanRows(k: {
-  total: number;
-  dana_pinjam_angkasa_tahap1?: number;
-  dana_pinjam_angkasa_tahap2?: number;
-  dana_pinjam_angkasa_tahap3?: number;
-  lembar2_btn?: number;
-  pinjaman_btn?: number;
-}): [string, number][] {
-  const ka = k as Record<string, number | undefined>;
-  if (ka.dana_pinjam_angkasa_tahap1 != null) {
-    return ([
-      ["Dana Pinjam Angkasa Tahap 1", ka.dana_pinjam_angkasa_tahap1],
-      ["Dana Pinjam Angkasa Tahap 2", ka.dana_pinjam_angkasa_tahap2],
-      ["Dana Pinjam Angkasa Tahap 3", ka.dana_pinjam_angkasa_tahap3],
-      ["Total", k.total],
-    ] as [string, number | undefined][]).filter((r): r is [string, number] => r[1] != null);
-  }
-  return ([
-    ["Lembar2 BTN", ka.lembar2_btn],
-    ["Pinjaman BTN", ka.pinjaman_btn],
-    ["Total", k.total],
-  ] as [string, number | undefined][]).filter((r): r is [string, number] => r[1] != null);
-}

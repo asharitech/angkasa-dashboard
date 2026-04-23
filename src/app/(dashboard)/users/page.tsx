@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Shield, Users } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
+import { ForbiddenState } from "@/components/forbidden-state";
 import { PageHeader } from "@/components/page-header";
 import { UsersManager, type UserRow } from "@/components/users-manager";
 
@@ -14,15 +14,10 @@ export default async function UsersPage() {
 
   if (session.role !== "admin") {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Shield className="mb-4 h-12 w-12 text-muted-foreground" />
-        <p className="text-base text-muted-foreground">
-          Hanya admin yang dapat mengakses halaman ini
-        </p>
-        <Link href="/" className="mt-4 text-sm font-medium text-primary hover:underline">
-          Kembali ke beranda
-        </Link>
-      </div>
+      <ForbiddenState
+        icon={Shield}
+        title="Hanya admin yang dapat mengakses halaman ini"
+      />
     );
   }
 

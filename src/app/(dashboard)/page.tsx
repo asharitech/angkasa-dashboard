@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   getDashboardSummary,
   getPendingTransfers,
@@ -7,6 +6,7 @@ import {
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
+import { kewajibanRows } from "@/lib/kewajiban-display";
 import { cn } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
@@ -14,20 +14,21 @@ import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
-import { Card, CardContent } from "@/components/ui/card";
+import { InsightLinkCard, NavChevronLink } from "@/components/link-insight";
+import { StatRowRupiah } from "@/components/stat-row";
 import { Badge } from "@/components/ui/badge";
 import {
   Landmark,
   Building2,
   Clock,
   Receipt,
-  ChevronRight,
   Banknote,
   Truck,
   ShieldAlert,
   GitCompare,
   Wallet,
   FileText,
+  CalendarDays,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -160,7 +161,7 @@ export default async function DashboardPage() {
       {(errorCount > 0 || warnCount > 0 || reconHasDiff) && (
         <div className="space-y-2">
           {(errorCount > 0 || warnCount > 0) && (
-            <AlertLink
+            <InsightLinkCard
               href="/audit"
               tone={errorCount > 0 ? "danger" : "warning"}
               icon={ShieldAlert}
@@ -173,7 +174,7 @@ export default async function DashboardPage() {
             />
           )}
           {reconHasDiff && (
-            <AlertLink
+            <InsightLinkCard
               href="/laporan-op"
               tone="warning"
               icon={GitCompare}
@@ -197,7 +198,7 @@ export default async function DashboardPage() {
               {data.pengajuanPending} item · {formatRupiah(data.pengajuanTotalAmount)}
             </Badge>
           }
-          action={<NavChevron href="/pengajuan" />}
+          action={<NavChevronLink href="/pengajuan" />}
         >
           {data.pengajuanByRequestor.length > 0 ? (
             <div className="divide-y divide-border/60">
@@ -227,7 +228,7 @@ export default async function DashboardPage() {
               {formatRupiah(pendingTransfers.totalExpected)}
             </span>
           }
-          action={<NavChevron href="/sewa" />}
+          action={<NavChevronLink href="/sewa" />}
         >
           <div className="divide-y divide-border/60">
             {pendingTransfers.pending.slice(0, 5).map((loc) => (
@@ -265,13 +266,40 @@ export default async function DashboardPage() {
               {formatRupiah(op.kewajiban.total)}
             </span>
           }
-          action={<NavChevron href="/laporan-op" />}
+          action={<NavChevronLink href="/laporan-op" />}
         >
           <div className="divide-y divide-border/60">
             {kewajibanRows(op.kewajiban).map(([label, val]) => (
-              <div key={label} className="flex items-center justify-between py-2.5">
-                <span className="text-sm text-muted-foreground">{label}</span>
-                <span className="text-sm font-semibold tabular-nums">{formatRupiah(val)}</span>
+              <StatRowRupiah key={label} label={label} amount={val} />
+            ))}
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Wajib Bulanan Yayasan */}
+      {data.wajibBulanan && data.wajibBulanan.length > 0 && (
+        <SectionCard
+          icon={CalendarDays}
+          title="Wajib Bulanan Yayasan"
+          tone="warning"
+          badge={
+            <span className="ml-1 text-sm font-bold tabular-nums text-amber-700">
+              {formatRupiah(data.wajibBulanan.reduce((s, w) => s + (w.amount ?? 0), 0))}/bln
+            </span>
+          }
+        >
+          <div className="divide-y divide-border/60">
+            {data.wajibBulanan.map((w) => (
+              <div key={w._id} className="flex items-center justify-between py-2.5">
+                <div className="min-w-0">
+                  <span className="truncate text-sm text-muted-foreground">{w.item}</span>
+                  {w.category && (
+                    <Badge variant="outline" className="ml-2 text-[10px]">
+                      {w.category.replace(/_/g, " ")}
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-sm font-semibold tabular-nums">{formatRupiah(w.amount ?? 0)}</span>
               </div>
             ))}
           </div>
@@ -314,7 +342,7 @@ export default async function DashboardPage() {
                 {activeCount}/{sewaLocations.length}
               </Badge>
             }
-            action={<NavChevron href="/sewa" />}
+            action={<NavChevronLink href="/sewa" />}
           >
             <div className="divide-y divide-border/60">
               {sewaLocations.slice(0, 8).map((loc) => (
@@ -329,63 +357,4 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
-}
-
-function NavChevron({ href }: { href: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-    >
-      <ChevronRight className="h-4 w-4" />
-    </Link>
-  );
-}
-
-function AlertLink({
-  href,
-  tone,
-  icon: Icon,
-  title,
-  hint,
-}: {
-  href: string;
-  tone: "danger" | "warning";
-  icon: typeof ShieldAlert;
-  title: string;
-  hint: string;
-}) {
-  const cls =
-    tone === "danger"
-      ? "border-rose-200 bg-rose-50/50 hover:bg-rose-50"
-      : "border-amber-200 bg-amber-50/50 hover:bg-amber-50";
-  const fg = tone === "danger" ? "text-rose-700" : "text-amber-700";
-  return (
-    <Link href={href} className="block">
-      <Card className={`shadow-sm transition-colors ${cls}`}>
-        <CardContent className="flex items-center gap-3 py-2.5">
-          <Icon className={`h-4 w-4 ${fg}`} />
-          <div className="min-w-0 flex-1">
-            <p className={`truncate text-sm font-semibold ${fg}`}>{title}</p>
-            <p className="truncate text-xs text-muted-foreground">{hint}</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-function kewajibanRows(k: Record<string, number | undefined>): [string, number][] {
-  if (k.dana_pinjam_angkasa_tahap1 != null) {
-    return ([
-      ["Dana Pinjam Angkasa Tahap 1", k.dana_pinjam_angkasa_tahap1],
-      ["Dana Pinjam Angkasa Tahap 2", k.dana_pinjam_angkasa_tahap2],
-      ["Dana Pinjam Angkasa Tahap 3", k.dana_pinjam_angkasa_tahap3],
-    ] as [string, number | undefined][]).filter((r): r is [string, number] => r[1] != null);
-  }
-  return ([
-    ["Lembar2 BTN", k.lembar2_btn],
-    ["Pinjaman BTN", k.pinjaman_btn],
-  ] as [string, number | undefined][]).filter((r): r is [string, number] => r[1] != null);
 }

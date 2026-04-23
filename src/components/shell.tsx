@@ -21,6 +21,7 @@ import {
   FolderOpen,
   ChevronLeft,
   UtensilsCrossed,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ const yayasanNav: NavItem[] = [
   { href: "/", label: "Yayasan", icon: Landmark },
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
   { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
+  { href: "/wajib-bulanan", label: "Wajib Bulanan", icon: CalendarDays },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
@@ -54,6 +56,7 @@ const mobilePrimary: NavItem[] = [
 // Mobile: overflow items under "Lainnya"
 const mobileMore: NavItem[] = [
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
+  { href: "/wajib-bulanan", label: "Wajib Bulanan", icon: CalendarDays },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },

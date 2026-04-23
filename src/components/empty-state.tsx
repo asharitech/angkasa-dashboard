@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { toneIcon, type Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,8 @@ export function EmptyState({
   tone = "muted",
   action,
   className,
+  /** Inside tables/cards: no border, no outer shadow, tighter padding */
+  embedded,
 }: {
   icon: LucideIcon;
   title: string;
@@ -17,13 +20,25 @@ export function EmptyState({
   tone?: Tone;
   action?: React.ReactNode | { label: string; href: string };
   className?: string;
+  embedded?: boolean;
 }) {
   const t = toneIcon[tone];
   // Determine if action is a legacy {label, href} object or a ReactNode
   const isLegacyAction = action && typeof action === "object" && !!(action as { label?: string }).label && !!(action as { href?: string }).href;
   return (
-    <Card className={cn("shadow-sm", className)}>
-      <CardContent className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+    <Card
+      className={cn(
+        "shadow-sm",
+        embedded && "border-0 bg-transparent shadow-none",
+        className,
+      )}
+    >
+      <CardContent
+        className={cn(
+          "flex flex-col items-center justify-center gap-3 text-center",
+          embedded ? "py-6" : "py-10",
+        )}
+      >
         <div className={cn("flex h-12 w-12 items-center justify-center rounded-full", t.bg)}>
           <Icon className={cn("h-6 w-6", t.fg)} />
         </div>
@@ -47,7 +62,6 @@ export function EmptyState({
   );
 }
 
-import Link from "next/link";
 function LegacyActionLink({ action }: { action: { label: string; href: string } }) {
   return (
     <Link

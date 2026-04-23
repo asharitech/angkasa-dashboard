@@ -30,6 +30,11 @@ export interface PengajuanInput {
   detail?: { item: string; amount: number }[] | null;
   owner?: string;
   org?: string | null;
+  status?: "pending" | "active" | "lunas" | "rejected";
+  due_day?: number;
+  reminder_days?: number;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
 }
 
 /**
@@ -45,7 +50,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
       item: input.item.trim(),
       category: input.category,
       amount: input.amount,
-      status: "pending",
+      status: input.status ?? "pending",
       requestor: input.requestor ?? null,
       sumber_dana: input.sumber_dana ?? null,
       month: input.month ?? null,
@@ -55,6 +60,8 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
       detail: input.detail ?? null,
       owner: input.owner ?? "yayasan",
       org: input.org ?? "yrbb",
+      due_day: input.due_day ?? null,
+      reminder_days: input.reminder_days ?? null,
       created_by: session.userId,
       updated_by: session.userId,
       created_at: now,
@@ -63,6 +70,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
     validateObligation(doc);
     const result = await db.collection("obligations").insertOne(doc);
     revalidatePath("/pengajuan");
+    revalidatePath("/wajib-bulanan");
     revalidatePath("/");
     return { ok: true, id: result.insertedId.toString() };
   } catch (err) {
@@ -95,6 +103,7 @@ export async function updateObligationAction(
       },
     );
     revalidatePath("/pengajuan");
+    revalidatePath("/wajib-bulanan");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {
@@ -119,6 +128,7 @@ export async function deleteObligationAction(id: string): Promise<ActionResult> 
     const result = await db.collection("obligations").deleteOne({ _id: toObjectId(id) });
     if (result.deletedCount === 0) return { error: "Pengajuan tidak ditemukan" };
     revalidatePath("/pengajuan");
+    revalidatePath("/wajib-bulanan");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {
@@ -199,9 +209,46 @@ export async function markLunasAction(input: MarkLunasInput): Promise<ActionResu
     );
 
     revalidatePath("/pengajuan");
+    revalidatePath("/wajib-bulanan");
     revalidatePath("/aktivitas");
     revalidatePath("/");
     return { ok: true, id: entryResult.insertedId.toString() };
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+/**
+ * Unmark an obligation from lunas back to active.
+ */
+export async function unmarkLunasAction(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireAdmin();
+    const db = await getDb();
+    const existing = await db.collection("obligations").findOne({ _id: toObjectId(id) });
+    if (!existing) return { error: "Pengajuan tidak ditemukan" };
+    if (existing.status !== "lunas") return { error: "Pengajuan belum lunas" };
+
+    await db.collection("obligations").updateOne(
+      { _id: toObjectId(id) },
+      {
+        $set: {
+          status: "active",
+          updated_by: session.userId,
+          updated_at: new Date(),
+        },
+        $unset: {
+          resolved_at: "",
+          resolved_by: "",
+          resolved_via: "",
+        },
+      },
+    );
+
+    revalidatePath("/pengajuan");
+    revalidatePath("/wajib-bulanan");
+    revalidatePath("/");
+    return { ok: true };
   } catch (err) {
     return actionError(err);
   }
