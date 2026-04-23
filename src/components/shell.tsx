@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Home,
   BookOpen,
@@ -49,7 +48,6 @@ const monitorNav: NavItem[] = [
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -68,11 +66,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return (
       <Link
         href={href}
-        className={cn("nav-item", active && "is-active")}
+        className={cn(
+          "nav-item transition-all duration-200",
+          active ? "is-active shadow-sm" : "hover:bg-ink-050"
+        )}
       >
-        <Icon className="nav-item__icon" />
-        <span>{label}</span>
-        {badge ? <span className="nav-item__badge">{badge}</span> : null}
+        <Icon className={cn("nav-item__icon", active ? "text-white" : "text-ink-400")} />
+        <span className={active ? "font-semibold" : "font-medium"}>{label}</span>
+        {badge ? <span className="nav-item__badge animate-pulse">{badge}</span> : null}
       </Link>
     );
   }
@@ -111,34 +112,36 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        <div className="sidebar__footer">
-          <div className="avatar">AG</div>
+        <div className="sidebar__footer group cursor-pointer hover:bg-ink-025 transition-colors">
+          <div className="avatar ring-2 ring-accent-100 group-hover:ring-accent-300 transition-all">AG</div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div className="sidebar__user-name">Angkasa</div>
+            <div className="sidebar__user-name group-hover:text-ink-000 transition-colors">Angkasa</div>
             <div className="sidebar__user-role">Admin</div>
           </div>
+          <ChevronRight className="w-4 h-4 text-ink-300 group-hover:text-ink-500 transition-colors" />
         </div>
       </aside>
 
       <div className="main">
-        <header className="topbar">
-          <div className="topbar__crumb">
-            <span>Angkasa</span>
-            <ChevronRight className="input__icon" />
+        <header className="topbar px-6 md:px-8">
+          <div className="topbar__crumb hidden md:flex">
+            <span className="text-ink-400 hover:text-ink-700 cursor-pointer transition-colors">Angkasa</span>
+            <ChevronRight className="w-3.5 h-3.5 text-ink-300" />
             <span className="topbar__crumb-active">{currentPageTitle}</span>
           </div>
-          <div className="topbar__actions">
-            <div className="input__wrap" style={{ width: 260 }}>
-              <Search className="input__icon" />
-              <input placeholder="Cari transaksi, lokasi, orang…" />
-              <span className="badge badge--outline" style={{ fontFamily: "var(--font-mono)", padding: "0 5px", height: 16 }}>⌘K</span>
+          <div className="topbar__actions flex-1 md:flex-none justify-end">
+            <div className="input__wrap group focus-within:ring-2 focus-within:ring-accent-100 transition-all" style={{ width: "100%", maxWidth: 320 }}>
+              <Search className="input__icon group-focus-within:text-accent-700" />
+              <input placeholder="Cari transaksi, lokasi, orang…" className="w-full" />
+              <span className="hidden sm:inline-flex badge badge--outline text-[10px] opacity-50 group-focus-within:opacity-100 transition-opacity" style={{ fontFamily: "var(--font-mono)", padding: "0 5px", height: 16 }}>⌘K</span>
             </div>
-            <button className="btn btn--ghost btn--sm" title="Notifications" style={{ width: 32, padding: 0, height: 32 }}>
-              <Bell className="btn__icon" />
+            <button className="btn btn--ghost btn--sm hover:bg-ink-050 relative" title="Notifications" style={{ width: 36, padding: 0, height: 36 }}>
+              <Bell className="btn__icon text-ink-500" />
+              <span className="absolute top-2 right-2.5 w-2 h-2 bg-neg-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="badge badge--outline">
-              <span className="badge__dot" style={{ color: "var(--pos-500)" }}></span>
-              Live · WITA 10:24
+            <div className="hidden lg:flex badge badge--outline bg-white/50 backdrop-blur-sm py-1 px-3 border-ink-100 shadow-sm">
+              <span className="badge__dot animate-pulse bg-pos-500"></span>
+              <span className="text-ink-500 font-medium ml-1">Live · WITA 10:24</span>
             </div>
           </div>
         </header>

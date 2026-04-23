@@ -9,7 +9,7 @@ export function ExportButton({
   label = "Export",
   className,
 }: {
-  data: any[];
+  data: Record<string, unknown>[];
   filename: string;
   label?: string;
   className?: string;

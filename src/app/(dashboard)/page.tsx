@@ -8,13 +8,10 @@ import {
   getActivityFeed,
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
-import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
+import { formatRupiah, formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import {
-  Calendar,
-  Download,
-  Plus,
   AlertTriangle,
   ArrowRight,
   ShieldAlert,
@@ -32,6 +29,7 @@ export default async function DashboardPage() {
     getActivityFeed(6),
   ]);
   
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isAdmin = session?.role === "admin";
   const errorCount = integrityIssues.filter((i) => i.severity === "error").length;
   const warnCount = integrityIssues.filter((i) => i.severity === "warn").length;
@@ -114,62 +112,67 @@ export default async function DashboardPage() {
       />
 
       {/* Hero: Dana Efektif */}
-      <section className="hero">
-        <div className="hero__main">
-          <div className="hero__eyebrow">
-            <span className="hero__eyebrow-mark"></span>
+      <section className="hero bg-white rounded-2xl shadow-sm border border-ink-100 overflow-hidden mb-8 transition-all hover:shadow-md">
+        <div className="hero__main p-8 md:p-10">
+          <div className="hero__eyebrow flex items-center gap-3 text-[10px] font-bold tracking-widest uppercase text-ink-400 mb-4">
+            <span className="w-2 h-2 bg-accent-700 rounded-full animate-pulse"></span>
             Dana Efektif {displayDate ? `· per ${formatDateShort(displayDate)}` : ""}
           </div>
-          <div className="hero__amount">
-            <span className="hero__amount-sym">Rp</span>
+          <div className="hero__amount text-5xl md:text-7xl font-bold tracking-tighter text-ink-000 leading-none mb-6">
+            <span className="text-2xl md:text-3xl font-medium text-ink-300 mr-2">Rp</span>
             {danaEfektif.toLocaleString('id-ID')}
           </div>
-          <div className="hero__formula">
-            <span className="fig">{formatRupiah(saldo)}</span>
-            <span className="op">saldo BTN</span>
-            <span className="op">−</span>
-            <span className="fig">{formatRupiah(totalKewajiban)}</span>
-            <span className="op">total kewajiban</span>
+          <div className="hero__formula flex items-center gap-3 p-4 bg-ink-025 rounded-xl border border-ink-100 w-fit">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-ink-400">Saldo BTN</span>
+              <span className="font-mono font-bold text-ink-700">{formatRupiah(saldo)}</span>
+            </div>
+            <span className="text-xl text-ink-200">−</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-ink-400">Kewajiban</span>
+              <span className="font-mono font-bold text-neg-700">{formatRupiah(totalKewajiban)}</span>
+            </div>
           </div>
         </div>
-        <div className="hero__side">
+        <div className="hero__side bg-ink-025/50 p-8 md:p-10 border-l border-ink-100 flex flex-col justify-center gap-8">
           <div>
-            <div className="health">
-              <span className={cn("health__dot", health.tone !== 'pos' && "bg-warn-500 shadow-none")}></span>
-              <span className="health__label">{health.label}</span>
-              <span className={cn("health__ratio", health.tone === 'neg' && "text-neg-700")}>
+            <div className="flex items-baseline justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className={cn("w-3 h-3 rounded-full", health.tone === 'pos' ? "bg-pos-500 shadow-[0_0_0_4px_var(--pos-100)]" : "bg-warn-500 shadow-[0_0_0_4px_var(--warn-100)]")}></span>
+                <span className="text-lg font-bold text-ink-000">{health.label}</span>
+              </div>
+              <span className={cn("font-mono font-bold text-xl", health.tone === 'neg' ? "text-neg-700" : "text-ink-700")}>
                 {(healthRatio * 100).toFixed(1)}%
               </span>
             </div>
-            <div style={{ marginTop: "var(--sp-3)" }}>
-              <div className="ratio-bar">
-                <div 
-                  className={cn("ratio-bar__fill", health.tone === 'warn' && "bg-warn-500", health.tone === 'neg' && "bg-neg-500")} 
-                  style={{ width: `${Math.min(100, healthRatio * 100)}%` }}
-                ></div>
-              </div>
-              <div className="ratio-meta" style={{ marginTop: 6 }}>
-                <span>Ratio dana efektif / saldo</span>
-                <span>target ≥ 50%</span>
-              </div>
+            <div className="w-full bg-ink-100 h-2.5 rounded-full overflow-hidden">
+              <div
+                className={cn("h-full transition-all duration-1000", health.tone === 'pos' ? "bg-pos-500" : health.tone === 'warn' ? "bg-warn-500" : "bg-neg-500")}
+                style={{ width: `${Math.min(100, healthRatio * 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] font-bold uppercase tracking-wider text-ink-400">
+              <span>Efisiensi Dana</span>
+              <span>Target ≥ 50%</span>
             </div>
           </div>
-          <div className="hero__side-meta">
-            <div className="hero__side-meta-item">
-              <div className="hero__side-meta-label">Cash Yayasan</div>
-              <div className="hero__side-meta-value">{formatRupiah(cashSisa)}</div>
+
+          <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-1">
+              <div className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">Cash Yayasan</div>
+              <div className="font-mono font-bold text-ink-900">{formatRupiah(cashSisa)}</div>
             </div>
-            <div className="hero__side-meta-item">
-              <div className="hero__side-meta-label">Dana Sewa (aktif)</div>
-              <div className="hero__side-meta-value">{formatRupiah(sewaTotal)}</div>
+            <div className="space-y-1">
+              <div className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">Sewa Aktif</div>
+              <div className="font-mono font-bold text-ink-900">{formatRupiah(sewaTotal)}</div>
             </div>
-            <div className="hero__side-meta-item">
-              <div className="hero__side-meta-label">Kewajiban Total</div>
-              <div className="hero__side-meta-value">{formatRupiah(totalKewajiban)}</div>
+            <div className="space-y-1">
+              <div className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">Kewajiban</div>
+              <div className="font-mono font-bold text-neg-700">{formatRupiah(totalKewajiban)}</div>
             </div>
-            <div className="hero__side-meta-item">
-              <div className="hero__side-meta-label">Pengajuan pending</div>
-              <div className="hero__side-meta-value">{data.pengajuanPending} item · {formatRupiah(data.pengajuanTotalAmount)}</div>
+            <div className="space-y-1">
+              <div className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">Pending</div>
+              <div className="font-mono font-bold text-warn-700">{data.pengajuanPending} <span className="text-[10px] font-medium">items</span></div>
             </div>
           </div>
         </div>
@@ -217,22 +220,24 @@ export default async function DashboardPage() {
 
       {/* Accounts strip */}
       {displayAccounts.length > 0 && (
-        <section className="section">
-          <div className="section__head">
-            <div className="row-flex">
-              <h2 className="section__title">Rekening</h2>
-              <span className="section__meta">{displayAccounts.length} akun</span>
+        <section className="section mb-10">
+          <div className="section__head mb-4 border-b border-ink-100 pb-2">
+            <div className="flex items-baseline gap-3">
+              <h2 className="text-xl font-bold text-ink-000">Rekening & Saldo</h2>
+              <span className="text-xs font-mono text-ink-400 uppercase tracking-wider">{displayAccounts.length} accounts</span>
             </div>
           </div>
-          <div className="accounts-grid" style={{ gridTemplateColumns: `repeat(${Math.min(displayAccounts.length, 4)}, 1fr)`}}>
-            {displayAccounts.map((acc: any, i: number) => (
-              <div className="account" key={acc._id || i}>
-                <div className="account__row">
-                  <div className="account__bank">{acc.bank}</div>
-                  <div className="account__type">{acc.type || "Rekening"}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {displayAccounts.map((acc: { _id: string, bank: string, type: string, balance: number, holder: string }, i: number) => (
+              <div className="group bg-white p-5 rounded-xl border border-ink-100 shadow-sm hover:border-accent-300 hover:shadow-md transition-all cursor-default" key={acc._id || i}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-ink-400 group-hover:text-accent-700 transition-colors">{acc.bank}</div>
+                  <div className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-ink-050 text-ink-500 border border-ink-100 uppercase tracking-tighter">{acc.type || "Vault"}</div>
                 </div>
-                <div className="account__amount">{formatRupiah(acc.balance || 0)}</div>
-                <div className="account__holder">
+                <div className="text-xl font-bold font-mono text-ink-000 mb-1 tracking-tight">
+                  {formatRupiah(acc.balance || 0)}
+                </div>
+                <div className="text-[11px] font-medium text-ink-500 truncate opacity-80 group-hover:opacity-100">
                   {acc.holder && String(acc.holder).includes("Terpakai") 
                     ? acc.holder 
                     : `a.n. ${formatRequestorName(acc.holder)}`}
@@ -244,30 +249,43 @@ export default async function DashboardPage() {
       )}
 
       {/* Two-column: pipeline + kewajiban */}
-      <section className="section">
-        <div className="split-2">
+      <section className="section mb-10">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Transfer pipeline */}
-          <div>
-            <div className="section__head">
-              <div className="row-flex">
-                <h2 className="section__title">Pipeline Transfer Masuk</h2>
-                <span className="section__meta">{pendingTransfers.pending.length} lokasi · {formatRupiah(pendingTransfers.totalExpected)}</span>
+          <div className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-ink-050 bg-ink-025/30 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-ink-000">Pipeline Transfer Masuk</h3>
+                <p className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">
+                  {pendingTransfers.pending.length} lokasi · {formatRupiah(pendingTransfers.totalExpected)}
+                </p>
               </div>
-              <Link className="section__link" href="/sewa">Sewa <ArrowRight className="w-3 h-3 ml-1"/></Link>
+              <Link href="/sewa" className="text-xs font-bold text-accent-700 hover:text-accent-900 flex items-center gap-1 transition-colors">
+                Kelola <ArrowRight className="w-3 h-3"/>
+              </Link>
             </div>
-            <div className="pipe-list">
+            <div className="divide-y divide-ink-050">
               {pendingTransfers.pending.length === 0 ? (
-                <div className="p-4 text-center text-sm text-ink-500">Tidak ada transfer masuk yang tertunda.</div>
+                <div className="p-8 text-center text-sm text-ink-400 italic">Tidak ada transfer masuk yang tertunda.</div>
               ) : (
                 pendingTransfers.pending.slice(0, 5).map((loc) => (
-                  <div className="pipe-item" key={loc.code}>
-                    <span className="pipe-code">{loc.code}</span>
-                    <span className="pipe-via">via {formatRequestorName(loc.pipeline?.holder)}</span>
-                    <span className="pipe-stage" style={{ color: "var(--warn-700)" }}>
-                      <span className="pipe-stage__dot" style={{ background: "var(--warn-500)" }}></span>
-                      Belum Diterima
-                    </span>
-                    <span className="pipe-amount">{formatRupiah(loc.pipeline?.expected_amount ?? loc.amount ?? 0)}</span>
+                  <div className="p-4 flex items-center justify-between hover:bg-ink-025 transition-colors" key={loc.code}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-accent-050 flex items-center justify-center text-accent-700 font-mono font-bold text-xs">
+                        {loc.code.substring(0, 2)}
+                      </div>
+                      <div>
+                        <div className="font-bold text-ink-000 text-sm">{loc.code}</div>
+                        <div className="text-xs text-ink-400">via {formatRequestorName(loc.pipeline?.holder)}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono font-bold text-ink-000 text-sm">{formatRupiah(loc.pipeline?.expected_amount ?? loc.amount ?? 0)}</div>
+                      <div className="flex items-center justify-end gap-1.5 mt-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-warn-500"></span>
+                        <span className="text-[10px] font-bold uppercase text-warn-700 tracking-tighter">Belum Diterima</span>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
@@ -275,29 +293,40 @@ export default async function DashboardPage() {
           </div>
 
           {/* Kewajiban breakdown */}
-          <div>
-            <div className="section__head">
-              <div className="row-flex">
-                <h2 className="section__title">Kewajiban</h2>
-                <span className="section__meta">Outstanding</span>
+          <div className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-ink-050 bg-ink-025/30 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-ink-000">Breakdown Kewajiban</h3>
+                <p className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">Outstanding Liabilities</p>
               </div>
-              <Link className="section__link" href="/laporan-op">Detail <ArrowRight className="w-3 h-3 ml-1"/></Link>
+              <Link href="/laporan-op" className="text-xs font-bold text-accent-700 hover:text-accent-900 flex items-center gap-1 transition-colors">
+                Laporan <ArrowRight className="w-3 h-3"/>
+              </Link>
             </div>
-            <div className="kewajiban-list">
+            <div className="p-5 space-y-4">
               {kewajibanRowsData.length === 0 ? (
-                <div className="p-4 text-center text-sm text-ink-500">Tidak ada kewajiban.</div>
+                <div className="p-4 text-center text-sm text-ink-400 italic">Tidak ada kewajiban.</div>
               ) : (
                 <>
-                  {kewajibanRowsData.map((row) => (
-                    <div className="kewajiban-row" key={row.label}>
-                      <span className="kewajiban-row__label">{row.label}</span>
-                      <span className="kewajiban-row__share">{((row.amount / totalKewajiban) * 100).toFixed(1)}%</span>
-                      <span className="kewajiban-row__amount">{formatRupiah(row.amount)}</span>
-                    </div>
-                  ))}
-                  <div className="kewajiban-total">
-                    <span className="kewajiban-total__label">Total Kewajiban</span>
-                    <span>{formatRupiah(totalKewajiban)}</span>
+                  <div className="space-y-2">
+                    {kewajibanRowsData.map((row) => (
+                      <div className="flex items-center justify-between py-2 group" key={row.label}>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-ink-700 group-hover:text-ink-900 transition-colors">{row.label}</span>
+                          <div className="w-32 h-1 bg-ink-050 rounded-full mt-1 overflow-hidden">
+                            <div className="h-full bg-neg-500 opacity-30 group-hover:opacity-60 transition-all" style={{ width: `${(row.amount / totalKewajiban) * 100}%` }}></div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-mono font-bold text-neg-700">{formatRupiah(row.amount)}</div>
+                          <div className="text-[10px] font-mono text-ink-400">{((row.amount / totalKewajiban) * 100).toFixed(1)}% share</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-4 border-t border-ink-100 flex items-center justify-between">
+                    <span className="font-bold text-ink-000 uppercase text-xs tracking-widest">Total Kewajiban</span>
+                    <span className="font-mono font-bold text-xl text-neg-700">{formatRupiah(totalKewajiban)}</span>
                   </div>
                 </>
               )}
@@ -307,48 +336,52 @@ export default async function DashboardPage() {
       </section>
 
       {/* Sewa locations */}
-      <section className="section">
-        <div className="section__head">
-          <div className="row-flex">
-            <h2 className="section__title">Sewa Dapur</h2>
-            <span className="badge badge--outline">
-              <span className="badge__dot" style={{ color: "var(--pos-500)" }}></span>
-              {activeCount}/{sewaLocations.length} aktif
-            </span>
-            <span className="section__meta">{formatRupiah(sewaTotal)}</span>
+      <section className="section mb-10">
+        <div className="section__head mb-4 flex items-baseline justify-between border-b border-ink-100 pb-2">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-ink-000">Sewa Dapur</h2>
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-pos-050 border border-pos-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-pos-500 animate-pulse"></span>
+              <span className="text-[10px] font-bold text-pos-700 uppercase tracking-tighter">{activeCount}/{sewaLocations.length} Aktif</span>
+            </div>
+            <span className="text-xs font-mono font-bold text-ink-400">{formatRupiah(sewaTotal)}</span>
           </div>
-          <Link className="section__link" href="/sewa">Buka Sewa <ArrowRight className="w-3 h-3 ml-1"/></Link>
+          <Link href="/sewa" className="text-xs font-bold text-accent-700 hover:text-accent-900 flex items-center gap-1 transition-colors">
+            Detail Sewa <ArrowRight className="w-3 h-3"/>
+          </Link>
         </div>
-        <div className="sewa-grid">
-          {/* Group into regions if possible. The dashboard code didn't have regions, so we will just spread them evenly into 3 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 rounded-xl border border-ink-100 bg-white overflow-hidden shadow-sm">
           {[0, 1, 2].map((colIndex) => {
             const itemsPerCol = Math.ceil(sewaLocations.length / 3);
             const items = sewaLocations.slice(colIndex * itemsPerCol, (colIndex + 1) * itemsPerCol);
             if (items.length === 0) return null;
             
             return (
-              <div className="sewa-region" key={colIndex}>
-                <div className="sewa-region__head">
-                  <span className="sewa-region__name">Lokasi {colIndex + 1}</span>
-                  <span className="sewa-region__total">
+              <div className={cn("p-5", colIndex < 2 && "border-r border-ink-050")} key={colIndex}>
+                <div className="flex items-center justify-between mb-4 border-b border-ink-050 pb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink-400">Cluster {colIndex + 1}</span>
+                  <span className="font-mono text-[10px] font-bold text-ink-500">
                     {formatRupiah(items.reduce((acc, loc) => acc + (loc.amount || 0), 0))}
                   </span>
                 </div>
-                {items.map((loc) => {
-                  const isPending = loc.status === "hold";
-                  const isActive = loc.status === "active";
-                  const statusClass = isActive ? "sewa-loc__status--active" : isPending ? "sewa-loc__status--pending" : "sewa-loc__status--inactive";
-                  
-                  return (
-                    <div className={cn("sewa-loc", isActive && "sewa-loc--active")} key={loc.code}>
-                      <span className="sewa-loc__code">{loc.code}</span>
-                      <span className={cn("sewa-loc__status", statusClass)}>
-                        <span className="sewa-loc__status-dot"></span>
-                        {loc.status}
-                      </span>
-                    </div>
-                  )
-                })}
+                <div className="space-y-1">
+                  {items.map((loc) => {
+                    const isPending = loc.status === "hold";
+                    const isActive = loc.status === "active";
+
+                    return (
+                      <div className={cn("flex items-center justify-between p-2 rounded-lg transition-colors group", isActive ? "hover:bg-pos-050/30" : "hover:bg-ink-025")} key={loc.code}>
+                        <span className={cn("text-sm font-bold", isActive ? "text-ink-900" : "text-ink-400")}>{loc.code}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={cn("text-[9px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100", isActive ? "text-pos-700" : isPending ? "text-warn-700" : "text-ink-300")}>
+                            {loc.status}
+                          </span>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-pos-500" : isPending ? "bg-warn-500" : "bg-ink-200")}></span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             );
           })}
@@ -356,33 +389,38 @@ export default async function DashboardPage() {
       </section>
 
       {/* Recent activity */}
-      <section className="section">
-        <div className="section__head">
-          <div className="row-flex">
-            <h2 className="section__title">Aktivitas Terbaru</h2>
-            <span className="section__meta">Aktivitas terakhir</span>
+      <section className="section mb-10">
+        <div className="section__head mb-4 border-b border-ink-100 pb-2 flex items-baseline justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-ink-000">Aktivitas Terbaru</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-ink-400">Live Feed</span>
           </div>
+          <Link href="/aktivitas" className="text-xs font-bold text-accent-700 hover:text-accent-900 flex items-center gap-1 transition-colors">
+            Semua Aktivitas <ArrowRight className="w-3 h-3"/>
+          </Link>
         </div>
-        <div className="panel" style={{ padding: 0 }}>
+        <div className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="ledger">
+            <table className="ledger w-full">
               <thead>
-                <tr>
-                  <th style={{ width: 100 }}>Tanggal</th>
-                  <th>Keterangan</th>
-                  <th>Kategori</th>
-                  <th className="num" style={{ width: 140 }}>Nominal</th>
+                <tr className="bg-ink-025/50">
+                  <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-ink-400">Tanggal</th>
+                  <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-ink-400">Keterangan</th>
+                  <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-ink-400">Kategori</th>
+                  <th className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-ink-400">Nominal</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-ink-050">
                 {activities.map((act) => (
-                  <tr key={act._id}>
-                    <td className="num">{formatDateShort(act.date)}</td>
-                    <td>{act.title}</td>
-                    <td>
-                      <span className="badge badge--outline">{act.category}</span>
+                  <tr className="hover:bg-ink-025/50 transition-colors" key={act._id}>
+                    <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-ink-500">{formatDateShort(act.date)}</td>
+                    <td className="px-6 py-4 font-medium text-ink-900 text-sm">{act.title}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-0.5 rounded-full bg-ink-050 text-ink-500 text-[10px] font-bold uppercase tracking-tighter border border-ink-100">
+                        {act.category}
+                      </span>
                     </td>
-                    <td className={cn("num", (act.amount ?? 0) > 0 ? "text-pos" : "text-neg")}>
+                    <td className={cn("px-6 py-4 text-right font-mono font-bold text-sm", (act.amount ?? 0) > 0 ? "text-pos-700" : "text-neg-700")}>
                       {(act.amount ?? 0) > 0 ? "+" : "−"}{formatRupiah(Math.abs(act.amount ?? 0))}
                     </td>
                   </tr>
