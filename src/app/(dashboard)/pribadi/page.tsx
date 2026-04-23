@@ -97,7 +97,7 @@ export default async function PribadiPage() {
           </div>
           <Link className="section__link" href="#">Riwayat pinjaman <ArrowRight className="w-3 h-3 ml-1"/></Link>
         </div>
-        <div className="loan-track" style={{ gridTemplateColumns: `repeat(${Math.max(1, data.loans.length)}, 1fr)` }}>
+        <div className="loan-track">
           {data.loans.map((loan, idx) => {
             const schedule = loan.schedule ?? [];
             const remaining = schedule.filter((s) => s.status !== "lunas");

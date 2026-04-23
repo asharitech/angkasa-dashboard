@@ -17,7 +17,7 @@ export function PageHeader({
   icon?: React.ElementType;
 }) {
   return (
-    <div className={cn("page-head border-b-2 border-ink-000 pb-6 mb-8 items-center", className)}>
+    <div className={cn("page-head border-b-2 border-ink-000 pb-6 mb-8 flex-col items-start gap-4 sm:flex-row sm:items-end", className)}>
       <div className="space-y-1">
         {eyebrow && (
           <div className="t-eyebrow text-accent-700 font-bold tracking-widest uppercase text-[10px] mb-1">
