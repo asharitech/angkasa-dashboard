@@ -5,12 +5,12 @@ import { validateObligation, validateEntry } from "./validate";
 
 export async function getNumpang(): Promise<Numpang[]> {
   const db = await getDb();
-  return db.collection("numpang").find({}).sort({ amount: -1 }).toArray() as unknown as Numpang[];
+  return serializeDates(await db.collection("numpang").find({}).sort({ amount: -1 }).toArray() as unknown as Numpang[]);
 }
 
 export async function getNumpangActive(): Promise<Numpang[]> {
   const db = await getDb();
-  return db.collection("numpang").find({ status: "active" }).sort({ amount: -1 }).toArray() as unknown as Numpang[];
+  return serializeDates(await db.collection("numpang").find({ status: "active" }).sort({ amount: -1 }).toArray() as unknown as Numpang[]);
 }
 
 export async function computeBriKas(): Promise<{ briBalance: number; numpangTotal: number; briKas: number }> {
@@ -21,42 +21,50 @@ export async function computeBriKas(): Promise<{ briBalance: number; numpangTota
   ]);
   const briBalance = (bri as unknown as Account)?.balance ?? 0;
   const numpangTotal = numpang.reduce((s, n) => s + n.amount, 0);
-  return { briBalance, numpangTotal, briKas: briBalance - numpangTotal };
+  return serializeDates({ briBalance, numpangTotal, briKas: briBalance - numpangTotal });
 }
 
 export async function getAccounts(): Promise<Account[]> {
   const db = await getDb();
-  return db.collection("accounts").find().toArray() as unknown as Account[];
+  return serializeDates(await db.collection("accounts").find().toArray() as unknown as Account[]);
 }
 
 export async function getLedger(type: string, current = true): Promise<Ledger | null> {
   const db = await getDb();
-  return db.collection("ledgers").findOne({
+  return serializeDates(await db.collection("ledgers").findOne({
     type,
     is_current: current,
-  }) as unknown as Ledger | null;
+  }) as unknown as Ledger | null);
 }
 
 export async function getLedgerByCode(type: string, period_code: string): Promise<Ledger | null> {
   const db = await getDb();
-  return db.collection("ledgers").findOne({
+  return serializeDates(await db.collection("ledgers").findOne({
     type,
     period_code,
-  }) as unknown as Ledger | null;
+  }) as unknown as Ledger | null);
 }
 
 export async function getAllLedgers(): Promise<Ledger[]> {
   const db = await getDb();
-  return db.collection("ledgers").find({ is_current: true }).toArray() as unknown as Ledger[];
+  return serializeDates(await db.collection("ledgers").find({ is_current: true }).toArray() as unknown as Ledger[]);
 }
 
 export async function getObligations(filter: Record<string, unknown> = {}): Promise<Obligation[]> {
   const db = await getDb();
-  return db
+  const docs = await db
     .collection("obligations")
     .find(filter)
     .sort({ month: 1, created_at: -1 })
-    .toArray() as unknown as Obligation[];
+    .toArray();
+
+  return docs.map((d) => ({
+    ...d,
+    _id: d._id.toString(),
+    created_at: d.created_at instanceof Date ? d.created_at.toISOString() : d.created_at,
+    updated_at: d.updated_at instanceof Date ? d.updated_at.toISOString() : d.updated_at,
+    resolved_at: d.resolved_at instanceof Date ? d.resolved_at.toISOString() : d.resolved_at,
+  })) as unknown as Obligation[];
 }
 
 export async function getObligationById(id: string): Promise<Obligation | null> {
@@ -95,12 +103,12 @@ export async function createObligation(data: Record<string, unknown>): Promise<s
 
 export async function getEntries(filter: Record<string, unknown> = {}, limit = 50): Promise<Entry[]> {
   const db = await getDb();
-  return db
+  return serializeDates(await db
     .collection("entries")
     .find(filter)
     .sort({ date: -1 })
     .limit(limit)
-    .toArray() as unknown as Entry[];
+    .toArray() as unknown as Entry[]);
 }
 
 export async function createEntry(data: Record<string, unknown>): Promise<string> {
@@ -133,14 +141,18 @@ export async function updateAccount(id: string, data: Record<string, unknown>): 
 // "Objects with toJSON are not supported" errors from Next.js serialization.
 function serializeDates<T>(obj: T): T {
   if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) return obj.toISOString().slice(0, 10) as unknown as T;
+  if (obj instanceof Date) return obj.toISOString() as unknown as T;
+  // Handle MongoDB ObjectId
+  if (typeof obj === 'object' && obj.constructor && obj.constructor.name === 'ObjectId') {
+    return obj.toString() as unknown as T;
+  }
   if (Array.isArray(obj)) return obj.map(serializeDates) as unknown as T;
   if (typeof obj === "object") {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       result[key] = serializeDates(value);
     }
-    return result as T;
+    return result as unknown as T;
   }
   return obj;
 }
@@ -463,11 +475,11 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
 
 export async function getSewaHistory(): Promise<Ledger[]> {
   const db = await getDb();
-  return db
+  return serializeDates(await db
     .collection("ledgers")
     .find({ type: "sewa" })
     .sort({ updated_at: -1 })
-    .toArray() as unknown as Ledger[];
+    .toArray() as unknown as Ledger[]);
 }
 
 export async function getSewaDanaUsage(tahap?: string) {
