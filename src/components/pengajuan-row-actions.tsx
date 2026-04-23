@@ -16,6 +16,7 @@ import { PengajuanForm } from "./pengajuan-form";
 import { MarkLunasForm } from "./mark-lunas-form";
 import { deleteObligationAction } from "@/lib/actions/obligations";
 import type { Obligation, Account } from "@/lib/types";
+import { idString } from "@/lib/utils";
 
 type DialogKind = "edit" | "delete" | "lunas" | null;
 
@@ -43,7 +44,7 @@ export function PengajuanRowActions({
   function confirmDelete() {
     setError(null);
     start(async () => {
-      const result = await deleteObligationAction(obligation._id);
+      const result = await deleteObligationAction(idString(obligation._id));
       if ("error" in result) {
         setError(result.error);
         return;

@@ -1,51 +1,62 @@
 import { getDb } from "@/lib/mongodb";
-import type { Account, Entry, Obligation } from "@/lib/types";
-import type { Filter, Document } from "mongodb";
+import { dbCollections } from "@/lib/db/collections";
+import type { EntryDoc, ObligationDoc } from "@/lib/db/schema";
+import type { Account, Obligation } from "@/lib/types";
+import type { Filter } from "mongodb";
+
+/** Rows for dana-cash table (serialized _id for RSC). */
+export type DanaCashPengeluaranRow = {
+  _id: string;
+  date: string;
+  description: string;
+  amount: number;
+};
 
 export async function getDanaCashSummary(opts: { period?: string } = {}) {
   const db = await getDb();
+  const c = dbCollections(db);
 
-  const entryFilter: Record<string, unknown> = { account: "cash_yayasan", direction: "out" };
-  if (opts.period) entryFilter.month = opts.period;
+  const entryFilter: Filter<EntryDoc> = {
+    account: "cash_yayasan",
+    direction: "out",
+    ...(opts.period ? { month: opts.period } : {}),
+  };
 
-  const [account, pengeluaran, totalAgg, pengajuan] = await Promise.all([
-    // Saldo cash yayasan
-    db.collection("accounts").findOne({ _id: "cash_yayasan" } as unknown as Filter<Document>) as unknown as Promise<Account | null>,
+  const [account, pengeluaranRaw, totalAgg, pengajuan] = await Promise.all([
+    c.accounts.findOne({ _id: "cash_yayasan" }),
 
-    // Pengeluaran dari cash_yayasan (optionally filtered by bulan)
-    db
-      .collection("entries")
-      .find(entryFilter as Filter<Document>)
-      .sort({ date: -1 })
-      .toArray() as unknown as Promise<Entry[]>,
+    c.entries.find(entryFilter).sort({ date: -1 }).toArray(),
 
-    // All-time total terpakai — derived from sum(out entries) so cash injections don't flip sign.
-    db
-      .collection("entries")
-      .aggregate([
+    c.entries
+      .aggregate<{ total: number }>([
         { $match: { account: "cash_yayasan", direction: "out" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ])
-      .toArray() as unknown as Promise<{ total: number }[]>,
+      .toArray(),
 
-    // Pengajuan yang bersumber dari cash_yayasan (bulan berjalan)
-    db
-      .collection("obligations")
-      .find({ sumber_dana: "CASH_YAYASAN", status: "pending" } as Filter<Document>)
+    c.obligations
+      .find({ sumber_dana: "CASH_YAYASAN", status: "pending" } satisfies Filter<ObligationDoc>)
       .sort({ created_at: -1 })
-      .toArray() as unknown as Promise<Obligation[]>,
+      .toArray(),
   ]);
 
-  const saldoAwal = (account as unknown as { meta?: { initial_amount?: number } })?.meta?.initial_amount ?? 0;
-  const saldoSisa = (account as unknown as { balance?: number })?.balance ?? 0;
+  const pengeluaran: DanaCashPengeluaranRow[] = pengeluaranRaw.map((e) => ({
+    _id: typeof e._id === "string" ? e._id : e._id.toString(),
+    date: e.date,
+    description: e.description,
+    amount: e.amount,
+  }));
+
+  const saldoAwal = Number(account?.meta?.initial_amount ?? 0) || 0;
+  const saldoSisa = account?.balance ?? 0;
   const totalTerpakai = totalAgg[0]?.total ?? 0;
 
   return {
-    account: account as unknown as Account,
+    account: account as Account | null,
     saldoAwal,
     saldoSisa,
     totalTerpakai,
-    pengeluaran: pengeluaran as unknown as Entry[],
+    pengeluaran,
     pengajuan: pengajuan as unknown as Obligation[],
   };
 }

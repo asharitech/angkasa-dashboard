@@ -35,7 +35,7 @@ import {
   FileImage,
   FileSpreadsheet,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 
 export const KATEGORI_DOC_CONFIG: Record<
   DocKategori,
@@ -256,6 +256,7 @@ export interface DocumentDoc {
 // ─── Row Actions ──────────────────────────────────────────────────────────────
 
 export function DocumentRowActions({ doc }: { doc: DocumentDoc }) {
+  const docId = idString(doc._id);
   const [pending, startTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -266,7 +267,7 @@ export function DocumentRowActions({ doc }: { doc: DocumentDoc }) {
     const form = new FormData(e.currentTarget);
     setError(null);
     startTransition(async () => {
-      const res = await updateDocumentAction(doc._id, {
+      const res = await updateDocumentAction(docId, {
         judul: form.get("judul") as string,
         kategori: form.get("kategori") as DocKategori,
         keterangan: (form.get("keterangan") as string) || null,
@@ -278,7 +279,7 @@ export function DocumentRowActions({ doc }: { doc: DocumentDoc }) {
 
   function handleDelete() {
     startTransition(async () => {
-      await deleteDocumentAction(doc._id);
+      await deleteDocumentAction(docId);
       setDeleteOpen(false);
     });
   }

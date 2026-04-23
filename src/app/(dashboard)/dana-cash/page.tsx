@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDanaCashSummary } from "@/lib/dana-cash";
+import { getDanaCashSummary, type DanaCashPengeluaranRow } from "@/lib/dana-cash";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";
@@ -19,8 +19,6 @@ import {
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-type Pengeluaran = { _id: string; date: string; description: string; amount: number };
 
 export default async function DanaCashPage({
   searchParams,
@@ -93,7 +91,7 @@ export default async function DanaCashPage({
         }
         bodyClassName="px-0 md:px-4"
       >
-        <DataTable<Pengeluaran>
+        <DataTable<DanaCashPengeluaranRow>
           minWidth={520}
           rows={pengeluaran}
           rowKey={(r) => r._id}

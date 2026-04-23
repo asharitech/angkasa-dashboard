@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, CheckCircle2, Clock, CalendarDays, Bell, AlertCircle, Calendar } from "lucide-react";
 import { monthLabel } from "@/lib/periods";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
       const defaultAccount = yayasanAccounts[0]?._id || "btn_yayasan";
       const today = new Date().toISOString().slice(0, 10);
       await markLunasAction({
-        obligationId: item._id as string,
+        obligationId: idString(item._id),
         account: defaultAccount,
         date: today,
         amount: item.amount ?? 0,
@@ -80,7 +80,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
     if (!isAdmin || !isLunas) return;
     setMarking(true);
     try {
-      await unmarkLunasAction(item._id);
+      await unmarkLunasAction(idString(item._id));
       router.refresh();
     } finally {
       setMarking(false);

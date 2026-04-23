@@ -19,6 +19,7 @@ import {
   type PengajuanInput,
 } from "@/lib/actions/obligations";
 import type { Obligation } from "@/lib/types";
+import { idString } from "@/lib/utils";
 
 const SUMBER_DANA_OPTIONS = [
   { value: "BRI_ANGKASA", label: "BRI Angkasa" },
@@ -91,7 +92,7 @@ export function PengajuanForm({
 
     start(async () => {
       const result = isEdit
-        ? await updateObligationAction(obligation!._id, payload)
+        ? await updateObligationAction(idString(obligation!._id), payload)
         : await createObligationAction(payload);
       if ("error" in result) {
         setError(result.error);

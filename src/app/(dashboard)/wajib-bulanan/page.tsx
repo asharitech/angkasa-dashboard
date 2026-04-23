@@ -12,7 +12,7 @@ import { WajibBulananCreateButton } from "@/components/wajib-bulanan-actions";
 import { Badge } from "@/components/ui/badge";
 import { toneBadge } from "@/lib/colors";
 import { MeterBarLabeled } from "@/components/meter-bar";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, Clock, Wallet, ListChecks, AlertCircle, RotateCcw } from "lucide-react";
 import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
 import type { Obligation } from "@/lib/types";
@@ -88,7 +88,7 @@ function CategoryGroup({
       <div className="divide-y divide-border/60 border-y border-border/60">
         {items.map((item, idx) => (
           <WajibBulananRow
-            key={item._id}
+            key={idString(item._id)}
             item={item}
             index={idx}
             isAdmin={isAdmin}

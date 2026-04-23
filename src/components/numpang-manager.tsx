@@ -37,15 +37,8 @@ import {
   type NumpangInput,
 } from "@/lib/actions/numpang";
 import { formatRupiah } from "@/lib/format";
-
-interface NumpangLite {
-  _id: string;
-  description: string;
-  amount: number;
-  parked_in?: string;
-  status?: "active" | "settled";
-  notes?: string;
-}
+import type { Numpang } from "@/lib/types";
+import { idString } from "@/lib/utils";
 
 const PARKED_IN_OPTIONS = [
   { value: "bri_angkasa", label: "BRI Angkasa" },
@@ -57,7 +50,7 @@ function NumpangForm({
   onSuccess,
   onCancel,
 }: {
-  numpang?: NumpangLite | null;
+  numpang?: Numpang | null;
   onSuccess: () => void;
   onCancel: () => void;
 }) {
@@ -93,7 +86,7 @@ function NumpangForm({
 
     start(async () => {
       const result = isEdit
-        ? await updateNumpangAction(numpang!._id, payload)
+        ? await updateNumpangAction(idString(numpang!._id), payload)
         : await createNumpangAction(payload);
       if ("error" in result) {
         setError(result.error);
@@ -196,7 +189,7 @@ export function NumpangCreateButton() {
   );
 }
 
-export function NumpangRowActions({ numpang }: { numpang: NumpangLite }) {
+export function NumpangRowActions({ numpang }: { numpang: Numpang }) {
   const router = useRouter();
   const [open, setOpen] = useState<"edit" | "delete" | "settle" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -292,7 +285,7 @@ export function NumpangRowActions({ numpang }: { numpang: NumpangLite }) {
               Batal
             </Button>
             <Button
-              onClick={() => runAction(() => settleNumpangAction(numpang._id))}
+              onClick={() => runAction(() => settleNumpangAction(idString(numpang._id)))}
               disabled={pending}
             >
               {pending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
@@ -329,7 +322,7 @@ export function NumpangRowActions({ numpang }: { numpang: NumpangLite }) {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => runAction(() => deleteNumpangAction(numpang._id))}
+              onClick={() => runAction(() => deleteNumpangAction(idString(numpang._id)))}
               disabled={pending}
             >
               {pending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}

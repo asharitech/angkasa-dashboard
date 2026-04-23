@@ -13,7 +13,7 @@ import { PengajuanCreateButton } from "@/components/pengajuan-row-actions";
 import { PengajuanAccordionRow } from "@/components/pengajuan-accordion";
 import { Badge } from "@/components/ui/badge";
 import { toneBadge } from "@/lib/colors";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 import { ListSectionTitle } from "@/components/list-section-title";
 import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
 import type { Obligation, Account } from "@/lib/types";
@@ -105,7 +105,7 @@ function RequestorGroup({
             <div className="divide-y divide-border/60 border-y border-border/60">
               {rows.map(({ o, globalIdx }) => (
                 <PengajuanAccordionRow
-                  key={o._id}
+                  key={idString(o._id)}
                   o={o}
                   index={globalIdx}
                   isAdmin={isAdmin}

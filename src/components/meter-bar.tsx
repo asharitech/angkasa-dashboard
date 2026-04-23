@@ -62,8 +62,8 @@ export function MeterBarLabeled({
 
 /** Fill color classes for agenda-style completion ratio (0–100). */
 export function agendaMeterFillClass(percent: number): string {
-  if (percent === 100) return "bg-emerald-500";
-  if (percent >= 60) return "bg-blue-500";
-  if (percent >= 30) return "bg-amber-400";
-  return "bg-rose-500";
+  if (percent === 100) return "bg-success";
+  if (percent >= 60) return "bg-info";
+  if (percent >= 30) return "bg-warning";
+  return "bg-destructive";
 }

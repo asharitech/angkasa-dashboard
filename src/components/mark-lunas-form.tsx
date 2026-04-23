@@ -15,6 +15,7 @@ import { Loader2 } from "lucide-react";
 import { markLunasAction } from "@/lib/actions/obligations";
 import { formatRupiah } from "@/lib/format";
 import type { Obligation, Account } from "@/lib/types";
+import { idString } from "@/lib/utils";
 
 const DANA_SUMBER_OPTIONS = [
   { value: "", label: "— (Operasional umum)" },
@@ -76,7 +77,7 @@ export function MarkLunasForm({
 
     start(async () => {
       const result = await markLunasAction({
-        obligationId: obligation._id,
+        obligationId: idString(obligation._id),
         account: form.account,
         date: form.date,
         amount,

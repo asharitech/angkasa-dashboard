@@ -66,7 +66,7 @@ export default async function DuplikatPage({
               <ul className="divide-y divide-border/60">
                 {group.entries.map((e) => (
                   <li
-                    key={e._id}
+                    key={typeof e._id === "string" ? e._id : e._id.toString()}
                     className="py-2.5 text-sm"
                   >
                     <div className="flex items-start justify-between gap-2">

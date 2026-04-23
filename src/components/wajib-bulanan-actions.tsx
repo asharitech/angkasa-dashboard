@@ -17,6 +17,7 @@ import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { createObligationAction, updateObligationAction, deleteObligationAction } from "@/lib/actions/obligations";
 import { useRouter } from "next/navigation";
 import type { Obligation, DetailItem } from "@/lib/types";
+import { idString } from "@/lib/utils";
 
 export function WajibBulananCreateButton() {
   const [open, setOpen] = useState(false);
@@ -163,6 +164,7 @@ export function WajibBulananCreateButton() {
 }
 
 export function WajibBulananEditButton({ item }: { item: Obligation }) {
+  const itemId = idString(item._id);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [details, setDetails] = useState<DetailItem[]>(item.detail || []);
@@ -181,7 +183,7 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
     const month = formData.get("month") as string;
 
     try {
-      await updateObligationAction(item._id, {
+      await updateObligationAction(itemId, {
         item: itemName,
         amount,
         category: category || "umum",
@@ -224,9 +226,9 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor={`item-${item._id}`}>Nama Item</Label>
+            <Label htmlFor={`item-${itemId}`}>Nama Item</Label>
             <Input 
-              id={`item-${item._id}`} 
+              id={`item-${itemId}`} 
               name="item" 
               defaultValue={item.item}
               required 
@@ -234,9 +236,9 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor={`amount-${item._id}`}>Nominal Total (Rp)</Label>
+            <Label htmlFor={`amount-${itemId}`}>Nominal Total (Rp)</Label>
             <Input 
-              id={`amount-${item._id}`} 
+              id={`amount-${itemId}`} 
               name="amount" 
               type="number" 
               defaultValue={item.amount || 0}
@@ -245,9 +247,9 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor={`category-${item._id}`}>Kelompok/Kategori</Label>
+            <Label htmlFor={`category-${itemId}`}>Kelompok/Kategori</Label>
             <Input 
-              id={`category-${item._id}`} 
+              id={`category-${itemId}`} 
               name="category" 
               defaultValue={item.category || ""}
             />
@@ -255,9 +257,9 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor={`due_day-${item._id}`}>Tanggal Jatuh Tempo</Label>
+              <Label htmlFor={`due_day-${itemId}`}>Tanggal Jatuh Tempo</Label>
               <Input 
-                id={`due_day-${item._id}`} 
+                id={`due_day-${itemId}`} 
                 name="due_day" 
                 type="number" 
                 min={1} 
@@ -266,9 +268,9 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`reminder_days-${item._id}`}>Reminder (H-)</Label>
+              <Label htmlFor={`reminder_days-${itemId}`}>Reminder (H-)</Label>
               <Input 
-                id={`reminder_days-${item._id}`} 
+                id={`reminder_days-${itemId}`} 
                 name="reminder_days" 
                 type="number" 
                 min={0}
@@ -278,9 +280,9 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor={`month-${item._id}`}>Bulan (Opsional)</Label>
+            <Label htmlFor={`month-${itemId}`}>Bulan (Opsional)</Label>
             <Input 
-              id={`month-${item._id}`} 
+              id={`month-${itemId}`} 
               name="month" 
               type="month"
               defaultValue={item.month || ""}
@@ -344,7 +346,7 @@ export function WajibBulananDeleteButton({ item }: { item: Obligation }) {
   async function handleDelete() {
     setDeleting(true);
     try {
-      await deleteObligationAction(item._id);
+      await deleteObligationAction(idString(item._id));
       setOpen(false);
       router.refresh();
     } finally {

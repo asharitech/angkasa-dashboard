@@ -5,7 +5,7 @@ export function TransactionIcon({ direction }: { direction: string }) {
   return (
     <div
       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-        isOut ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500"
+        isOut ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success"
       }`}
     >
       {isOut ? (
@@ -30,7 +30,7 @@ export function AmountText({
   return (
     <span
       className={`text-base font-bold tabular-nums shrink-0 ${
-        isOut ? "text-rose-600" : "text-emerald-600"
+        isOut ? "text-destructive" : "text-success"
       }`}
     >
       {isOut ? "-" : "+"}

@@ -37,7 +37,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 
 function AgendaForm({
   defaultValues,
@@ -200,6 +200,7 @@ export interface AgendaDoc {
 // ─── Row Actions ──────────────────────────────────────────────────────────────
 
 export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
+  const agendaId = idString(agenda._id);
   const [pending, startTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -207,7 +208,7 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
 
   function handleToggle() {
     startTransition(async () => {
-      await toggleAgendaStatusAction(agenda._id, agenda.status);
+      await toggleAgendaStatusAction(agendaId, agenda.status);
     });
   }
 
@@ -223,7 +224,7 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
     };
     setError(null);
     startTransition(async () => {
-      const res = await updateAgendaAction(agenda._id, patch);
+      const res = await updateAgendaAction(agendaId, patch);
       if ("error" in res) setError(res.error);
       else setEditOpen(false);
     });
@@ -231,7 +232,7 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
 
   function handleDelete() {
     startTransition(async () => {
-      await deleteAgendaAction(agenda._id);
+      await deleteAgendaAction(agendaId);
       setDeleteOpen(false);
     });
   }

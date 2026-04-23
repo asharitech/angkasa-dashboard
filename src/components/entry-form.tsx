@@ -15,6 +15,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { createEntryAction, updateEntryAction, type EntryInput } from "@/lib/actions/entries";
 import type { Entry, Account } from "@/lib/types";
+import { idString } from "@/lib/utils";
 
 const COMMON_CATEGORIES = [
   "konsumsi",
@@ -110,7 +111,7 @@ export function EntryForm({
 
     start(async () => {
       const result = isEdit
-        ? await updateEntryAction(entry!._id, payload)
+        ? await updateEntryAction(idString(entry!._id), payload)
         : await createEntryAction(payload);
       if ("error" in result) {
         setError(result.error);

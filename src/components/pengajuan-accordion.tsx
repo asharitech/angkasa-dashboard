@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { BuktiButton } from "@/components/bukti-button";
@@ -148,7 +148,7 @@ export function PengajuanAccordionRow({
               {isAdmin && (
                 <div className="flex items-center gap-1">
                   <BuktiButton
-                    obligationId={o._id}
+                    obligationId={idString(o._id)}
                     buktiUrl={o.bukti_url}
                     buktiType={o.bukti_type}
                     itemLabel={o.item}

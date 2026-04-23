@@ -1,7 +1,8 @@
 import { getPribadiSummary } from "@/lib/data";
 import { getSession } from "@/lib/auth";
-import type { Obligation, Numpang } from "@/lib/types";
+import type { Entry, Obligation, Numpang } from "@/lib/types";
 import { formatRupiah, formatDateShort } from "@/lib/format";
+import { idString } from "@/lib/utils";
 import { ListSectionTitle } from "@/components/list-section-title";
 import { StatRowRupiah } from "@/components/stat-row";
 import { PageHeader } from "@/components/page-header";
@@ -155,7 +156,6 @@ export default async function PribadiPage() {
 }
 
 type SavingsAggregate = { _id: string; count: number; total: number; total_in: number; total_out: number };
-type SavingEntry = { _id: string; description: string; date: string; owner: string; amount: number };
 
 function RingkasanView({
   currentMonth,
@@ -172,7 +172,7 @@ function RingkasanView({
   totalBulanan: number;
   totalSavings: number;
   savingsTotal: SavingsAggregate[];
-  savings: SavingEntry[];
+  savings: Entry[];
 }) {
   return (
     <div className="space-y-4">
@@ -226,7 +226,7 @@ function RingkasanView({
               <ListSectionTitle className="mt-4 pb-2">Riwayat Terakhir</ListSectionTitle>
               <div className="divide-y divide-border/60">
                 {savings.slice(0, 8).map((entry) => (
-                  <div key={entry._id} className="flex items-center justify-between py-2">
+                  <div key={idString(entry._id)} className="flex items-center justify-between py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm">{entry.description}</p>
                       <p className="text-xs text-muted-foreground">
@@ -307,7 +307,7 @@ function CicilanView({
               const lastMonth = loan.final_month ?? remaining[remaining.length - 1]?.month;
               const remainingAmount = remaining.reduce((s, r) => s + r.amount, 0);
               return (
-                <div key={loan._id}>
+                <div key={idString(loan._id)}>
                   <div className="flex items-start justify-between gap-3 pb-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold">{loan.item}</span>
@@ -429,7 +429,7 @@ function NumpangView({
     >
       <div className="divide-y divide-border/60">
         {numpang.map((n) => (
-          <div key={n._id} className="flex items-center justify-between gap-2 py-2.5">
+          <div key={idString(n._id)} className="flex items-center justify-between gap-2 py-2.5">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{n.description}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -448,15 +448,6 @@ function NumpangView({
   );
 }
 
-type SpendEntry = {
-  _id: string;
-  description: string;
-  date: string;
-  amount: number;
-  direction: "in" | "out";
-  category?: string;
-};
-
 function PengeluaranView({
   recurring,
   recurringTotal,
@@ -464,7 +455,7 @@ function PengeluaranView({
 }: {
   recurring: Obligation[];
   recurringTotal: number;
-  spending: SpendEntry[];
+  spending: Entry[];
 }) {
   return (
     <div className="space-y-4">
@@ -481,7 +472,7 @@ function PengeluaranView({
         >
           <div className="divide-y divide-border/60">
             {recurring.map((r) => (
-              <div key={r._id} className="flex items-center justify-between gap-3 py-2.5">
+              <div key={idString(r._id)} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{r.item}</p>
                   <Badge variant="outline" className="mt-1">
@@ -501,9 +492,9 @@ function PengeluaranView({
         <SectionCard icon={ShoppingBag} title="Pengeluaran Terakhir" tone="muted">
           <ul className="divide-y divide-border/60">
             {spending.slice(0, 25).map((entry) => (
-              <li key={entry._id} className="flex items-center justify-between py-2.5">
+              <li key={idString(entry._id)} className="flex items-center justify-between py-2.5">
                 <div className="flex min-w-0 items-center gap-3">
-                  <TransactionIcon direction={entry.direction} />
+                  <TransactionIcon direction={entry.direction as "in" | "out"} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{entry.description}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -514,7 +505,7 @@ function PengeluaranView({
                 </div>
                 <AmountText
                   amount={entry.amount}
-                  direction={entry.direction}
+                  direction={entry.direction as "in" | "out"}
                   formatter={formatRupiah}
                 />
               </li>

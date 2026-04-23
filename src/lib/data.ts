@@ -1,6 +1,8 @@
 import { getDb } from "./mongodb";
+import type { DbDate } from "./db/schema";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
 import type { Document } from "mongodb";
+import { ObjectId } from "mongodb";
 import { validateObligation, validateEntry } from "./validate";
 
 export async function getNumpang(): Promise<Numpang[]> {
@@ -128,12 +130,19 @@ export async function updateAccount(id: string, data: Record<string, unknown>): 
   );
 }
 
+function dbDateToDateOnlyString(d: DbDate | undefined | null): string | undefined {
+  if (d == null) return undefined;
+  if (typeof d === "string") return d;
+  return d.toISOString().slice(0, 10);
+}
+
 // Serialize any Date objects in a plain object to ISO date strings (YYYY-MM-DD).
 // Applied before returning data that will be passed to React components to prevent
 // "Objects with toJSON are not supported" errors from Next.js serialization.
 function serializeDates<T>(obj: T): T {
   if (obj === null || obj === undefined) return obj;
   if (obj instanceof Date) return obj.toISOString().slice(0, 10) as unknown as T;
+  if (obj instanceof ObjectId) return obj.toString() as unknown as T;
   if (Array.isArray(obj)) return obj.map(serializeDates) as unknown as T;
   if (typeof obj === "object") {
     const result: Record<string, unknown> = {};
@@ -376,7 +385,7 @@ export async function getLaporanOpReconciliation(): Promise<LaporanOpReconciliat
     diffMasuk: entriesMasuk - ledgerMasuk,
     diffKeluar: entriesKeluar - ledgerKeluar,
     account,
-    asOf: ledger.as_of,
+    asOf: dbDateToDateOnlyString(ledger.as_of),
   };
 }
 

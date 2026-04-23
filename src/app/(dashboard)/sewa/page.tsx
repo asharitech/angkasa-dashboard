@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { Badge } from "@/components/ui/badge";
 import { toneBadge, type Tone } from "@/lib/colors";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 import {
   Building2,
   MapPin,
@@ -258,7 +258,7 @@ return (
                 <div className="divide-y divide-border/60">
                   {danaSewa.pengeluaranSewa.map((e) => (
                     <div
-                      key={e._id}
+                      key={idString(e._id)}
                       className="flex items-center justify-between gap-3 py-2.5"
                     >
                       <div className="min-w-0 flex-1">
@@ -307,7 +307,7 @@ return (
                   const isActive = code === activeTahap;
                   return (
                     <Link
-                      key={h._id}
+                      key={idString(h._id)}
                       href={href}
                       className={cn(
                         "flex items-center justify-between px-2 py-2.5 transition-colors -mx-2 rounded-md",

@@ -8,19 +8,19 @@ export function FeedEventIcon({
 }) {
   if (event.type === "entry") {
     return event.direction === "in" ? (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15 text-success">
         <ArrowDownLeft className="h-4 w-4" />
       </span>
     ) : (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/15 text-destructive">
         <ArrowUpRight className="h-4 w-4" />
       </span>
     );
   }
   const iconMap: Record<string, { icon: typeof Receipt; bg: string; color: string }> = {
-    pengajuan: { icon: Receipt, bg: "bg-amber-50", color: "text-amber-600" },
-    loan: { icon: CreditCard, bg: "bg-violet-50", color: "text-violet-600" },
-    recurring: { icon: Repeat, bg: "bg-blue-50", color: "text-blue-600" },
+    pengajuan: { icon: Receipt, bg: "bg-warning/15", color: "text-warning" },
+    loan: { icon: CreditCard, bg: "bg-primary/10", color: "text-primary" },
+    recurring: { icon: Repeat, bg: "bg-info/15", color: "text-info" },
   };
   const cfg = iconMap[event.domain ?? ""] ?? iconMap.pengajuan;
   const Icon = cfg.icon;
