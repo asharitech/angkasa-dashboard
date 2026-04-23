@@ -2,6 +2,8 @@ import { getDb } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { KATEGORI_CONFIG } from "@/lib/agenda-config";
+import { PageHeader } from "@/components/page-header";
+import { ToneBadge } from "@/components/tone-badge";
 import type { AgendaDoc } from "@/components/agenda-manager";
 import { AgendaCreateButton, AgendaCheckToggle, AgendaMenuActions } from "@/components/agenda-manager";
 import type { AgendaKategori } from "@/lib/actions/agenda";
@@ -34,19 +36,16 @@ export default async function AgendaPage() {
 
   return (
     <main className="content" data-screen-label="07 Agenda & Tasks">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Pribadi · Task Tracker</div>
-          <h1 className="page-head__title">Agenda</h1>
-          <div className="page-head__sub">Catatan harian & deadline pribadi — sinkron dengan kalender WITA · {formatDateShort(new Date().toISOString())}</div>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--secondary">
-            <Calendar className="btn__icon" /> Kalender
-          </button>
-          <AgendaCreateButton />
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Pribadi · Task Tracker"
+        title="Agenda"
+        subtitle={`Catatan harian & deadline pribadi — sinkron dengan kalender WITA · ${formatDateShort(new Date().toISOString())}`}
+      >
+        <button className="btn btn--secondary">
+          <Calendar className="btn__icon" /> Kalender
+        </button>
+        <AgendaCreateButton />
+      </PageHeader>
 
       <div className="ag-hero">
         <div className="ag-hero__main">

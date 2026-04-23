@@ -2,6 +2,7 @@ import { getDb } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 import { FilterTabs } from "@/components/filter-bar";
 import {
   DocumentUploadButton,
@@ -84,45 +85,62 @@ export default async function DokumenPage({
     .sort({ created_at: -1 })
     .toArray()) as unknown as DocumentDoc[];
 
-  const displayed = kategoriFilter
+  const filteredDocs = kategoriFilter
     ? all.filter((d) => (d.kategori ?? "lainnya") === kategoriFilter)
     : all;
+  const displayed = filteredDocs;
 
   // Group by kategori for stats
-  const countByKat = new Map<string, number>();
-  for (const d of all) {
-    const k = d.kategori ?? "lainnya";
-    countByKat.set(k, (countByKat.get(k) ?? 0) + 1);
-  }
+  const counts = { legal: 0, surat: 0, laporan: 0, laci: 0 };
+  all.forEach(d => {
+    const k = d.kategori as keyof typeof counts;
+    if (counts.hasOwnProperty(k)) counts[k]++;
+  });
+
+  const totalSize = all.reduce((s, d) => s + (d.file_size ?? 0), 0);
+  const formatBytes = (bytes: number) => (bytes / (1024 * 1024)).toFixed(1) + " MB";
 
   return (
     <main className="content" data-screen-label="06 Dokumen">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Arsip</div>
-          <h1 className="page-head__title">Dokumen Yayasan</h1>
-          <div className="page-head__sub">File pendukung operasional dan legalitas</div>
-        </div>
-        <div className="page-head__actions">
-          <DocumentUploadButton />
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Arsip Yayasan"
+        title="Dokumen Center"
+        subtitle={`${filteredDocs.length} dokumen tersimpan · ${formatBytes(totalSize)} digunakan`}
+      >
+        <DocumentUploadButton />
+      </PageHeader>
 
       {all.length > 0 && (
-        <div className="sewa-summary">
-          <div className="ss-cell">
-            <div className="ss-cell__label">Total Dokumen</div>
-            <div className="ss-cell__value ss-cell__value--hero">{all.length}</div>
-          </div>
-          <div className="ss-cell">
-            <div className="ss-cell__label">Kategori Aktif</div>
-            <div className="ss-cell__value" style={{ color: "var(--pos-700)" }}>{countByKat.size}</div>
-          </div>
-          <div className="ss-cell">
-            <div className="ss-cell__label">Penyimpanan Terpakai</div>
-            <div className="ss-cell__value">{(all.reduce((s, d) => s + (d.file_size ?? 0), 0) / (1024 * 1024)).toFixed(1)} <span style={{ fontSize: "var(--text-sm)" }}>MB</span></div>
-          </div>
-        </div>
+        <SummaryStrip variant="sewa">
+          <SummaryCell 
+            variant="sewa"
+            label="Total Dokumen" 
+            value={filteredDocs.length} 
+            valueClassName="ss-cell__value--hero"
+            subtext="File dalam arsip" 
+          />
+          <SummaryCell 
+            variant="sewa"
+            label="Legalitas & Akta" 
+            value={counts.legal} 
+            valueClassName="text-warn-700"
+            subtext="Dokumen penting" 
+          />
+          <SummaryCell 
+            variant="sewa"
+            label="Surat & MoA" 
+            value={counts.surat} 
+            valueClassName="text-pos-700"
+            subtext="Perjanjian kerjasama" 
+          />
+          <SummaryCell 
+            variant="sewa"
+            label="Laporan & Laci" 
+            value={counts.laporan + counts.laci} 
+            valueClassName="text-ink-000"
+            subtext="Arsip pasif" 
+          />
+        </SummaryStrip>
       )}
 
       {all.length > 0 && (

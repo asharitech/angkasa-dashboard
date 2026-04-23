@@ -1,7 +1,8 @@
 import { getLedger, getLaporanOpReconciliation } from "@/lib/data";
 import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
-import { Download, AlertTriangle, ArrowRight } from "lucide-react";
+import { FileOutput, ArrowRight, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,16 +33,13 @@ export default async function LaporanOpPage() {
 
   return (
     <main className="content" data-screen-label="06 Laporan OP">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · BTN 107</div>
-          <h1 className="page-head__title">Laporan Operasional</h1>
-          <div className="page-head__sub">Ledger snapshot {ledger.as_of ? `per ${formatDateShort(ledger.as_of)}` : "periode berjalan"}</div>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Laporan Op · Sandbox"
+        title="Validasi Saldo & Kewajiban"
+        subtitle={`Ledger & rekap keuangan operasional · ${entries.length} transaksi terakhir`}
+      >
+        <button className="btn btn--secondary"><FileOutput className="btn__icon"/> Export</button>
+      </PageHeader>
 
       {reconHasDiff && recon && (
         <div className="mb-6 p-4 rounded bg-warn-50 border border-warn-200 text-warn-800 text-sm flex gap-3">
@@ -137,8 +135,8 @@ export default async function LaporanOpPage() {
         </div>
 
         {/* Side summary */}
-        <div className="detail">
-          <div className="detail__body">
+        <aside className="detail" style={{ position: "sticky", top: "var(--sp-6)", padding: "var(--sp-6)", background: "var(--surface)", border: "1px solid var(--ink-200)", borderRadius: "var(--r-md)", alignSelf: "start" }}>
+          <div className="detail__body" style={{ padding: 0 }}>
             <div className="t-eyebrow">Rekapitulasi {ledger.period || "Bulan Ini"}</div>
             <div className="divider"></div>
             
@@ -181,7 +179,7 @@ export default async function LaporanOpPage() {
               <div>Dana yang benar-benar bisa dipakai setelah dikurangi hutang.</div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </main>
   );

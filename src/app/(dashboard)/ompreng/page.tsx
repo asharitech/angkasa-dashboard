@@ -1,8 +1,8 @@
 import { getDb } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import { ToneBadge } from "@/components/tone-badge";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 import { OmprengAddButton, OmprengRowActions } from "@/components/ompreng-manager";
 import { DAPUR_LOCATIONS, DAPUR_LABELS, type DapurLocation, type OmprengDoc } from "@/lib/ompreng-constants";
 import { UtensilsCrossed, LayoutGrid, Users } from "lucide-react";
@@ -72,44 +72,27 @@ export default async function OmprengPage() {
 
   const grandKekurangan = monthTotals.reduce((s, m) => s + m.total_kekurangan, 0);
 
-  const kpis: KpiItem[] = [
-    { label: "Total Ompreng (Jan–Apr)", value: grandOmpreng.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "info" },
-    { label: "Total Sasaran (Jan–Apr)", value: grandSasaran.toLocaleString("id-ID"), icon: Users, tone: "success" },
-    { label: "Total Kekurangan (Jan–Apr)", value: grandKekurangan.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "warning" },
-    { label: "Entry Tercatat", value: docs.length.toString(), icon: LayoutGrid, tone: "neutral" },
-  ];
-
   return (
     <main className="content" data-screen-label="08 Ompreng">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Logistik</div>
-          <h1 className="page-head__title">Data Ompreng Dapur</h1>
-          <div className="page-head__sub">Monitoring jumlah ompreng dan sasaran penerima</div>
-        </div>
-        <div className="page-head__actions">
-          {isAdmin && <OmprengAddButton />}
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Yayasan YRBB · Logistik"
+        title="Data Ompreng Dapur"
+        subtitle="Monitoring jumlah ompreng dan sasaran penerima"
+      >
+        {isAdmin && <OmprengAddButton />}
+      </PageHeader>
 
-      <div className="sewa-summary">
-        <div className="ss-cell">
-          <div className="ss-cell__label">Total Ompreng (Jan–Apr)</div>
-          <div className="ss-cell__value ss-cell__value--hero">{grandOmpreng.toLocaleString("id-ID")}</div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Total Sasaran (Jan–Apr)</div>
-          <div className="ss-cell__value" style={{ color: "var(--pos-700)" }}>{grandSasaran.toLocaleString("id-ID")}</div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Total Kekurangan (Jan–Apr)</div>
-          <div className="ss-cell__value" style={{ color: "var(--warn-700)" }}>{grandKekurangan.toLocaleString("id-ID")}</div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Entry Tercatat</div>
-          <div className="ss-cell__value">{docs.length}</div>
-        </div>
-      </div>
+      <SummaryStrip>
+        <SummaryCell label="Grand Total Ompreng" value={grandOmpreng.toLocaleString("id-ID")} icon={<UtensilsCrossed />} />
+        <SummaryCell label="Total Sasaran" value={grandSasaran.toLocaleString("id-ID")} icon={<Users />} tone="pos" />
+        <SummaryCell 
+          label="Total Kekurangan" 
+          value={grandKekurangan.toLocaleString("id-ID")} 
+          icon={<LayoutGrid />} 
+          tone={grandKekurangan > 0 ? "warn" : "outline"}
+        />
+        <SummaryCell label="Entry Tercatat" value={docs.length.toString()} />
+      </SummaryStrip>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-8)" }}>
         {MONTHS.map((m) => {

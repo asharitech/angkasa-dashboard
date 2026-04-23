@@ -5,7 +5,10 @@ import { formatRupiah, formatDateShort } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
 import { currentWitaMonth } from "@/lib/periods";
 import { cn } from "@/lib/utils";
-import { Search, Filter, Calendar, Check, Download, Plus, ArrowRight } from "lucide-react";
+import { History, Download, ChevronRight, Plus, Search, Filter } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { ToneBadge } from "@/components/tone-badge";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 import type { Obligation, Account } from "@/lib/types";
 import { PengajuanCreateButton, PengajuanDetailActions } from "@/components/pengajuan-row-actions";
 
@@ -40,43 +43,43 @@ export default async function PengajuanPage({
 
   return (
     <main className="content" data-screen-label="03 Pengajuan">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Approval Workflow</div>
-          <h1 className="page-head__title">Pengajuan</h1>
-          <div className="page-head__sub">Kelola pengajuan dana dari operasional & investigator · {allInScope.length} total bulan ini</div>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--secondary"><Download className="btn__icon"/> Export laporan</button>
-          {isAdmin && <PengajuanCreateButton />}
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Yayasan YRBB · Payment Processing"
+        title="Pengajuan Dana"
+        subtitle={`${allInScope.length} permohonan · Filter: ${statusView !== "semua" ? statusView : "semua"}`}
+      >
+        <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat</button>
+        <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
+        {isAdmin && <PengajuanCreateButton />}
+      </PageHeader>
 
       {/* Summary */}
-      <div className="summary-strip">
-        <div className="summary-cell">
-          <div className="summary-cell__label">Pending ACC</div>
-          <div className="summary-cell__value" style={{ color: "var(--warn-700)" }}>{formatRupiah(totalPending)}</div>
-          <div className="summary-cell__meta">{pendingItems.length} item menunggu approval</div>
-        </div>
-        <div className="summary-cell">
-          <div className="summary-cell__label">Diproses bulan ini</div>
-          <div className="summary-cell__value">{formatRupiah(totalLunas)}</div>
-          <div className="summary-cell__meta">{lunasItems.length} lunas · {pendingItems.length} pending</div>
-        </div>
-        <div className="summary-cell">
-          <div className="summary-cell__label">Avg per pengajuan</div>
-          <div className="summary-cell__value">
-            {allInScope.length > 0 ? formatRupiah(Math.round(totalScope / allInScope.length)) : "Rp 0"}
-          </div>
-          <div className="summary-cell__meta">{allInScope.length} pengajuan {monthView}</div>
-        </div>
-        <div className="summary-cell">
-          <div className="summary-cell__label">SLA approval avg</div>
-          <div className="summary-cell__value">1.8 hari</div>
-          <div className="summary-cell__meta">Target ≤ 2 hari</div>
-        </div>
-      </div>
+      <SummaryStrip variant="standard">
+        <SummaryCell 
+          label="Menunggu Persetujuan" 
+          value={pendingItems.length} 
+          valueClassName="text-warn-700"
+          subtext="Action required" 
+        />
+        <SummaryCell 
+          label="Total Nominal Pending" 
+          value={formatRupiah(totalPending)} 
+          valueClassName="text-warn-700"
+          subtext="Estimasi outflow" 
+        />
+        <SummaryCell 
+          label="Selesai Ditransfer" 
+          value={lunasItems.length} 
+          valueClassName="text-pos-700"
+          subtext={`Dari ${allInScope.length} total pengajuan`} 
+        />
+        <SummaryCell 
+          label="Total Realisasi" 
+          value={formatRupiah(totalLunas)} 
+          valueClassName="text-ink-000"
+          subtext="Total dana keluar" 
+        />
+      </SummaryStrip>
 
       {/* Tabs */}
       <div className="tabs">
@@ -129,7 +132,7 @@ export default async function PengajuanPage({
             return (
               <Link href={`?statusView=${statusView}${monthView !== currentWitaMonth() ? "&monthView=" + monthView : ""}&selected=${o._id}`} className={cn("pj-row", isSelected && "is-selected")} key={o._id}>
                 <div className="pj-row__check" style={isSelected ? { background: "var(--accent-700)", borderColor: "var(--accent-700)" } : {}}>
-                  {isSelected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                  {isSelected && <div style={{width: 6, height: 6, background: 'white', borderRadius: 2}}></div>}
                 </div>
                 <div className="pj-row__code">PJ-{o._id.substring(o._id.length - 4)}</div>
                 <div className="pj-row__who">
@@ -140,7 +143,7 @@ export default async function PengajuanPage({
                   </div>
                 </div>
                 <div><span className="cat-chip"><span className="badge__dot" style={{ color: "var(--info-500)" }}></span>{o.category || "lainnya"}</span></div>
-                <div><span className={`badge badge--${tone}`}><span className="badge__dot"></span>{toneLabel}</span></div>
+                <div><ToneBadge tone={tone}>{toneLabel}</ToneBadge></div>
                 <div style={{ textAlign: "right" }}>
                   <div className="pj-row__amount">{formatRupiah(o.amount || 0)}</div>
                   <div className="pj-row__date">{formatDateShort(o.created_at)}</div>
@@ -160,9 +163,9 @@ export default async function PengajuanPage({
             <div className="detail__head">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span className="detail__code">PJ-{selectedItem._id.substring(selectedItem._id.length - 4)}</span>
-                <span className={`badge badge--${selectedItem.status === "lunas" ? "pos" : "warn"}`}>
-                  <span className="badge__dot"></span>{selectedItem.status === "lunas" ? "Lunas" : "Menunggu Papi"}
-                </span>
+                <ToneBadge tone={selectedItem.status === "lunas" ? "pos" : "warn"}>
+                  {selectedItem.status === "lunas" ? "Lunas" : "Menunggu Papi"}
+                </ToneBadge>
               </div>
               <div className="detail__title">{selectedItem.item}</div>
               <div className="detail__amount">{formatRupiah(selectedItem.amount || 0)}</div>

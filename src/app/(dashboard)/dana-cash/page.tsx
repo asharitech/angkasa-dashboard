@@ -2,14 +2,10 @@ import Link from "next/link";
 import { getDanaCashSummary } from "@/lib/dana-cash";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import {
-  Banknote,
-  TrendingDown,
-  Wallet,
-  ChevronRight,
-  Inbox,
-  History,
-} from "lucide-react";
+import { ChevronRight, ArrowRight, Download, History } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { ToneBadge } from "@/components/tone-badge";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 
 export const dynamic = "force-dynamic";
 
@@ -35,20 +31,14 @@ export default async function DanaCashPage({
 
   return (
     <main className="content" data-screen-label="07 Cash Yayasan">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Petty Cash</div>
-          <h1 className="page-head__title">Cash Yayasan</h1>
-          <div className="page-head__sub">Monitoring pemakaian kas kecil yayasan</div>
-        </div>
-        <div className="page-head__actions">
-          {pengajuan.length > 0 && (
-            <Link href="/pengajuan" className="btn btn--secondary">
-              <Inbox className="btn__icon" /> {pengajuan.length} pengajuan pending ({formatRupiah(pengajuan.reduce((s, o) => s + (o.amount ?? 0), 0))})
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Yayasan YRBB · Mutasi"
+        title="Dana Cash"
+        subtitle="Monitoring pemakaian kas kecil yayasan"
+      >
+        <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat</button>
+        <button className="btn btn--secondary"><Download className="btn__icon"/> Export laporan</button>
+      </PageHeader>
 
       <div className="tabs" style={{ marginBottom: "var(--sp-8)" }}>
         <Link href="?" className={cn("tabs__item", !period && "is-active")}>Semua</Link>
@@ -58,22 +48,26 @@ export default async function DanaCashPage({
         <Link href="?period=2026-01" className={cn("tabs__item", period === "2026-01" && "is-active")}>Jan 2026</Link>
       </div>
 
-      <div className="sewa-summary">
-        <div className="ss-cell">
-          <div className="ss-cell__label">Saldo Awal</div>
-          <div className="ss-cell__value">{formatRupiah(saldoAwal)}</div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Terpakai</div>
-          <div className="ss-cell__value" style={{ color: "var(--warn-700)" }}>{formatRupiah(totalTerpakai)}</div>
-          <div className="ss-cell__sub">{pctTerpakai}% dari awal</div>
-          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--warn" style={{ width: `${Math.min(pctTerpakai, 100)}%` }}></div></div></div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Sisa Cash</div>
-          <div className="ss-cell__value" style={{ color: "var(--pos-700)" }}>{formatRupiah(saldoSisa)}</div>
-        </div>
-      </div>
+      <SummaryStrip variant="sewa">
+        <SummaryCell 
+          variant="sewa"
+          label="Saldo Awal" 
+          value={formatRupiah(saldoAwal)} 
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Terpakai" 
+          value={formatRupiah(totalTerpakai)} 
+          valueClassName="text-warn-700"
+          subtext={`${pctTerpakai}% dari awal`}
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Sisa Cash" 
+          value={formatRupiah(saldoSisa)} 
+          valueClassName="text-pos-700"
+        />
+      </SummaryStrip>
 
       <section className="section">
         <div className="section__head">

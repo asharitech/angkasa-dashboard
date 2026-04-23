@@ -1,21 +1,36 @@
-import type { LucideIcon } from "lucide-react";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 export function PageHeader({
-  icon: Icon,
+  eyebrow,
   title,
+  subtitle,
   children,
+  className,
+  icon: Icon,
 }: {
-  icon: LucideIcon;
-  title: string;
+  eyebrow?: React.ReactNode;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
   children?: React.ReactNode;
+  className?: string;
+  icon?: React.ElementType;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="text-lg font-semibold tracking-tight md:text-2xl flex items-center gap-2 min-w-0">
-        <Icon className="h-5 w-5 md:h-6 md:w-6 text-primary shrink-0" />
-        <span className="truncate">{title}</span>
-      </h2>
-      {children && <div className="shrink-0">{children}</div>}
+    <div className={cn("page-head", className)}>
+      <div>
+        {eyebrow && (
+          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>
+            {eyebrow}
+          </div>
+        )}
+        <h1 className="page-head__title">
+          {Icon && <Icon className="inline-block w-5 h-5 mr-2 align-[-3px] text-ink-500" />}
+          {title}
+        </h1>
+        {subtitle && <div className="page-head__sub">{subtitle}</div>}
+      </div>
+      {children && <div className="page-head__actions">{children}</div>}
     </div>
   );
 }

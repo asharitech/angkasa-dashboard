@@ -2,7 +2,9 @@ import { getPribadiSummary } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Download, Plus, ArrowRight } from "lucide-react";
+import { Download, Wallet, CreditCard, PiggyBank, ArrowRight } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 import Link from "next/link";
 import { EntryCreateButton } from "@/components/entry-row-actions";
 
@@ -49,48 +51,41 @@ export default async function PribadiPage() {
 
   return (
     <main className="content" data-screen-label="05 Keuangan Pribadi">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Pak Angkasa · Personal Finance</div>
-          <h1 className="page-head__title">Keuangan Pribadi</h1>
-          <div className="page-head__sub">Kas bersih terpisah dari Yayasan · Sinkron dengan pinjaman yayasan</div>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
-          {isAdmin && <EntryCreateButton accounts={data.personalAccounts} label="Catat transaksi" />}
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Tanggungan Personal"
+        title="Buku Pribadi"
+        subtitle={`Ledger & rekap keuangan pribadi · ${data.spending.length} transaksi terakhir`}
+      >
+        <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
+        {isAdmin && <EntryCreateButton accounts={data.personalAccounts} label="Catat transaksi" />}
+      </PageHeader>
 
-      <div className="hero-split">
-        <div className="hero-main">
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-3)" }}>
-            <span style={{ display: "inline-block", width: 5, height: 5, background: "var(--accent-700)", borderRadius: "50%", marginRight: 8, verticalAlign: "middle" }}></span>
-            Kas Bersih Pribadi
-          </div>
-          <div className="hero-amount"><span className="sym">Rp</span>{cashTotal.toLocaleString('id-ID')}</div>
-          <div className="hero-breakdown">
-            <span><span className="fig">{formatRupiah(bcaBalance)}</span> BCA</span>
-            <span>·</span>
-            <span><span className="fig">{formatRupiah(briEstatement)}</span> BRI</span>
-            <span>·</span>
-            <span style={{ color: "var(--neg-700)" }}>−<span className="fig" style={{ color: "var(--neg-700)" }}>{formatRupiah(numpangTotal)}</span> titipan yayasan di BRI</span>
-          </div>
-        </div>
-        <div className="hero-side">
-          <div>
-            <div className="t-eyebrow">Piutang ke Yayasan</div>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-2xl)", fontWeight: 600, color: "var(--pos-700)", marginTop: 4 }}>
-              {formatRupiah(totalRemainingDebt)}
-            </div>
-            <div className="t-caption" style={{ marginTop: 2 }}>{data.loans.length} tahap outstanding</div>
-          </div>
-          <div className="divider" style={{ margin: 0 }}></div>
-          <div className="row-between">
-            <div><div className="t-eyebrow">Tabungan bulan ini</div><div className="mono" style={{ fontSize: "var(--text-md)", fontWeight: 600, marginTop: 2 }}>{formatRupiah(totalSavings)}</div></div>
-            <div><div className="t-eyebrow">Cicilan bulan ini</div><div className="mono" style={{ fontSize: "var(--text-md)", fontWeight: 600, marginTop: 2 }}>{formatRupiah(cicilanBulanIni)}</div></div>
-          </div>
-        </div>
-      </div>
+      <SummaryStrip variant="sewa" style={{ marginBottom: "var(--sp-8)" }}>
+        <SummaryCell 
+          variant="sewa"
+          label="Saldo Saat Ini" 
+          value={formatRupiah(cashTotal)} 
+          valueClassName="ss-cell__value--hero"
+          icon={<Wallet />}
+          subtext="Total likuiditas pribadi" 
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Pemasukan Bulan Ini" 
+          value={formatRupiah(totalSavings)} 
+          valueClassName="text-pos-700"
+          icon={<PiggyBank />}
+          subtext="Dari gaji & lainnya" 
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Pengeluaran Bulan Ini" 
+          value={formatRupiah(cicilanBulanIni)} 
+          valueClassName="text-neg-700"
+          icon={<CreditCard />}
+          subtext="Total debit tercatat" 
+        />
+      </SummaryStrip>
 
       {/* Pinjaman tahap */}
       <section className="section">

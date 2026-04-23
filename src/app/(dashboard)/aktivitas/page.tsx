@@ -1,7 +1,9 @@
 import { getActivityFeed, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format";
+
 import { PageHeader } from "@/components/page-header";
+import { ToneBadge, type Tone } from "@/components/tone-badge";
 import { PeriodPicker } from "@/components/period-picker";
 import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { SectionCard } from "@/components/section-card";
@@ -125,20 +127,15 @@ export default async function AktivitasPage({
 
   return (
     <main className="content">
-      <div className="page-head">
-        <div>
-          <h1 className="page-head__title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Activity className="w-6 h-6" />
-            Aktivitas
-          </h1>
-        </div>
-        <div className="page-head__actions">
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" }}>
-            {events.length} event
-          </span>
-          {isAdmin && <EntryCreateButton accounts={accounts} />}
-        </div>
-      </div>
+      <PageHeader 
+        icon={Activity}
+        title="Aktivitas"
+      >
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" }}>
+          {events.length} event
+        </span>
+        {isAdmin && <EntryCreateButton accounts={accounts} />}
+      </PageHeader>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--sp-4)", marginBottom: "var(--sp-6)" }}>
         <div style={{ display: "flex", gap: "2px", background: "var(--surface)", border: "var(--hair)", borderRadius: "var(--r-sm)", padding: "3px" }}>
@@ -196,10 +193,9 @@ export default async function AktivitasPage({
                         )}
                         {event.status && (
                           <div style={{ marginTop: "4px" }}>
-                            <span className={`badge badge--${tone === "neutral" ? "outline" : tone}`}>
-                              <span className="badge__dot"></span>
+                            <ToneBadge tone={tone === "neutral" ? "outline" : (tone as Tone)}>
                               {formatStatusLabel(event.status)}
-                            </span>
+                            </ToneBadge>
                           </div>
                         )}
                         <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-400)", marginTop: "4px" }}>

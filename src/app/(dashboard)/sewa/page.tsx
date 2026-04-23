@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { History, Download, Plus, Check } from "lucide-react";
 import type { SewaLocation } from "@/lib/types";
 import { SewaLocationEditButton } from "@/components/sewa-location-editor";
+import { PageHeader } from "@/components/page-header";
+import { ToneBadge } from "@/components/tone-badge";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 
 export const dynamic = "force-dynamic";
 
@@ -82,18 +85,15 @@ export default async function SewaPage({
 
   return (
     <main className="content" data-screen-label="04 Sewa Dapur">
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Dapur Partner Payments</div>
-          <h1 className="page-head__title">Sewa Dapur</h1>
-          <div className="page-head__sub">11 lokasi · {byRegion.size} wilayah · Multi-step transfer pipeline via perantara</div>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat tahap</button>
-          <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
-          {canEdit && <button className="btn btn--primary"><Plus className="btn__icon"/> Mulai tahap baru</button>}
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Yayasan YRBB · Dapur Partner Payments"
+        title="Sewa Dapur"
+        subtitle={`11 lokasi · ${byRegion.size} wilayah · Multi-step transfer pipeline via perantara`}
+      >
+        <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat tahap</button>
+        <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
+        {canEdit && <button className="btn btn--primary"><Plus className="btn__icon"/> Mulai tahap baru</button>}
+      </PageHeader>
 
       {/* Tahap selector */}
       <div className="tahap-bar">
@@ -112,31 +112,42 @@ export default async function SewaPage({
       </div>
 
       {/* Summary */}
-      <div className="sewa-summary">
-        <div className="ss-cell">
-          <div className="ss-cell__label">Target {activeTahap}</div>
-          <div className="ss-cell__value ss-cell__value--hero">{formatRupiah(sewa.total)}</div>
-          <div className="ss-cell__sub">{activeCount} lokasi aktif · rata-rata {formatRupiah(Math.round(sewa.total / Math.max(1, activeCount)))}/lokasi</div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Sudah sampai Yayasan</div>
-          <div className="ss-cell__value" style={{ color: "var(--pos-700)" }}>{formatRupiah(totalMasuk)}</div>
-          <div className="ss-cell__sub">{sewa.locations.filter(l => l.pipeline?.stage === "tercatat").length} lokasi · {percentMasuk.toFixed(1)}%</div>
-          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--pos" style={{ width: `${percentMasuk}%` }}></div></div></div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Di perantara</div>
-          <div className="ss-cell__value" style={{ color: "var(--warn-700)" }}>{formatRupiah(totalPerantara)}</div>
-          <div className="ss-cell__sub">{sewa.locations.filter(l => l.pipeline?.stage === "transfer_yayasan" || l.pipeline?.stage === "di_intermediate").length} lokasi · belum masuk BTN</div>
-          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--warn" style={{ width: `${percentPerantara}%` }}></div></div></div>
-        </div>
-        <div className="ss-cell">
-          <div className="ss-cell__label">Belum diterima</div>
-          <div className="ss-cell__value" style={{ color: "var(--neg-700)" }}>{formatRupiah(totalBelum)}</div>
-          <div className="ss-cell__sub">{sewa.locations.filter(l => l.pipeline?.stage === "belum_diterima" || !l.pipeline?.stage).length} lokasi · action required</div>
-          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--neg" style={{ width: `${percentBelum}%` }}></div></div></div>
-        </div>
-      </div>
+      <SummaryStrip variant="sewa">
+        <SummaryCell 
+          variant="sewa"
+          label={`Target ${activeTahap}`} 
+          value={formatRupiah(sewa.total)} 
+          valueClassName="ss-cell__value--hero"
+          subtext={`${activeCount} lokasi aktif · rata-rata ${formatRupiah(Math.round(sewa.total / Math.max(1, activeCount)))}/lokasi`} 
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Sudah sampai Yayasan" 
+          value={formatRupiah(totalMasuk)} 
+          valueClassName="text-pos-700"
+          subtext={`${sewa.locations.filter(l => l.pipeline?.stage === "tercatat").length} lokasi · ${percentMasuk.toFixed(1)}%`} 
+          progress={percentMasuk}
+          progressTone="pos"
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Di perantara" 
+          value={formatRupiah(totalPerantara)} 
+          valueClassName="text-warn-700"
+          subtext={`${sewa.locations.filter(l => l.pipeline?.stage === "transfer_yayasan" || l.pipeline?.stage === "di_intermediate").length} lokasi · belum masuk BTN`} 
+          progress={percentPerantara}
+          progressTone="warn"
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Belum diterima" 
+          value={formatRupiah(totalBelum)} 
+          valueClassName="text-neg-700"
+          subtext={`${sewa.locations.filter(l => l.pipeline?.stage === "belum_diterima" || !l.pipeline?.stage).length} lokasi · action required`} 
+          progress={percentBelum}
+          progressTone="neg"
+        />
+      </SummaryStrip>
 
       {/* Regions */}
       {Array.from(byRegion.entries()).map(([region, locations]) => {
@@ -164,9 +175,9 @@ export default async function SewaPage({
                 <span><span className="dot" style={{ background: "var(--neg-500)" }}></span>Belum</span>
               </div>
               {pendingCount > 0 ? (
-                <div className="badge badge--outline"><span className="badge__dot" style={{ color: "var(--warn-500)" }}></span>{pendingCount} pending</div>
+                <ToneBadge tone="warn">{pendingCount} pending</ToneBadge>
               ) : (
-                <div className="badge badge--pos">Selesai</div>
+                <ToneBadge tone="pos">Selesai</ToneBadge>
               )}
               <span className="region__count mono" style={{ fontWeight: 600, color: "var(--ink-000)" }}>{formatRupiah(regionTotal)}</span>
             </div>
@@ -222,7 +233,7 @@ export default async function SewaPage({
                   <div className="loc-row__date">{loc.pipeline?.received_at ? formatDateShort(loc.pipeline.received_at) : "—"}</div>
                   <div className="loc-row__action">
                     {isDone ? (
-                      <span className="badge badge--pos">Lunas</span>
+                      <ToneBadge tone="pos">Lunas</ToneBadge>
                     ) : (
                       <SewaLocationEditButton location={loc} />
                     )}
