@@ -30,6 +30,10 @@ export interface PengajuanInput {
   detail?: { item: string; amount: number }[] | null;
   owner?: string;
   org?: string | null;
+  due_day?: number | null;
+  frequency?: string | null;
+  is_active?: boolean;
+  tags?: string[];
 }
 
 /**
@@ -55,6 +59,10 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
       detail: input.detail ?? null,
       owner: input.owner ?? "yayasan",
       org: input.org ?? "yrbb",
+      due_day: input.due_day ?? null,
+      frequency: input.frequency ?? null,
+      is_active: input.is_active ?? (input.type === "recurring" ? true : undefined),
+      tags: input.tags ?? null,
       created_by: session.userId,
       updated_by: session.userId,
       created_at: now,
@@ -63,6 +71,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
     validateObligation(doc);
     const result = await db.collection("obligations").insertOne(doc);
     revalidatePath("/pengajuan");
+    revalidatePath("/yayasan-rutin");
     revalidatePath("/");
     return { ok: true, id: result.insertedId.toString() };
   } catch (err) {
@@ -95,6 +104,7 @@ export async function updateObligationAction(
       },
     );
     revalidatePath("/pengajuan");
+    revalidatePath("/yayasan-rutin");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {
@@ -119,6 +129,7 @@ export async function deleteObligationAction(id: string): Promise<ActionResult> 
     const result = await db.collection("obligations").deleteOne({ _id: toObjectId(id) });
     if (result.deletedCount === 0) return { error: "Pengajuan tidak ditemukan" };
     revalidatePath("/pengajuan");
+    revalidatePath("/yayasan-rutin");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {

@@ -1,8 +1,8 @@
 import { getDb } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import { ToneBadge } from "@/components/tone-badge";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
 import { OmprengAddButton, OmprengRowActions } from "@/components/ompreng-manager";
 import { DAPUR_LOCATIONS, DAPUR_LABELS, type DapurLocation, type OmprengDoc } from "@/lib/ompreng-constants";
 import { UtensilsCrossed, LayoutGrid, Users } from "lucide-react";
@@ -72,97 +72,89 @@ export default async function OmprengPage() {
 
   const grandKekurangan = monthTotals.reduce((s, m) => s + m.total_kekurangan, 0);
 
-  const kpis: KpiItem[] = [
-    { label: "Total Ompreng (Jan–Apr)", value: grandOmpreng.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "info" },
-    { label: "Total Sasaran (Jan–Apr)", value: grandSasaran.toLocaleString("id-ID"), icon: Users, tone: "success" },
-    { label: "Total Kekurangan (Jan–Apr)", value: grandKekurangan.toLocaleString("id-ID"), icon: UtensilsCrossed, tone: "warning" },
-    { label: "Entry Tercatat", value: docs.length.toString(), icon: LayoutGrid, tone: "neutral" },
-  ];
-
   return (
-    <div className="space-y-6">
-      <PageHeader icon={UtensilsCrossed} title="Data Ompreng Dapur">
+    <main className="content" data-screen-label="08 Ompreng">
+      <PageHeader 
+        eyebrow="Yayasan YRBB · Logistik"
+        title="Data Ompreng Dapur"
+        subtitle="Monitoring jumlah ompreng dan sasaran penerima"
+      >
         {isAdmin && <OmprengAddButton />}
       </PageHeader>
 
-      <KpiStrip items={kpis} cols={4} />
+      <SummaryStrip>
+        <SummaryCell label="Grand Total Ompreng" value={grandOmpreng.toLocaleString("id-ID")} icon={<UtensilsCrossed />} />
+        <SummaryCell label="Total Sasaran" value={grandSasaran.toLocaleString("id-ID")} icon={<Users />} tone="pos" />
+        <SummaryCell 
+          label="Total Kekurangan" 
+          value={grandKekurangan.toLocaleString("id-ID")} 
+          icon={<LayoutGrid />} 
+          tone={grandKekurangan > 0 ? "warn" : "outline"}
+        />
+        <SummaryCell label="Entry Tercatat" value={docs.length.toString()} />
+      </SummaryStrip>
 
-      {MONTHS.map((m) => {
-        const mt = monthTotals.find((t) => t.month === m.value)!;
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-8)" }}>
+        {MONTHS.map((m) => {
+          const mt = monthTotals.find((t) => t.month === m.value)!;
 
-        return (
-          <SectionCard
-            key={m.value}
-            icon={UtensilsCrossed}
-            title={MONTH_LABELS[m.value]}
-            tone="info"
-            badge={
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>Ompreng: <strong className="text-foreground">{mt.total_ompreng.toLocaleString("id-ID")}</strong></span>
-                <span>Sasaran: <strong className="text-foreground">{mt.total_sasaran.toLocaleString("id-ID")}</strong></span>
-                {mt.total_kekurangan > 0 && (
-                  <span>Kurang: <strong className="text-amber-500">{mt.total_kekurangan.toLocaleString("id-ID")}</strong></span>
-                )}
+          return (
+            <section className="section" key={m.value}>
+              <div className="section__head">
+                <h2 className="section__title">{MONTH_LABELS[m.value]}</h2>
+                <span className="section__meta">Ompreng: {mt.total_ompreng.toLocaleString("id-ID")} · Sasaran: {mt.total_sasaran.toLocaleString("id-ID")} {mt.total_kekurangan > 0 && `· Kurang: ${mt.total_kekurangan}`}</span>
               </div>
-            }
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="ledger">
                 <thead>
-                  <tr className="border-b border-border/60 text-muted-foreground text-xs">
-                    <th className="py-2 pr-4 text-left font-medium">Dapur</th>
-                    <th className="py-2 px-4 text-right font-medium">Ompreng</th>
-                    <th className="py-2 px-4 text-right font-medium">Sasaran</th>
-                    <th className="py-2 px-4 text-right font-medium">Kekurangan</th>
-                    <th className="py-2 pl-4 text-left font-medium">Alasan Tambah</th>
-                    {isAdmin && <th className="py-2 w-16" />}
+                  <tr>
+                    <th>Dapur</th>
+                    <th className="num" style={{ width: "100px" }}>Ompreng</th>
+                    <th className="num" style={{ width: "100px" }}>Sasaran</th>
+                    <th className="num" style={{ width: "100px" }}>Kekurangan</th>
+                    <th style={{ width: "200px" }}>Alasan Tambah</th>
+                    {isAdmin && <th style={{ width: "40px" }} />}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/40">
-                  {DAPUR_LOCATIONS.map((dapur) => {
-                    const doc = lookup.get(`${dapur}::${m.value}`);
-                    return (
-                      <tr key={dapur} className={cn("transition-colors", !doc && "opacity-40")}>
-                        <td className="py-2 pr-4 font-medium">{DAPUR_LABELS[dapur]}</td>
-                        <td className="py-2 px-4 text-right tabular-nums">
-                          {doc ? doc.jumlah_ompreng.toLocaleString("id-ID") : "—"}
+                <tbody>
+                {DAPUR_LOCATIONS.map((dapur) => {
+                  const doc = lookup.get(`${dapur}::${m.value}`);
+                  return (
+                    <tr className={cn(!doc && "opacity-50")} key={dapur}>
+                      <td style={{ fontWeight: 600, color: "var(--ink-000)" }}>{DAPUR_LABELS[dapur]}</td>
+                      <td className="num">{doc ? doc.jumlah_ompreng.toLocaleString("id-ID") : "—"}</td>
+                      <td className="num">{doc ? doc.jumlah_sasaran.toLocaleString("id-ID") : "—"}</td>
+                      <td className="num" style={{ color: doc?.kekurangan_ompreng ? "var(--warn-700)" : "inherit" }}>
+                        {doc?.kekurangan_ompreng ? doc.kekurangan_ompreng.toLocaleString("id-ID") : "—"}
+                      </td>
+                      <td style={{ color: "var(--ink-400)", fontSize: "var(--text-xs)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {doc?.alasan_tambah || "—"}
+                      </td>
+                      {isAdmin && (
+                        <td style={{ textAlign: "right" }}>
+                          {doc && <OmprengRowActions row={doc} />}
                         </td>
-                        <td className="py-2 px-4 text-right tabular-nums">
-                          {doc ? doc.jumlah_sasaran.toLocaleString("id-ID") : "—"}
-                        </td>
-                        <td className="py-2 px-4 text-right tabular-nums">
-                          {doc?.kekurangan_ompreng ? (
-                            <span className="text-amber-500 font-semibold">{doc.kekurangan_ompreng.toLocaleString("id-ID")}</span>
-                          ) : "—"}
-                        </td>
-                        <td className="py-2 pl-4 text-muted-foreground text-xs max-w-[200px] truncate">
-                          {doc?.alasan_tambah || "—"}
-                        </td>
-                        {isAdmin && (
-                          <td className="py-2 text-right">
-                            {doc && <OmprengRowActions row={doc} />}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
+                      )}
+                    </tr>
+                  );
+                })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-border font-bold text-sm">
-                    <td className="py-2 pr-4">Total</td>
-                    <td className="py-2 px-4 text-right tabular-nums">{mt.total_ompreng.toLocaleString("id-ID")}</td>
-                    <td className="py-2 px-4 text-right tabular-nums">{mt.total_sasaran.toLocaleString("id-ID")}</td>
-                    <td className="py-2 px-4 text-right tabular-nums text-amber-500">
+                  <tr style={{ fontWeight: 600 }}>
+                    <td>Total</td>
+                    <td className="num">{mt.total_ompreng.toLocaleString("id-ID")}</td>
+                    <td className="num">{mt.total_sasaran.toLocaleString("id-ID")}</td>
+                    <td className="num" style={{ color: "var(--warn-700)" }}>
                       {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
                     </td>
-                    <td colSpan={isAdmin ? 2 : 1} />
+                    <td />
+                    {isAdmin && <td />}
                   </tr>
                 </tfoot>
               </table>
-            </div>
-          </SectionCard>
-        );
-      })}
-    </div>
+            </section>
+          );
+        })}
+      </div>
+    </main>
   );
 }

@@ -33,7 +33,7 @@ export function KpiStrip({
           ? "md:grid-cols-3"
           : "md:grid-cols-2";
   return (
-    <div className={cn("grid grid-cols-2 gap-2 md:gap-3", colClass)}>
+    <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3", colClass)}>
       {items.map((it) => (
         <KpiCard key={it.label} item={it} />
       ))}

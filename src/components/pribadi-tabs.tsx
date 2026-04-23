@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export type PribadiView = "ringkasan" | "akun" | "cicilan" | "numpang" | "pengeluaran";
+export type PribadiView = "ringkasan" | "akun" | "cicilan" | "numpang" | "pengeluaran" | "rutin";
 
-const VIEWS: PribadiView[] = ["ringkasan", "akun", "cicilan", "numpang", "pengeluaran"];
+const VIEWS: PribadiView[] = ["ringkasan", "akun", "cicilan", "numpang", "pengeluaran", "rutin"];
 const VIEW_LABEL: Record<PribadiView, string> = {
   ringkasan: "Ringkasan",
   akun: "Akun",
   cicilan: "Cicilan & Piutang",
   numpang: "Numpang",
   pengeluaran: "Pengeluaran",
+  rutin: "Wajib Bulanan",
 };
 
 export function PribadiTabs({
@@ -20,12 +21,14 @@ export function PribadiTabs({
   cicilan,
   numpang,
   pengeluaran,
+  rutin,
 }: {
   ringkasan: React.ReactNode;
   akun: React.ReactNode;
   cicilan: React.ReactNode;
   numpang: React.ReactNode;
   pengeluaran: React.ReactNode;
+  rutin: React.ReactNode;
 }) {
   const [activeView, setActiveView] = useState<PribadiView>("ringkasan");
 
@@ -35,6 +38,7 @@ export function PribadiTabs({
     cicilan,
     numpang,
     pengeluaran,
+    rutin,
   };
 
   return (

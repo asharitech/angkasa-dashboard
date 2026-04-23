@@ -224,15 +224,12 @@ export function SewaLocationEditButton({ location }: { location: SewaLocation })
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button
-        variant="ghost"
-        size="icon-sm"
+      <button
+        className="btn btn--primary btn--sm"
         onClick={() => setOpen(true)}
-        aria-label={`Edit ${location.code}`}
-        title="Edit lokasi"
       >
-        <Pencil className="h-4 w-4" />
-      </Button>
+        Proses
+      </button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit {location.code}</DialogTitle>

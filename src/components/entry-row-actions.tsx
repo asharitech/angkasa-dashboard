@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, Loader2, AlertTriangle, Plus } from "lucide-react";
 import { EntryForm } from "./entry-form";
 import { deleteEntryAction, getEntryByIdAction } from "@/lib/actions/entries";
 import { createEntryAction as _createEntry } from "@/lib/actions/entries";
@@ -154,7 +154,7 @@ export function EntryRowActions({
   );
 }
 
-export function EntryCreateButton({ accounts }: { accounts: Account[] }) {
+export function EntryCreateButton({ accounts, label = "Tambah Transaksi" }: { accounts: Account[]; label?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -165,9 +165,9 @@ export function EntryCreateButton({ accounts }: { accounts: Account[] }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        + Tambah Transaksi
-      </Button>
+      <button className="btn btn--primary" onClick={() => setOpen(true)}>
+        <Plus className="btn__icon" /> {label}
+      </button>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tambah Transaksi</DialogTitle>

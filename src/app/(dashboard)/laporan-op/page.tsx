@@ -1,24 +1,12 @@
 import { getLedger, getLaporanOpReconciliation } from "@/lib/data";
-import { formatRupiah, formatDate } from "@/lib/format";
+import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
+import { FileOutput, ArrowRight, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
-import { SectionCard } from "@/components/section-card";
-import { EmptyState } from "@/components/empty-state";
-import { DataTable } from "@/components/data-table";
-import {
-  FileText,
-  TrendingUp,
-  TrendingDown,
-  Scale,
-  Banknote,
-  GitCompare,
-  Receipt,
-  Inbox,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ExportButton } from "@/components/export-button";
 
 export const dynamic = "force-dynamic";
-
-type EntryRow = { no: number; keterangan: string; masuk: number; keluar: number; saldo: number };
 
 export default async function LaporanOpPage() {
   const [ledger, recon] = await Promise.all([
@@ -27,247 +15,194 @@ export default async function LaporanOpPage() {
   ]);
 
   if (!ledger?.laporan_op) {
-    return (
-      <div className="space-y-5">
-        <PageHeader icon={FileText} title="Laporan Operasional" />
-        <EmptyState
-          icon={Inbox}
-          title="Laporan Op belum tersedia"
-          description="Snapshot ledger belum di-publish."
-        />
-      </div>
-    );
+    return <main className="content"><div className="p-8 text-center text-ink-500">Laporan Operasional belum tersedia.</div></main>;
   }
 
   const { entries, totals, kewajiban, dana_efektif } = ledger.laporan_op;
   const reconHasDiff = recon && (recon.diffMasuk !== 0 || recon.diffKeluar !== 0);
 
-  const kpis: KpiItem[] = [
-    {
-      label: "Total Masuk",
-      value: formatRupiah(totals.masuk),
-      icon: TrendingUp,
-      tone: "success",
-    },
-    {
-      label: "Total Keluar",
-      value: formatRupiah(totals.keluar),
-      icon: TrendingDown,
-      tone: "danger",
-    },
-    {
-      label: "Saldo",
-      value: formatRupiah(totals.saldo),
-      icon: Scale,
-      tone: "info",
-    },
-    {
-      label: "Dana Efektif",
-      value: formatRupiah(dana_efektif),
-      icon: Banknote,
-      tone: "primary",
-    },
-  ];
+  // Group obligations
+  const kewajibanList = Object.entries(kewajiban as Record<string, number>)
+    .filter(([key, value]) => key !== "total" && value != null && typeof value === "number")
+    .sort((a, b) => {
+      const isATahap = a[0].startsWith("dana_pinjam_angkasa_tahap");
+      const isBTahap = b[0].startsWith("dana_pinjam_angkasa_tahap");
+      if (isATahap && !isBTahap) return -1;
+      if (!isATahap && isBTahap) return 1;
+      if (isATahap && isBTahap) {
+        const aNum = Number(a[0].match(/tahap(\d+)$/)?.[1] ?? 0);
+        const bNum = Number(b[0].match(/tahap(\d+)$/)?.[1] ?? 0);
+        return aNum - bNum;
+      }
+      return a[0].localeCompare(b[0]);
+    })
+    .map(([key, value]) => {
+      let label = key;
+      if (key.startsWith("dana_pinjam_angkasa_tahap")) {
+        const num = key.match(/tahap(\d+)$/)?.[1] ?? "?";
+        label = `Tahap ${num}`;
+      } else if (key === "lembar2_btn") {
+        label = "Lembar 2 BTN";
+      } else if (key === "pinjaman_btn") {
+        label = "Pinjaman BTN";
+      } else {
+        label = key.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+      }
+      return { label, amount: value };
+    });
 
-  const kRows = kewajibanRows(kewajiban);
+  const percentEfektif = totals.saldo > 0 ? (dana_efektif / totals.saldo) * 100 : 0;
 
   return (
-    <div className="space-y-5">
-      <PageHeader icon={FileText} title="Laporan Operasional">
-        {ledger.as_of && (
-          <span className="text-xs text-muted-foreground">per {formatDate(ledger.as_of)}</span>
-        )}
+    <main className="content" data-screen-label="06 Laporan OP">
+      <PageHeader 
+        eyebrow="Laporan Op · Sandbox"
+        title="Validasi Saldo & Kewajiban"
+        subtitle={`Ledger & rekap keuangan operasional · ${entries.length} transaksi terakhir`}
+      >
+        <ExportButton data={entries} filename={`laporan-op-${ledger.period || "current"}`} />
       </PageHeader>
 
-      {/* Reconciliation — promoted to top when diff exists */}
       {reconHasDiff && recon && (
-        <SectionCard
-          icon={GitCompare}
-          title="Rekonsiliasi: Ledger vs Entries"
-          tone="warning"
-          className="border-amber-200 bg-amber-50/30"
-        >
-          <p className="mb-2 text-xs text-muted-foreground">
-            Snapshot Laporan Op vs hitungan live (account: btn_yayasan).
-          </p>
-          <div className="divide-y divide-amber-200/60">
-            <ReconRow
-              label="Masuk"
-              ledger={recon.ledgerMasuk}
-              entries={recon.entriesMasuk}
-              diff={recon.diffMasuk}
-            />
-            <ReconRow
-              label="Keluar"
-              ledger={recon.ledgerKeluar}
-              entries={recon.entriesKeluar}
-              diff={recon.diffKeluar}
-            />
+        <div className="mb-6 p-4 rounded bg-warn-50 border border-warn-200 text-warn-800 text-sm flex gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <div>
+            <div className="font-semibold mb-1">Rekonsiliasi: Terdapat selisih antara Ledger vs Entries</div>
+            <p>Selisih bukan error — Laporan Op adalah snapshot manual. Update via mongo_helper bila perlu.</p>
+            <div className="mt-2 grid grid-cols-2 gap-4">
+              <div>Masuk diff: <span className="font-mono">{formatRupiah(recon.diffMasuk)}</span></div>
+              <div>Keluar diff: <span className="font-mono">{formatRupiah(recon.diffKeluar)}</span></div>
+            </div>
           </div>
-          <p className="mt-3 text-xs italic text-muted-foreground">
-            Selisih bukan error — Laporan Op adalah snapshot manual. Update via mongo_helper bila
-            perlu.
-          </p>
-        </SectionCard>
+        </div>
       )}
 
-      <KpiStrip items={kpis} cols={4} />
-
-      {/* Kewajiban */}
-      <SectionCard
-        icon={Receipt}
-        title="Kewajiban"
-        tone="danger"
-        badge={
-          <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
-            {formatRupiah(kewajiban.total)}
-          </span>
-        }
-      >
-        <div className="divide-y divide-border/60">
-          {kRows.map(([label, val]) => {
-            const isTotal = label === "Total";
-            return (
-              <div key={label} className="flex items-center justify-between py-2.5">
-                <span className={isTotal ? "text-sm font-semibold" : "text-sm text-muted-foreground"}>
-                  {label}
-                </span>
-                <span className={isTotal ? "text-base font-bold tabular-nums" : "text-sm font-semibold tabular-nums"}>
-                  {formatRupiah(val)}
-                </span>
-              </div>
-            );
-          })}
+      {/* Snapshot */}
+      <div className="hero-split">
+        <div className="hero-main">
+          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-3)" }}>
+            <span style={{ display: "inline-block", width: 5, height: 5, background: "var(--info-500)", borderRadius: "50%", marginRight: 8, verticalAlign: "middle" }}></span>
+            Saldo Tersedia
+          </div>
+          <div className="hero-amount"><span className="sym">Rp</span>{totals.saldo.toLocaleString('id-ID')}</div>
+          <div className="hero-breakdown">
+            <span style={{ color: "var(--pos-700)" }}>+{formatRupiah(totals.masuk)} masuk</span>
+            <span>·</span>
+            <span style={{ color: "var(--neg-700)" }}>−{formatRupiah(totals.keluar)} keluar</span>
+            <span>·</span>
+            <span>{entries.length} transaksi</span>
+          </div>
         </div>
-      </SectionCard>
+        <div className="hero-side">
+          <div>
+            <div className="t-eyebrow">Dana Efektif</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-2xl)", fontWeight: 600, color: "var(--ink-000)", marginTop: 4 }}>
+              {formatRupiah(dana_efektif)}
+            </div>
+            <div className="t-caption" style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="bar" style={{ width: 80, height: 4 }}><div className={cn("bar__fill", percentEfektif >= 100 ? "bar__fill--pos" : percentEfektif >= 50 ? "bar__fill--warn" : "bar__fill--neg")} style={{ width: `${Math.min(100, Math.max(0, percentEfektif))}%` }}></div></div>
+              {percentEfektif.toFixed(0)}% dr saldo
+            </div>
+          </div>
+          <div className="divider" style={{ margin: 0 }}></div>
+          <div>
+            <div className="t-eyebrow">Kewajiban</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xl)", fontWeight: 600, color: "var(--neg-700)", marginTop: 4 }}>
+              −{formatRupiah(kewajiban.total)}
+            </div>
+            <Link className="t-caption" style={{ marginTop: 2, display: "inline-flex", alignItems: "center", color: "var(--info-700)", textDecoration: "none" }} href="/pribadi">
+              Lihat hutang ke Pak Angkasa <ArrowRight className="w-3 h-3 ml-1"/>
+            </Link>
+          </div>
+        </div>
+      </div>
 
-      {/* Detail Transaksi */}
-      <SectionCard
-        icon={FileText}
-        title={`Detail Transaksi`}
-        badge={
-          <span className="ml-1 text-xs text-muted-foreground">{entries.length} item</span>
-        }
-        bodyClassName="px-0 md:px-4"
-      >
-        <DataTable<EntryRow>
-          minWidth={640}
-          rows={entries}
-          rowKey={(r) => String(r.no)}
-          empty={
-            <EmptyState
-              icon={Inbox}
-              title="Tidak ada transaksi"
-              description="Ledger kosong untuk periode ini."
-              className="border-none shadow-none"
-            />
-          }
-          columns={[
-            {
-              key: "no",
-              header: "#",
-              cell: (r) => <span className="text-muted-foreground">{r.no}</span>,
-              className: "w-12",
-            },
-            {
-              key: "keterangan",
-              header: "Keterangan",
-              cell: (r) => (
-                <span className="block whitespace-normal break-words md:max-w-[260px] md:truncate">
-                  {r.keterangan}
-                </span>
-              ),
-            },
-            {
-              key: "masuk",
-              header: "Masuk",
-              align: "right",
-              cell: (r) =>
-                r.masuk > 0 ? (
-                  <span className="font-semibold text-emerald-600">{formatRupiah(r.masuk)}</span>
-                ) : (
-                  ""
-                ),
-            },
-            {
-              key: "keluar",
-              header: "Keluar",
-              align: "right",
-              cell: (r) =>
-                r.keluar > 0 ? (
-                  <span className="font-semibold text-rose-600">{formatRupiah(r.keluar)}</span>
-                ) : (
-                  ""
-                ),
-            },
-            {
-              key: "saldo",
-              header: "Saldo",
-              align: "right",
-              cell: (r) => <span className="font-bold">{formatRupiah(r.saldo)}</span>,
-            },
-          ]}
-        />
-      </SectionCard>
-    </div>
+      <div className="two-col mt-6">
+        {/* Ledger */}
+        <div className="panel" style={{ padding: 0 }}>
+          <div className="section__head" style={{ padding: "var(--sp-4) var(--sp-5)", borderBottom: "1px solid var(--ink-200)" }}>
+            <h2 className="section__title">Mutasi Rekening</h2>
+            <span className="section__meta">{entries.length} baris mutasi</span>
+          </div>
+          
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th style={{ width: 48, textAlign: "center" }}>No</th>
+                <th>Keterangan</th>
+                <th className="num" style={{ width: 140 }}>Masuk</th>
+                <th className="num" style={{ width: 140 }}>Keluar</th>
+                <th className="num" style={{ width: 160 }}>Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((r, i) => {
+                const isSelected = i === entries.length - 1; // Highlight last entry
+                return (
+                  <tr key={r.no} className={isSelected ? "is-selected" : ""}>
+                    <td className="num" style={{ textAlign: "center", color: "var(--ink-400)" }}>{r.no}</td>
+                    <td style={{ fontWeight: isSelected ? 600 : 400 }}>{r.keterangan}</td>
+                    {r.masuk > 0 ? (
+                      <td className="num text-pos">+{formatRupiah(r.masuk)}</td>
+                    ) : <td className="num text-ink-300">—</td>}
+                    {r.keluar > 0 ? (
+                      <td className="num text-neg">−{formatRupiah(r.keluar)}</td>
+                    ) : <td className="num text-ink-300">—</td>}
+                    <td className="num" style={{ fontWeight: 600 }}>{formatRupiah(r.saldo)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Side summary */}
+        <aside className="detail" style={{ position: "sticky", top: "var(--sp-6)", padding: "var(--sp-6)", background: "var(--surface)", border: "1px solid var(--ink-200)", borderRadius: "var(--r-md)", alignSelf: "start" }}>
+          <div className="detail__body" style={{ padding: 0 }}>
+            <div className="t-eyebrow">Rekapitulasi {ledger.period || "Bulan Ini"}</div>
+            <div className="divider"></div>
+            
+            <div style={{ marginBottom: "var(--sp-5)" }}>
+              <div className="row-between" style={{ marginBottom: 4 }}>
+                <span className="t-label">Saldo Awal</span>
+                <span className="mono" style={{ fontWeight: 600 }}>{formatRupiah(entries[0]?.saldo - (entries[0]?.masuk || 0) + (entries[0]?.keluar || 0) || 0)}</span>
+              </div>
+              <div className="row-between" style={{ marginBottom: 4 }}>
+                <span className="t-label text-pos">Total Masuk</span>
+                <span className="mono text-pos">+{formatRupiah(totals.masuk)}</span>
+              </div>
+              <div className="row-between" style={{ marginBottom: 4 }}>
+                <span className="t-label text-neg">Total Keluar</span>
+                <span className="mono text-neg">−{formatRupiah(totals.keluar)}</span>
+              </div>
+              <div className="row-between" style={{ paddingTop: 8, marginTop: 8, borderTop: "1px dashed var(--ink-200)" }}>
+                <span className="t-label">Saldo Akhir</span>
+                <span className="mono" style={{ fontWeight: 600, fontSize: "var(--text-lg)" }}>{formatRupiah(totals.saldo)}</span>
+              </div>
+            </div>
+
+            <div className="t-eyebrow">Kewajiban Ditahan</div>
+            <div className="divider"></div>
+
+            {kewajibanList.map(({ label, amount }) => (
+              <div className="row-between" style={{ marginBottom: 4 }} key={label}>
+                <span className="t-label">{label}</span>
+                <span className="mono">−{formatRupiah(amount)}</span>
+              </div>
+            ))}
+            
+            <div className="row-between" style={{ paddingTop: 8, marginTop: 8, borderTop: "1px dashed var(--ink-200)" }}>
+              <span className="t-label" style={{ fontWeight: 600 }}>Total Kewajiban</span>
+              <span className="mono text-neg" style={{ fontWeight: 600 }}>−{formatRupiah(kewajiban.total)}</span>
+            </div>
+
+            <div className="alert-box" style={{ marginTop: "var(--sp-5)" }}>
+              <div className="alert-box__title">Dana Efektif: {formatRupiah(dana_efektif)}</div>
+              <div>Dana yang benar-benar bisa dipakai setelah dikurangi hutang.</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
   );
-}
-
-function ReconRow({
-  label,
-  ledger,
-  entries,
-  diff,
-}: {
-  label: string;
-  ledger: number;
-  entries: number;
-  diff: number;
-}) {
-  return (
-    <div className="grid grid-cols-4 gap-2 py-2.5 text-xs">
-      <div className="font-semibold">{label}</div>
-      <div className="text-right">
-        <p className="text-[10px] uppercase text-muted-foreground">Ledger</p>
-        <p className="tabular-nums">{formatRupiah(ledger)}</p>
-      </div>
-      <div className="text-right">
-        <p className="text-[10px] uppercase text-muted-foreground">Entries</p>
-        <p className="tabular-nums">{formatRupiah(entries)}</p>
-      </div>
-      <div className="text-right">
-        <p className="text-[10px] uppercase text-muted-foreground">Selisih</p>
-        <p
-          className={`font-bold tabular-nums ${diff !== 0 ? "text-amber-700" : "text-emerald-700"}`}
-        >
-          {diff > 0 ? "+" : ""}
-          {formatRupiah(diff)}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function kewajibanRows(k: {
-  total: number;
-  dana_pinjam_angkasa_tahap1?: number;
-  dana_pinjam_angkasa_tahap2?: number;
-  dana_pinjam_angkasa_tahap3?: number;
-  lembar2_btn?: number;
-  pinjaman_btn?: number;
-}): [string, number][] {
-  const ka = k as Record<string, number | undefined>;
-  if (ka.dana_pinjam_angkasa_tahap1 != null) {
-    return ([
-      ["Dana Pinjam Angkasa Tahap 1", ka.dana_pinjam_angkasa_tahap1],
-      ["Dana Pinjam Angkasa Tahap 2", ka.dana_pinjam_angkasa_tahap2],
-      ["Dana Pinjam Angkasa Tahap 3", ka.dana_pinjam_angkasa_tahap3],
-      ["Total", k.total],
-    ] as [string, number | undefined][]).filter((r): r is [string, number] => r[1] != null);
-  }
-  return ([
-    ["Lembar2 BTN", ka.lembar2_btn],
-    ["Pinjaman BTN", ka.pinjaman_btn],
-    ["Total", k.total],
-  ] as [string, number | undefined][]).filter((r): r is [string, number] => r[1] != null);
 }

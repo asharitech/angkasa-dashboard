@@ -1,41 +1,17 @@
 import { getPribadiSummary } from "@/lib/data";
 import { getSession } from "@/lib/auth";
-import type { Obligation, Numpang } from "@/lib/types";
 import { formatRupiah, formatDateShort } from "@/lib/format";
-import { PageHeader } from "@/components/page-header";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
-import { SectionCard } from "@/components/section-card";
-import { EmptyState } from "@/components/empty-state";
-import { TransactionIcon, AmountText } from "@/components/transaction-item";
-import {
-  NumpangCreateButton,
-  NumpangRowActions,
-} from "@/components/numpang-manager";
-import { AccountAdjustButton } from "@/components/account-adjust-button";
-import { PribadiTabs } from "@/components/pribadi-tabs";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  User,
-  Wallet,
-  HandCoins,
-  PiggyBank,
-  CreditCard,
-  Repeat,
-  Banknote,
-  CheckCircle2,
-  Clock,
-  CalendarDays,
-  ShoppingBag,
-  TrendingDown,
-  Target,
-  Inbox,
-} from "lucide-react";
+import { Download, Wallet, CreditCard, PiggyBank, ArrowRight } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
+import { ExportButton } from "@/components/export-button";
+import Link from "next/link";
+import { EntryCreateButton } from "@/components/entry-row-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function PribadiPage() {
-
   const [data, session] = await Promise.all([getPribadiSummary(), getSession()]);
   const isAdmin = session?.role === "admin";
 
@@ -62,6 +38,7 @@ export default async function PribadiPage() {
   const currentMonth = `${witaYear}-${witaMonth}`;
   let cicilanBulanIni = 0;
   let totalRemainingDebt = 0;
+  
   for (const loan of data.loans) {
     for (const s of loan.schedule ?? []) {
       if (s.status !== "lunas") totalRemainingDebt += s.amount;
@@ -69,486 +46,205 @@ export default async function PribadiPage() {
     }
   }
   const recurringTotal = data.recurring.reduce((s, r) => s + (r.amount ?? 0), 0);
-  const netPosition = cashTotal + piutangTotal - totalRemainingDebt;
-  const totalBulanan = cicilanBulanIni + recurringTotal;
 
-  const kpis: KpiItem[] = [
-    {
-      label: "Posisi Bersih",
-      value: formatRupiah(netPosition),
-      icon: Target,
-      tone: netPosition >= 0 ? "info" : "danger",
-      hint: "Kas + piutang − hutang",
-      valueTone: netPosition >= 0 ? undefined : "danger",
-    },
-    {
-      label: "Cash Total",
-      value: formatRupiah(cashTotal),
-      icon: Wallet,
-      tone: "primary",
-      hint: `BCA ${formatRupiah(bcaBalance)} · BRI ${formatRupiah(briKas)}`,
-    },
-    {
-      label: "Piutang",
-      value: formatRupiah(piutangTotal),
-      icon: HandCoins,
-      tone: "warning",
-      hint: "Belum diganti yayasan",
-    },
-    {
-      label: "Sisa Cicilan",
-      value: formatRupiah(totalRemainingDebt),
-      icon: TrendingDown,
-      tone: "danger",
-      hint: `${data.loans.length} cicilan aktif`,
-      valueTone: "danger",
-    },
-  ];
+  // Group items
+  const piutangItems = data.piutangItems.filter((i) => (i.amount ?? 0) > 0);
 
   return (
-    <div className="space-y-5">
-      <PageHeader icon={User} title="Keuangan Pribadi">
-        {briAccount?.balance_as_of && (
-          <span className="text-xs text-muted-foreground">
-            BRI per {formatDateShort(briAccount.balance_as_of)}
-          </span>
-        )}
+    <main className="content" data-screen-label="05 Keuangan Pribadi">
+      <PageHeader 
+        eyebrow="Tanggungan Personal"
+        title="Buku Pribadi"
+        subtitle={`Ledger & rekap keuangan pribadi · ${data.spending.length} transaksi terakhir`}
+      >
+        <ExportButton data={data.spending} filename="rekap-pribadi" />
+        {isAdmin && <EntryCreateButton accounts={data.personalAccounts} label="Catat transaksi" />}
       </PageHeader>
 
-      <KpiStrip items={kpis} cols={4} />
-
-      <PribadiTabs
-        ringkasan={
-          <RingkasanView
-            currentMonth={currentMonth}
-            cicilanBulanIni={cicilanBulanIni}
-            recurringTotal={recurringTotal}
-            totalBulanan={totalBulanan}
-            totalSavings={totalSavings}
-            savingsTotal={data.savingsTotal}
-            savings={data.savings}
-          />
-        }
-        akun={<AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />}
-        cicilan={
-          <CicilanView
-            loans={data.loans}
-            totalRemainingDebt={totalRemainingDebt}
-            piutangByMonth={data.piutangByMonth}
-            piutangTotal={piutangTotal}
-          />
-        }
-        numpang={
-          <NumpangView
-            numpang={data.numpang}
-            numpangTotal={numpangTotal}
-            isAdmin={isAdmin}
-          />
-        }
-        pengeluaran={
-          <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
-        }
-      />
-    </div>
-  );
-}
-
-type SavingsAggregate = { _id: string; count: number; total: number; total_in: number; total_out: number };
-type SavingEntry = { _id: string; description: string; date: string; owner: string; amount: number };
-
-function RingkasanView({
-  currentMonth,
-  cicilanBulanIni,
-  recurringTotal,
-  totalBulanan,
-  totalSavings,
-  savingsTotal,
-  savings,
-}: {
-  currentMonth: string;
-  cicilanBulanIni: number;
-  recurringTotal: number;
-  totalBulanan: number;
-  totalSavings: number;
-  savingsTotal: SavingsAggregate[];
-  savings: SavingEntry[];
-}) {
-  return (
-    <div className="space-y-4">
-      <SectionCard
-        icon={CalendarDays}
-        title="Proyeksi Bulanan"
-        tone="danger"
-        badge={
-          <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
-            {formatRupiah(totalBulanan)}/bln
-          </span>
-        }
-      >
-        <div className="divide-y divide-border/60">
-          <KvRow label={`Cicilan (${currentMonth})`} value={cicilanBulanIni} />
-          <KvRow label="Pengeluaran Rutin" value={recurringTotal} />
-          <KvRow label="Total Kewajiban/Bulan" value={totalBulanan} highlight />
-        </div>
-      </SectionCard>
-
-      {savingsTotal.length > 0 && (
-        <SectionCard
-          icon={PiggyBank}
-          title="Tabungan"
-          tone="info"
-          badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-violet-700">
-              {formatRupiah(totalSavings)}
-            </span>
-          }
-        >
-          <div className="divide-y divide-border/60">
-            {savingsTotal.map((s) => {
-              const displayAmount =
-                s.total_out > 0 ? s.total_out : s.total_in > 0 ? s.total_in : s.total;
-              return (
-                <div key={s._id} className="flex items-center justify-between py-2.5">
-                  <div>
-                    <span className="text-sm font-medium capitalize">{s._id}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{s.count} setoran</span>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatRupiah(displayAmount)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          {savings.length > 0 && (
-            <>
-              <p className="mt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Riwayat Terakhir
-              </p>
-              <div className="divide-y divide-border/60">
-                {savings.slice(0, 8).map((entry) => (
-                  <div key={entry._id} className="flex items-center justify-between py-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm">{entry.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateShort(entry.date)} · {entry.owner}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold tabular-nums text-violet-600">
-                      {formatRupiah(entry.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </SectionCard>
-      )}
-    </div>
-  );
-}
-
-function AkunView({
-  accounts,
-  isAdmin,
-}: {
-  accounts: { _id: string; bank: string; holder: string; balance: number; balance_as_of?: string }[];
-  isAdmin: boolean;
-}) {
-  return (
-    <SectionCard icon={Wallet} title="Rekening Pribadi" tone="info">
-      <div className="divide-y divide-border/60">
-        {accounts.map((acc) => (
-          <div key={acc._id} className="flex items-center justify-between gap-2 py-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{acc.bank}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {acc.holder}
-                {acc.balance_as_of && <> · per {formatDateShort(acc.balance_as_of)}</>}
-              </p>
-            </div>
-            <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
-            {isAdmin && <AccountAdjustButton account={acc} />}
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-function CicilanView({
-  loans,
-  totalRemainingDebt,
-  piutangByMonth,
-  piutangTotal,
-}: {
-  loans: Obligation[];
-  totalRemainingDebt: number;
-  piutangByMonth: { _id: string | null; count: number; total: number }[];
-  piutangTotal: number;
-}) {
-  return (
-    <div className="space-y-4">
-      {loans.length > 0 ? (
-        <SectionCard
-          icon={CreditCard}
-          title="Cicilan"
-          tone="danger"
-          badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
-              sisa {formatRupiah(totalRemainingDebt)}
-            </span>
-          }
-        >
-          <div className="space-y-5">
-            {loans.map((loan) => {
-              const schedule = loan.schedule ?? [];
-              const paid = schedule.filter((s) => s.status === "lunas");
-              const remaining = schedule.filter((s) => s.status !== "lunas");
-              const lastMonth = loan.final_month ?? remaining[remaining.length - 1]?.month;
-              const remainingAmount = remaining.reduce((s, r) => s + r.amount, 0);
-              return (
-                <div key={loan._id}>
-                  <div className="flex items-start justify-between gap-3 pb-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold">{loan.item}</span>
-                      {lastMonth && (
-                        <Badge variant="outline" className="text-xs">
-                          lunas {lastMonth}
-                        </Badge>
-                      )}
-                    </div>
-                    {loan.due_day && (
-                      <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                        <CalendarDays className="h-3 w-3" />
-                        Tgl {loan.due_day}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="pb-2 text-xs text-muted-foreground">
-                    Sisa: {formatRupiah(remainingAmount)} · {remaining.length} bulan lagi
-                  </p>
-                  <div className="divide-y divide-border/60 border-y border-border/60">
-                    {paid.length > 0 && (
-                      <div className="flex items-center justify-between py-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          <span className="text-sm text-muted-foreground">
-                            {paid.length} bulan lunas
-                          </span>
-                        </div>
-                        <span className="text-sm tabular-nums text-muted-foreground">
-                          {formatRupiah(paid.reduce((s, p) => s + p.amount, 0))}
-                        </span>
-                      </div>
-                    )}
-                    {remaining.map((s) => (
-                      <div key={s.month} className="flex items-center justify-between py-2">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{s.month}</span>
-                        </div>
-                        <span className="text-sm font-semibold tabular-nums">
-                          {formatRupiah(s.amount)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </SectionCard>
-      ) : (
-        <EmptyState icon={Inbox} title="Tidak ada cicilan aktif" />
-      )}
-
-      {piutangByMonth.length > 0 && (
-        <SectionCard
-          icon={HandCoins}
-          title="Hutang Yayasan ke Saya"
-          tone="warning"
-          badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-amber-700">
-              {formatRupiah(piutangTotal)}
-            </span>
-          }
-        >
-          <div className="divide-y divide-border/60">
-            {piutangByMonth.map((p) => (
-              <div key={p._id ?? "lain"} className="flex items-center justify-between py-2.5">
-                <div>
-                  <span className="text-sm font-medium">{p._id ?? "Lainnya"}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{p.count} item</span>
-                </div>
-                <span className="text-sm font-semibold tabular-nums">{formatRupiah(p.total)}</span>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      )}
-    </div>
-  );
-}
-
-function NumpangView({
-  numpang,
-  numpangTotal,
-  isAdmin,
-}: {
-  numpang: Numpang[];
-  numpangTotal: number;
-  isAdmin: boolean;
-}) {
-  if (numpang.length === 0) {
-    return (
-      <div className="space-y-3">
-        {isAdmin && (
-          <div className="flex justify-end">
-            <NumpangCreateButton />
-          </div>
-        )}
-        <EmptyState
-          icon={Inbox}
-          title="Tidak ada dana numpang"
-          description="Saat ini tidak ada dana parkir di rekening pribadi."
+      <SummaryStrip variant="sewa" style={{ marginBottom: "var(--sp-8)" }}>
+        <SummaryCell 
+          variant="sewa"
+          label="Saldo Saat Ini" 
+          value={formatRupiah(cashTotal)} 
+          valueClassName="ss-cell__value--hero"
+          icon={<Wallet />}
+          subtext="Total likuiditas pribadi" 
         />
-      </div>
-    );
-  }
-  return (
-    <SectionCard
-      icon={Banknote}
-      title="Dana Numpang di BRI"
-      tone="muted"
-      badge={
-        <span className="ml-1 text-sm font-bold tabular-nums text-muted-foreground">
-          {formatRupiah(numpangTotal)}
-        </span>
-      }
-      action={isAdmin ? <NumpangCreateButton /> : undefined}
-    >
-      <div className="divide-y divide-border/60">
-        {numpang.map((n) => (
-          <div key={n._id} className="flex items-center justify-between gap-2 py-2.5">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{n.description}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Parkir di {n.parked_in?.replace(/_/g, " ").toUpperCase()}
-                {n.notes && <> · {n.notes}</>}
-              </p>
-            </div>
-            <span className="text-sm font-semibold tabular-nums">
-              {formatRupiah(n.amount)}
-            </span>
-            {isAdmin && <NumpangRowActions numpang={n} />}
+        <SummaryCell 
+          variant="sewa"
+          label="Pemasukan Bulan Ini" 
+          value={formatRupiah(totalSavings)} 
+          valueClassName="text-pos-700"
+          icon={<PiggyBank />}
+          subtext="Dari gaji & lainnya" 
+        />
+        <SummaryCell 
+          variant="sewa"
+          label="Pengeluaran Bulan Ini" 
+          value={formatRupiah(cicilanBulanIni)} 
+          valueClassName="text-neg-700"
+          icon={<CreditCard />}
+          subtext="Total debit tercatat" 
+        />
+      </SummaryStrip>
+
+      {/* Pinjaman tahap */}
+      <section className="section">
+        <div className="section__head">
+          <div className="row-flex">
+            <h2 className="section__title">Dana Pinjam ke Yayasan</h2>
+            <span className="section__meta">{data.loans.length} tahap · {formatRupiah(totalRemainingDebt)} outstanding</span>
           </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-type SpendEntry = {
-  _id: string;
-  description: string;
-  date: string;
-  amount: number;
-  direction: "in" | "out";
-  category?: string;
-};
-
-function PengeluaranView({
-  recurring,
-  recurringTotal,
-  spending,
-}: {
-  recurring: Obligation[];
-  recurringTotal: number;
-  spending: SpendEntry[];
-}) {
-  return (
-    <div className="space-y-4">
-      {recurring.length > 0 && (
-        <SectionCard
-          icon={Repeat}
-          title="Pengeluaran Rutin"
-          tone="info"
-          badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-muted-foreground">
-              {formatRupiah(recurringTotal)}/bln
-            </span>
-          }
-        >
-          <div className="divide-y divide-border/60">
-            {recurring.map((r) => (
-              <div key={r._id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{r.item}</p>
-                  <Badge variant="outline" className="mt-1">
-                    {r.category.replace(/_/g, " ")}
-                  </Badge>
+          <Link className="section__link" href="#">Riwayat pinjaman <ArrowRight className="w-3 h-3 ml-1"/></Link>
+        </div>
+        <div className="loan-track">
+          {data.loans.map((loan, idx) => {
+            const schedule = loan.schedule ?? [];
+            const remaining = schedule.filter((s) => s.status !== "lunas");
+            const paid = schedule.filter((s) => s.status === "lunas");
+            const remainingAmt = remaining.reduce((s, r) => s + r.amount, 0);
+            const paidAmt = paid.reduce((s, r) => s + r.amount, 0);
+            const totalAmt = remainingAmt + paidAmt;
+            const pct = totalAmt > 0 ? (paidAmt / totalAmt) * 100 : 0;
+            const isLunas = pct === 100;
+            
+            return (
+              <div className="loan-cell" key={loan._id}>
+                <div className="loan-cell__head">
+                  <span className="loan-cell__title">Tahap {idx + 1}</span>
+                  <span className="loan-cell__pct">{schedule[0]?.month || "N/A"}</span>
                 </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {formatRupiah(r.amount ?? 0)}
-                </span>
+                <div className="loan-cell__amount">{formatRupiah(totalAmt)}</div>
+                <div className="bar"><div className={cn("bar__fill", isLunas ? "bar__fill--pos" : pct > 0 ? "bar__fill--warn" : "bar__fill--neg")} style={{ width: `${Math.max(1, pct)}%` }}></div></div>
+                <div className="loan-cell__meta">
+                  {pct > 0 ? `Dikembalikan ${formatRupiah(paidAmt)} · ${pct.toFixed(0)}%` : "Belum ada pengembalian"}
+                </div>
               </div>
-            ))}
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Numpang & Piutang */}
+      <section className="section">
+        <div className="grid grid--2">
+          {/* Numpang */}
+          <div>
+            <div className="section__head">
+              <div className="row-flex"><h2 className="section__title">Dana Numpang di BRI</h2><span className="section__meta">{formatRupiah(numpangTotal)}</span></div>
+            </div>
+            <div className="ledger-frame">
+              {data.numpang.length === 0 ? (
+                <div className="p-4 text-center text-sm text-ink-500">Tidak ada dana numpang.</div>
+              ) : (
+                data.numpang.map(n => {
+                  const initials = n.description.substring(0, 2).toUpperCase();
+                  return (
+                    <div className="piutang-item" key={n._id}>
+                      <div className="piutang-item__avatar" style={{ background: "color-mix(in oklab, var(--warn-500) 14%, var(--surface))", color: "var(--warn-700)" }}>{initials}</div>
+                      <div className="piutang-item__main">
+                        <div className="piutang-item__top"><span style={{ fontWeight: 600 }}>{n.description}</span></div>
+                        <div className="piutang-item__meta-row">
+                          <span>{n.parked_in?.replace(/_/g, " ").toUpperCase()}</span>
+                          {n.notes && (
+                            <>
+                              <span className="piutang-item__dot"></span>
+                              <span className="mono">{n.notes}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="piutang-item__right">
+                        <div className="mono" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{formatRupiah(n.amount)}</div>
+                        <span className="badge badge--warn"><span className="badge__dot"></span>Perlu pindah</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </SectionCard>
-      )}
 
-      {spending.length > 0 ? (
-        <SectionCard icon={ShoppingBag} title="Pengeluaran Terakhir" tone="muted">
-          <ul className="divide-y divide-border/60">
-            {spending.slice(0, 25).map((entry) => (
-              <li key={entry._id} className="flex items-center justify-between py-2.5">
-                <div className="flex min-w-0 items-center gap-3">
-                  <TransactionIcon direction={entry.direction} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{entry.description}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatDateShort(entry.date)}
-                      {entry.category && <> · {entry.category.replace(/_/g, " ")}</>}
-                    </p>
-                  </div>
-                </div>
-                <AmountText
-                  amount={entry.amount}
-                  direction={entry.direction}
-                  formatter={formatRupiah}
-                />
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      ) : (
-        <EmptyState icon={Inbox} title="Belum ada pengeluaran" />
-      )}
-    </div>
-  );
-}
+          {/* Piutang Individu */}
+          <div>
+            <div className="section__head">
+              <div className="row-flex"><h2 className="section__title">Piutang Individu</h2><span className="section__meta">{piutangItems.length} orang · {formatRupiah(piutangTotal)}</span></div>
+            </div>
+            <div className="ledger-frame">
+              {piutangItems.length === 0 ? (
+                <div className="p-4 text-center text-sm text-ink-500">Tidak ada piutang.</div>
+              ) : (
+                piutangItems.map(item => {
+                  const nameParts = item.item.split(" ");
+                  const initials = nameParts.length > 1 ? nameParts[0][0] + nameParts[1][0] : nameParts[0].substring(0, 2);
+                  return (
+                    <div className="piutang-item" key={item._id}>
+                      <div className="piutang-item__avatar">{initials.toUpperCase()}</div>
+                      <div className="piutang-item__main">
+                        <div className="piutang-item__top"><span style={{ fontWeight: 600 }}>{item.item}</span></div>
+                        <div className="piutang-item__meta-row">
+                          <span>{item.category?.replace(/_/g, " ")}</span>
+                        </div>
+                      </div>
+                      <div className="piutang-item__right">
+                        <div className="mono" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{formatRupiah(item.amount || 0)}</div>
+                        <span className="badge"><span className="badge__dot"></span>Aktif</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
-function KvRow({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between py-2.5">
-      <span className={cn("text-sm", highlight && "font-semibold")}>{label}</span>
-      <span
-        className={cn(
-          "text-sm font-semibold tabular-nums",
-          highlight && "text-base font-bold text-primary",
-        )}
-      >
-        {formatRupiah(value)}
-      </span>
-    </div>
+      {/* Personal ledger */}
+      <section className="section">
+        <div className="section__head">
+          <div className="row-flex"><h2 className="section__title">Transaksi Pribadi {currentMonth}</h2><span className="section__meta">{data.spending.length} entri</span></div>
+          <Link className="section__link" href="/aktivitas">Semua aktivitas <ArrowRight className="w-3 h-3 ml-1"/></Link>
+        </div>
+        <div className="panel" style={{ padding: 0 }}>
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th style={{ width: 90 }}>Tanggal</th>
+                <th>Keterangan</th>
+                <th>Kategori</th>
+                <th style={{ width: 120 }}>Akun</th>
+                <th className="num" style={{ width: 140 }}>Masuk</th>
+                <th className="num" style={{ width: 140 }}>Keluar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.spending.length === 0 ? (
+                <tr><td colSpan={6} className="text-center p-4 text-ink-500">Belum ada transaksi.</td></tr>
+              ) : (
+                data.spending.slice(0, 10).map((entry) => (
+                  <tr key={entry._id}>
+                    <td className="num">{formatDateShort(entry.date)}</td>
+                    <td>{entry.description}</td>
+                    <td><span className="badge badge--outline">{entry.category?.replace(/_/g, " ")}</span></td>
+                    <td>{entry.direction === "in" ? "BCA" : "BRI"}</td>
+                    {entry.direction === "in" ? (
+                      <>
+                        <td className="num text-pos">+{formatRupiah(entry.amount)}</td>
+                        <td className="num">—</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="num">—</td>
+                        <td className="num text-neg">−{formatRupiah(entry.amount)}</td>
+                      </>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   );
 }

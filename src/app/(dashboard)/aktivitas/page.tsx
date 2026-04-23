@@ -1,7 +1,9 @@
 import { getActivityFeed, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format";
+
 import { PageHeader } from "@/components/page-header";
+import { ToneBadge, type Tone } from "@/components/tone-badge";
 import { PeriodPicker } from "@/components/period-picker";
 import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { SectionCard } from "@/components/section-card";
@@ -124,81 +126,95 @@ export default async function AktivitasPage({
   }
 
   return (
-    <div className="space-y-5">
-      <PageHeader icon={Activity} title="Aktivitas">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground tabular-nums">{events.length} event</span>
-          {isAdmin && <EntryCreateButton accounts={accounts} />}
-        </div>
+    <main className="content">
+      <PageHeader 
+        icon={Activity}
+        title="Aktivitas"
+      >
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" }}>
+          {events.length} event
+        </span>
+        {isAdmin && <EntryCreateButton accounts={accounts} />}
       </PageHeader>
 
-      <FilterBar>
-        <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
-        <FilterTabs tabs={typeTabs} size="sm" />
-        <FilterTabs tabs={domainTabs} size="sm" />
-      </FilterBar>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--sp-4)", marginBottom: "var(--sp-6)" }}>
+        <div style={{ display: "flex", gap: "2px", background: "var(--surface)", border: "var(--hair)", borderRadius: "var(--r-sm)", padding: "3px" }}>
+          <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
+        </div>
+        <div style={{ display: "flex", gap: "2px", background: "var(--surface)", border: "var(--hair)", borderRadius: "var(--r-sm)", padding: "3px" }}>
+          {typeTabs.map(t => (
+            <a key={t.label} href={t.href} style={{ padding: "4px 12px", fontSize: "var(--text-xs)", fontWeight: 500, borderRadius: "3px", textDecoration: "none", color: t.active ? "var(--surface)" : "var(--ink-500)", background: t.active ? "var(--ink-000)" : "transparent" }}>
+              {t.label}
+            </a>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: "2px", background: "var(--surface)", border: "var(--hair)", borderRadius: "var(--r-sm)", padding: "3px" }}>
+          {domainTabs.map(t => (
+            <a key={t.label} href={t.href} style={{ padding: "4px 12px", fontSize: "var(--text-xs)", fontWeight: 500, borderRadius: "3px", textDecoration: "none", color: t.active ? "var(--surface)" : "var(--ink-500)", background: t.active ? "var(--ink-000)" : "transparent" }}>
+              {t.label}
+            </a>
+          ))}
+        </div>
+      </div>
 
       {events.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title="Belum ada aktivitas"
-          description="Tidak ada event sesuai filter yang dipilih."
-        />
+        <div style={{ textAlign: "center", padding: "var(--sp-8)", color: "var(--ink-400)" }}>
+          <Inbox className="w-8 h-8 mx-auto mb-4" />
+          <p>Belum ada aktivitas</p>
+        </div>
       ) : (
         Array.from(grouped.entries()).map(([day, dayEvents]) => (
-          <section key={day} className="space-y-2">
-            <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {formatDateShort(day)}
-            </p>
-            <SectionCard bodyClassName="p-0">
-              <ul className="divide-y divide-border/50">
+          <section key={day} className="section" style={{ marginBottom: "var(--sp-6)" }}>
+            <div className="t-eyebrow" style={{ marginBottom: "var(--sp-3)" }}>
+              {formatDateShort(day).toUpperCase()}
+            </div>
+            <table className="ledger">
+              <tbody>
                 {dayEvents.map((event) => {
                   const tone = event.status ? obligationStatusTone(event.status) : "neutral";
                   return (
-                    <li key={event._id} className="flex items-start gap-3 px-4 py-3">
-                      <div className="mt-0.5">
+                    <tr key={event._id.toString()}>
+                      <td style={{ width: "40px" }}>
                         <EventIcon event={event} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{event.title}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{event.subtitle}</p>
-                      </div>
-                      <div className="shrink-0 text-right">
+                      </td>
+                      <td style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, color: "var(--ink-000)", marginBottom: "2px" }}>{event.title}</div>
+                        <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-400)" }}>{event.subtitle}</div>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
                         {event.amount != null && event.amount > 0 && (
-                          <p
-                            className={cn(
-                              "text-sm font-semibold tabular-nums",
-                              event.direction === "in"
-                                ? "text-emerald-600"
-                                : event.direction === "out"
-                                  ? "text-rose-600"
-                                  : "",
-                            )}
-                          >
+                          <div className="mono" style={{ 
+                            fontWeight: 600, 
+                            color: event.direction === "in" ? "var(--pos-700)" : event.direction === "out" ? "var(--neg-700)" : "inherit"
+                          }}>
                             {event.direction === "in" ? "+" : event.direction === "out" ? "−" : ""}
                             {formatRupiah(event.amount)}
-                          </p>
+                          </div>
                         )}
                         {event.status && (
-                          <Badge className={cn("mt-0.5 text-xs", toneBadge[tone])}>
-                            {formatStatusLabel(event.status)}
-                          </Badge>
+                          <div style={{ marginTop: "4px" }}>
+                            <ToneBadge tone={tone === "neutral" ? "outline" : (tone as Tone)}>
+                              {formatStatusLabel(event.status)}
+                            </ToneBadge>
+                          </div>
                         )}
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-400)", marginTop: "4px" }}>
                           {formatRelativeTime(event.date)}
-                        </p>
-                      </div>
+                        </div>
+                      </td>
                       {isAdmin && event.type === "entry" && (
-                        <EntryRowActions entryId={event._id} accounts={accounts} />
+                        <td style={{ width: "60px", textAlign: "right" }}>
+                          <EntryRowActions entryId={event._id} accounts={accounts} />
+                        </td>
                       )}
-                    </li>
+                    </tr>
                   );
                 })}
-              </ul>
-            </SectionCard>
+              </tbody>
+            </table>
           </section>
         ))
       )}
-    </div>
+    </main>
   );
 }

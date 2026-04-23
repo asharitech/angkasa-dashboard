@@ -1,300 +1,192 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  Landmark,
-  FileText,
+  Home,
+  BookOpen,
   Receipt,
-  Building2,
-  Users,
-  User,
-  LogOut,
-  Activity,
-  MoreHorizontal,
-  X,
+  Building,
   Banknote,
-  AlertTriangle,
-  ShieldCheck,
-  CalendarCheck2,
-  FolderOpen,
-  ChevronLeft,
-  UtensilsCrossed,
+  Utensils,
+  Folder,
+  Wallet,
+  Calendar,
+  Activity,
+  Shield,
+  Copy,
+  Users,
+  Search,
+  Bell,
+  ChevronRight,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; id: string; badge?: number };
 
-// Yayasan domain
 const yayasanNav: NavItem[] = [
-  { href: "/", label: "Yayasan", icon: Landmark },
-  { href: "/laporan-op", label: "Laporan Op", icon: FileText },
-  { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
-  { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
-  { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
-  { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
-  { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
+  { id: "/", href: "/", label: "Ringkasan", icon: Home },
+  { id: "/laporan-op", href: "/laporan-op", label: "Laporan Op", icon: BookOpen },
+  { id: "/pengajuan", href: "/pengajuan", label: "Pengajuan", icon: Receipt },
+  { id: "/sewa", href: "/sewa", label: "Sewa Dapur", icon: Building },
+  { id: "/dana-cash", href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
+  { id: "/ompreng", href: "/ompreng", label: "Ompreng", icon: Utensils },
+  { id: "/dokumen", href: "/dokumen", label: "Dokumen", icon: Folder },
 ];
 
-// Personal domain (consolidated — dana-pribadi & transaksi removed)
 const pribadiNav: NavItem[] = [
-  { href: "/pribadi", label: "Pribadi", icon: User },
-  { href: "/agenda", label: "Agenda", icon: CalendarCheck2 },
+  { id: "/pribadi", href: "/pribadi", label: "Keuangan Pribadi", icon: Wallet },
+  { id: "/agenda", href: "/agenda", label: "Agenda", icon: Calendar },
 ];
 
-// Mobile: 4 primary items shown directly
-const mobilePrimary: NavItem[] = [
-  { href: "/", label: "Yayasan", icon: Landmark },
-  { href: "/pengajuan", label: "Pengajuan", icon: Receipt },
-  { href: "/pribadi", label: "Pribadi", icon: User },
-  { href: "/agenda", label: "Agenda", icon: CalendarCheck2 },
-];
-
-// Mobile: overflow items under "Lainnya"
-const mobileMore: NavItem[] = [
-  { href: "/laporan-op", label: "Laporan Op", icon: FileText },
-  { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
-  { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
-  { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
-  { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
-  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
-  { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
-  { href: "/audit", label: "Audit Data", icon: ShieldCheck },
-  { href: "/users", label: "Users", icon: Users },
-];
-
-// Monitoring
 const monitorNav: NavItem[] = [
-  { href: "/aktivitas", label: "Aktivitas", icon: Activity },
-  { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
-  { href: "/audit", label: "Audit Data", icon: ShieldCheck },
+  { id: "/aktivitas", href: "/aktivitas", label: "Aktivitas", icon: Activity },
+  { id: "/audit", href: "/audit", label: "Audit Data", icon: Shield },
+  { id: "/duplikat", href: "/duplikat", label: "Cek Duplikat", icon: Copy },
+  { id: "/users", href: "/users", label: "Users", icon: Users },
 ];
-
-const adminNav: NavItem[] = [{ href: "/users", label: "Users", icon: Users }];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [moreOpen, setMoreOpen] = useState(false);
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
-  }
 
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
   }
 
-  const moreIsActive = mobileMore.some((item) => isActive(item.href));
-
-  // Derive current page title from pathname
   const allNavItems: NavItem[] = [
     ...yayasanNav,
     ...pribadiNav,
     ...monitorNav,
-    ...adminNav,
   ];
   const currentPageTitle =
     allNavItems.find((item) => isActive(item.href))?.label ?? "Dashboard";
 
-  function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) {
+  function NavLink({ href, label, icon: Icon, badge }: NavItem) {
     const active = isActive(href);
     return (
       <Link
         href={href}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-          active
-            ? "border-l-2 border-primary bg-primary/15 text-primary shadow-sm"
-            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          "nav-item transition-all duration-200",
+          active ? "is-active shadow-sm" : "hover:bg-ink-050"
         )}
       >
-        <Icon className={cn("h-5 w-5", active && "text-primary")} />
-        {label}
+        <Icon className={cn("nav-item__icon", active ? "text-white" : "text-ink-400")} />
+        <span className={active ? "font-semibold" : "font-medium"}>{label}</span>
+        {badge ? <span className="nav-item__badge animate-pulse">{badge}</span> : null}
       </Link>
     );
   }
 
-  return (
-    <div className="flex min-h-dvh flex-col bg-background">
-      {/* Mobile top header */}
-      <header className="fixed inset-x-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border/60 bg-card/95 px-4 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden">
-        <div className="flex items-center gap-2">
-          {!mobilePrimary.some((item) => isActive(item.href)) ? (
-            <button
-              onClick={() => router.back()}
-              className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-          ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Landmark className="h-3.5 w-3.5" />
-            </div>
-          )}
-          <span className="text-sm font-semibold tracking-tight">Angkasa</span>
+  const SidebarContent = (
+    <>
+      <div className="sidebar__brand">
+        <div className="sidebar__brand-mark">A</div>
+        <div>
+          <div className="sidebar__brand-name">Angkasa</div>
+          <div className="sidebar__brand-sub">YRBB · Finance</div>
         </div>
-        <span className="text-sm font-medium text-muted-foreground">{currentPageTitle}</span>
-      </header>
+      </div>
 
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border/60 bg-card shadow-sm md:flex md:flex-col">
-        <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Landmark className="h-4 w-4" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold tracking-tight">Angkasa</h1>
-            <p className="text-xs text-muted-foreground leading-none">Dashboard Keuangan</p>
-          </div>
+      <nav className="sidebar__nav">
+        <div className="nav-group">
+          <div className="nav-group__label">Yayasan YRBB</div>
+          {yayasanNav.map((item) => (
+            <NavLink key={item.id} {...item} />
+          ))}
         </div>
-        <nav className="flex-1 overflow-y-auto p-3">
-          <p className="px-3 pb-1.5 pt-1 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Yayasan
-          </p>
-          <div className="space-y-0.5">
-            {yayasanNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Pribadi
-          </p>
-          <div className="space-y-0.5">
-            {pribadiNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Monitor
-          </p>
-          <div className="space-y-0.5">
-            {monitorNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Admin
-          </p>
-          <div className="space-y-0.5">
-            {adminNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-        </nav>
-        <div className="border-t border-border/60 p-3">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
-          >
-            <LogOut className="h-5 w-5" />
-            Keluar
-          </button>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 md:ml-60">
-        <div className="mx-auto max-w-4xl px-4 pb-24 pt-[calc(3rem+1.25rem)] md:px-6 md:pb-10 md:pt-8">
-          {children}
-        </div>
-      </main>
-
-      {/* Mobile "More" overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 md:hidden transition-opacity duration-300",
-          moreOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-        )}
-        onClick={() => setMoreOpen(false)}
-      >
-        <div className="absolute inset-0 bg-black/40" />
-        <div
-          className={cn(
-            "absolute inset-x-0 bottom-0 rounded-t-2xl bg-card pb-20 pt-3 px-4 shadow-xl transition-transform duration-300 ease-out",
-            moreOpen ? "translate-y-0" : "translate-y-full"
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
-            <div className="flex items-center justify-between mb-3 px-1">
-              <p className="text-sm font-semibold">Lainnya</p>
-              <button
-                onClick={() => setMoreOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {mobileMore.map(({ href, label, icon: Icon }) => {
-                const active = isActive(href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setMoreOpen(false)}
-                    className={cn(
-                      "flex flex-col items-center gap-1.5 rounded-xl py-3 text-xs font-medium transition-colors",
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            <div className="mt-3 border-t border-border/60 pt-3">
-              <button
-                onClick={() => { setMoreOpen(false); handleLogout(); }}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              >
-                <LogOut className="h-5 w-5" />
-                Keluar
-              </button>
-            </div>
-          </div>
+        
+        <div className="nav-group">
+          <div className="nav-group__label">Pribadi</div>
+          {pribadiNav.map((item) => (
+            <NavLink key={item.id} {...item} />
+          ))}
         </div>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-lg items-center justify-around px-1">
-          {mobilePrimary.map(({ href, label, icon: Icon }) => {
-            const active = isActive(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors min-w-[48px]",
-                  active ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <Icon className={cn("h-5 w-5", active && "text-primary")} />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-          <button
-            onClick={() => setMoreOpen(!moreOpen)}
-            className={cn(
-              "flex flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors min-w-[48px]",
-              moreIsActive ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            <MoreHorizontal className={cn("h-5 w-5", moreIsActive && "text-primary")} />
-            <span>Lainnya</span>
-          </button>
+        <div className="nav-group">
+          <div className="nav-group__label">Monitor</div>
+          {monitorNav.map((item) => (
+            <NavLink key={item.id} {...item} />
+          ))}
         </div>
       </nav>
+
+      <div className="sidebar__footer group cursor-pointer hover:bg-ink-025 transition-colors">
+        <div className="avatar ring-2 ring-accent-100 group-hover:ring-accent-300 transition-all">AG</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="sidebar__user-name group-hover:text-ink-000 transition-colors">Angkasa</div>
+          <div className="sidebar__user-role">Admin</div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-ink-300 group-hover:text-ink-500 transition-colors" />
+      </div>
+    </>
+  );
+
+  return (
+    <div className="app">
+      <aside className="sidebar hidden md:flex">
+        {SidebarContent}
+      </aside>
+
+      <div className="main">
+        <header className="topbar px-4 md:px-8">
+          <div className="flex items-center gap-4 flex-1 md:flex-none">
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger
+                  render={
+                    <button className="p-2 -ml-2 text-ink-500 hover:bg-ink-050 rounded-md transition-colors" />
+                  }
+                >
+                  <Menu className="w-6 h-6" />
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-[280px] border-r-0">
+                  <SheetHeader className="sr-only">
+                    <SheetTitle>Navigasi</SheetTitle>
+                  </SheetHeader>
+                  <div className="sidebar !flex h-full">
+                    {SidebarContent}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+            <div className="topbar__crumb hidden md:flex">
+              <span className="text-ink-400 hover:text-ink-700 cursor-pointer transition-colors">Angkasa</span>
+              <ChevronRight className="w-3.5 h-3.5 text-ink-300" />
+              <span className="topbar__crumb-active">{currentPageTitle}</span>
+            </div>
+            <div className="md:hidden font-bold text-ink-000 truncate">{currentPageTitle}</div>
+          </div>
+
+          <div className="topbar__actions flex-shrink-0">
+            <div className="input__wrap group focus-within:ring-2 focus-within:ring-accent-100 transition-all hidden sm:flex" style={{ width: 280 }}>
+              <Search className="input__icon group-focus-within:text-accent-700" />
+              <input placeholder="Cari..." className="w-full" />
+              <span className="badge badge--outline text-[10px] opacity-50 group-focus-within:opacity-100 transition-opacity" style={{ fontFamily: "var(--font-mono)", padding: "0 5px", height: 16 }}>⌘K</span>
+            </div>
+            <button className="btn btn--ghost btn--sm hover:bg-ink-050 relative" title="Notifications" style={{ width: 36, padding: 0, height: 36 }}>
+              <Bell className="btn__icon text-ink-500" />
+              <span className="absolute top-2 right-2.5 w-2 h-2 bg-neg-500 rounded-full border-2 border-white"></span>
+            </button>
+            <div className="hidden lg:flex badge badge--outline bg-white/50 backdrop-blur-sm py-1 px-3 border-ink-100 shadow-sm">
+              <span className="badge__dot animate-pulse bg-pos-500"></span>
+              <span className="text-ink-500 font-medium ml-1">Live · WITA 10:24</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="content-wrap overflow-x-hidden">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

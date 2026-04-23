@@ -51,88 +51,98 @@ export default async function AuditPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <PageHeader icon={ShieldCheck} title="Audit Data">
-        <Badge
-          className={cn(
-            "font-semibold",
-            issues.length === 0 ? toneBadge.success : toneBadge.warning,
-          )}
-        >
-          {issues.length} isu
-        </Badge>
-      </PageHeader>
+    <main className="content">
+      <div className="page-head">
+        <div>
+          <h1 className="page-head__title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ShieldCheck className="w-6 h-6" />
+            Audit Data
+          </h1>
+        </div>
+        <div className="page-head__actions">
+          <Badge
+            className={cn(
+              "font-semibold",
+              issues.length === 0 ? toneBadge.success : toneBadge.warning,
+            )}
+            style={{ borderRadius: "999px", padding: "4px 12px" }}
+          >
+            {issues.length} isu
+          </Badge>
+        </div>
+      </div>
 
-      <KpiStrip items={kpis} cols={3} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--sp-4)", marginBottom: "var(--sp-6)" }}>
+        {kpis.map((kpi, i) => (
+          <div className="panel" key={i} style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-4)" }}>
+              <span className="t-label">{kpi.label}</span>
+              <span className={cn("flex h-6 w-6 items-center justify-center rounded-full", toneIcon[kpi.tone as Tone]?.bg)}>
+                <kpi.icon className={cn("h-3 w-3", toneIcon[kpi.tone as Tone]?.fg)} />
+              </span>
+            </div>
+            <div className="mono" style={{ fontSize: "var(--text-3xl)", fontWeight: 600 }}>{kpi.value}</div>
+          </div>
+        ))}
+      </div>
 
       {issues.length === 0 ? (
-        <EmptyState
-          icon={ShieldCheck}
-          tone="success"
-          title="Data bersih"
-          description="Tidak ada isu integritas saat ini."
-        />
+        <div style={{ textAlign: "center", padding: "var(--sp-8)", color: "var(--ink-400)" }}>
+          <ShieldCheck className="w-8 h-8 mx-auto mb-4 text-emerald-500" />
+          <p>Data bersih. Tidak ada isu integritas saat ini.</p>
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-6)" }}>
           {severities.map((sev) => {
             const list = grouped.get(sev) ?? [];
             if (list.length === 0) return null;
             const tone: Tone = severityTone(sev);
             const Icon = SEVERITY_ICON[sev];
+            const t = toneIcon[tone];
+            
             return (
-              <SectionCard
-                key={sev}
-                icon={Icon}
-                title={SEVERITY_LABEL[sev]}
-                tone={tone}
-                badge={
-                  <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-                    {list.length}
-                  </span>
-                }
-              >
-                <ul className="divide-y divide-border/60">
-                  {list.map((issue, idx) => {
-                    const t = toneIcon[tone];
-                    return (
-                      <li
-                        key={`${issue.kind}-${idx}`}
-                        className="flex items-start gap-3 py-2.5"
-                      >
-                        <span
-                          className={cn(
-                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                            t.bg,
-                          )}
-                        >
-                          <Icon className={cn("h-3 w-3", t.fg)} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold">{issue.message}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            <code className="font-mono">{issue.kind}</code>
+              <section key={sev} className="section">
+                <div className="t-eyebrow" style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "var(--sp-3)" }}>
+                  <Icon className={cn("h-4 w-4", t.fg)} />
+                  {SEVERITY_LABEL[sev]}
+                  <span className="mono" style={{ color: "var(--ink-400)", marginLeft: "4px" }}>{list.length}</span>
+                </div>
+                
+                <table className="ledger">
+                  <tbody>
+                    {list.map((issue, idx) => (
+                      <tr key={`${issue.kind}-${idx}`}>
+                        <td style={{ width: "32px", paddingRight: 0 }}>
+                          <span className={cn("flex h-5 w-5 items-center justify-center rounded-full", t.bg)}>
+                            <Icon className={cn("h-3 w-3", t.fg)} />
+                          </span>
+                        </td>
+                        <td style={{ minWidth: 0, paddingLeft: "12px" }}>
+                          <div style={{ fontWeight: 600, color: "var(--ink-000)" }}>{issue.message}</div>
+                          <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-400)", marginTop: "4px" }}>
+                            <code className="mono">{issue.kind}</code>
                             {issue.entity_id && (
                               <>
                                 {" · "}
-                                <code className="font-mono">{issue.entity_id}</code>
+                                <code className="mono">{issue.entity_id}</code>
                               </>
                             )}
-                          </p>
+                          </div>
                           {issue.hint && (
-                            <p className="mt-0.5 text-xs italic text-muted-foreground">
+                            <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-500)", fontStyle: "italic", marginTop: "4px" }}>
                               {issue.hint}
-                            </p>
+                            </div>
                           )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </SectionCard>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
             );
           })}
         </div>
       )}
-    </div>
+    </main>
   );
 }
