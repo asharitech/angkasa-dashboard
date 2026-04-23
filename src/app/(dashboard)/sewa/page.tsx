@@ -11,6 +11,8 @@ import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { PageHeader } from "@/components/page-header";
 import { ToneBadge } from "@/components/tone-badge";
 import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
+import { ExportButton } from "@/components/export-button";
+import { SewaStartTahapButton } from "@/components/sewa-start-tahap-button";
 
 export const dynamic = "force-dynamic";
 
@@ -90,9 +92,8 @@ export default async function SewaPage({
         title="Sewa Dapur"
         subtitle={`11 lokasi · ${byRegion.size} wilayah · Multi-step transfer pipeline via perantara`}
       >
-        <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat tahap</button>
-        <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
-        {canEdit && <button className="btn btn--primary"><Plus className="btn__icon"/> Mulai tahap baru</button>}
+        <ExportButton data={sewa.locations} filename={`sewa-locations-${activeTahap}`} />
+        {canEdit && <SewaStartTahapButton />}
       </PageHeader>
 
       {/* Tahap selector */}

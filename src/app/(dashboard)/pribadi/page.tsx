@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Download, Wallet, CreditCard, PiggyBank, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
+import { ExportButton } from "@/components/export-button";
 import Link from "next/link";
 import { EntryCreateButton } from "@/components/entry-row-actions";
 
@@ -56,7 +57,7 @@ export default async function PribadiPage() {
         title="Buku Pribadi"
         subtitle={`Ledger & rekap keuangan pribadi · ${data.spending.length} transaksi terakhir`}
       >
-        <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
+        <ExportButton data={data.spending} filename="rekap-pribadi" />
         {isAdmin && <EntryCreateButton accounts={data.personalAccounts} label="Catat transaksi" />}
       </PageHeader>
 

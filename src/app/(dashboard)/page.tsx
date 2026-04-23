@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/page-header";
 import {
   getDashboardSummary,
   getPendingTransfers,
@@ -75,43 +76,42 @@ export default async function DashboardPage() {
 
   const kewajiban = op?.kewajiban;
   const kewajibanRowsData = kewajiban ? Object.entries(kewajiban)
-    .filter(([key, value]) => /^dana_pinjam_angkasa_tahap\d+$/.test(key) && value != null)
+    .filter(([key, value]) => key !== "total" && value != null && typeof value === "number")
     .sort((a, b) => {
-      const aNum = Number(a[0].match(/tahap(\d+)$/)?.[1] ?? 0);
-      const bNum = Number(b[0].match(/tahap(\d+)$/)?.[1] ?? 0);
-      return aNum - bNum;
+      // Prioritize tahap items, then alphabetical
+      const isATahap = a[0].startsWith("dana_pinjam_angkasa_tahap");
+      const isBTahap = b[0].startsWith("dana_pinjam_angkasa_tahap");
+      if (isATahap && !isBTahap) return -1;
+      if (!isATahap && isBTahap) return 1;
+      if (isATahap && isBTahap) {
+        const aNum = Number(a[0].match(/tahap(\d+)$/)?.[1] ?? 0);
+        const bNum = Number(b[0].match(/tahap(\d+)$/)?.[1] ?? 0);
+        return aNum - bNum;
+      }
+      return a[0].localeCompare(b[0]);
     })
     .map(([key, value]) => {
-      const tahapNum = key.match(/tahap(\d+)$/)?.[1] ?? "?";
-      return { label: `Dana Pinjam Angkasa — Tahap ${tahapNum}`, amount: value as number };
+      let label = key;
+      if (key.startsWith("dana_pinjam_angkasa_tahap")) {
+        const num = key.match(/tahap(\d+)$/)?.[1] ?? "?";
+        label = `Dana Pinjam Angkasa — Tahap ${num}`;
+      } else if (key === "lembar2_btn") {
+        label = "Lembar 2 BTN";
+      } else if (key === "pinjaman_btn") {
+        label = "Pinjaman BTN";
+      } else {
+        label = key.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+      }
+      return { label, amount: value as number };
     }) : [];
 
   return (
     <main className="content" data-screen-label="01 Dashboard">
-      {/* Page head */}
-      <div className="page-head">
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Operational Overview</div>
-          <h1 className="page-head__title">Ringkasan</h1>
-          <div className="page-head__sub">
-            {displayDate ? `Updated ${formatDateShort(displayDate)}` : "Live Overview"}
-          </div>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--secondary">
-            <Calendar className="btn__icon" />
-            Period
-          </button>
-          <button className="btn btn--secondary">
-            <Download className="btn__icon" />
-            Export
-          </button>
-          <button className="btn btn--primary">
-            <Plus className="btn__icon" />
-            New entry
-          </button>
-        </div>
-      </div>
+      <PageHeader 
+        eyebrow="Yayasan YRBB · Operational Overview"
+        title="Ringkasan"
+        subtitle={displayDate ? `Updated ${formatDateShort(displayDate)}` : "Live Overview"}
+      />
 
       {/* Hero: Dana Efektif */}
       <section className="hero">

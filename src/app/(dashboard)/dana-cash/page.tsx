@@ -6,6 +6,7 @@ import { ChevronRight, ArrowRight, Download, History } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { ToneBadge } from "@/components/tone-badge";
 import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
+import { ExportButton } from "@/components/export-button";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export default async function DanaCashPage({
         subtitle="Monitoring pemakaian kas kecil yayasan"
       >
         <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat</button>
-        <button className="btn btn--secondary"><Download className="btn__icon"/> Export laporan</button>
+        <ExportButton data={pengeluaran} filename={`danacash-${period || "all"}`} />
       </PageHeader>
 
       <div className="tabs" style={{ marginBottom: "var(--sp-8)" }}>

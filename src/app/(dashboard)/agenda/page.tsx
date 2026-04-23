@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { KATEGORI_CONFIG } from "@/lib/agenda-config";
 import { PageHeader } from "@/components/page-header";
@@ -8,11 +9,17 @@ import type { AgendaDoc } from "@/components/agenda-manager";
 import { AgendaCreateButton, AgendaCheckToggle, AgendaMenuActions } from "@/components/agenda-manager";
 import type { AgendaKategori } from "@/lib/actions/agenda";
 import { Plus, CheckCircle2, Search, Calendar, MoreHorizontal } from "lucide-react";
-import { formatDateShort } from "@/lib/format";
+import { formatRupiah, formatDateShort } from "@/lib/format";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function AgendaPage() {
+export default async function AgendaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; kategori?: string; q?: string }>;
+}) {
+  const { tab = "belum", kategori = "semua", q = "" } = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -29,10 +36,27 @@ export default async function AgendaPage() {
     created_at: d.created_at instanceof Date ? d.created_at.toISOString() : (d.created_at ?? null),
   })) as unknown as AgendaDoc[];
 
-  const overdue = all.filter(a => a.status !== "selesai" && new Date(a.due_date) < new Date(new Date().setHours(0,0,0,0)));
-  const pending = all.filter(a => a.status === "belum" && a.priority !== "tinggi");
-  const inProgress = all.filter(a => a.status === "belum" && a.priority === "tinggi");
-  const done = all.filter(a => a.status === "selesai");
+  let filtered = all;
+  if (kategori !== "semua") {
+    filtered = filtered.filter((a) => a.kategori === kategori);
+  }
+  if (q) {
+    const qlow = q.toLowerCase();
+    filtered = filtered.filter(
+      (a) =>
+        a.title.toLowerCase().includes(qlow) ||
+        (a.description || "").toLowerCase().includes(qlow)
+    );
+  }
+
+  const overdue = filtered.filter(a => a.status !== "selesai" && new Date(a.due_date) < new Date(new Date().setHours(0,0,0,0)));
+  const pending = filtered.filter(a => a.status === "belum" && a.priority !== "tinggi");
+  const inProgress = filtered.filter(a => a.status === "belum" && a.priority === "tinggi");
+  const done = filtered.filter(a => a.status === "selesai");
+  const uncompleted = pending.length + inProgress.length + overdue.length;
+
+  const showBelum = tab === "belum" || tab === "semua";
+  const showSelesai = tab === "selesai" || tab === "semua";
 
   return (
     <main className="content" data-screen-label="07 Agenda & Tasks">
@@ -85,26 +109,26 @@ export default async function AgendaPage() {
       <div className="ag-toolbar">
         <div className="ag-search">
           <Search className="w-4 h-4 text-ink-400" />
-          <input placeholder="Cari judul, keterangan, tag..." />
+          <input placeholder="Cari judul, keterangan, tag..." defaultValue={q} />
           <span className="badge badge--outline" style={{ fontFamily: "var(--font-mono)", padding: "0 5px", height: "18px", fontSize: "10px" }}>⌘F</span>
         </div>
         <div className="ag-tabs">
-          <button className="ag-tabs__btn is-active">Belum selesai <span className="count">{pending.length + inProgress.length + overdue.length}</span></button>
-          <button className="ag-tabs__btn">Selesai <span className="count">{done.length}</span></button>
-          <button className="ag-tabs__btn">Semua <span className="count">{all.length}</span></button>
+          <Link href={`?tab=belum&kategori=${kategori}&q=${q}`} className={cn("ag-tabs__btn", tab === "belum" && "is-active")}>Belum selesai <span className="count">{uncompleted}</span></Link>
+          <Link href={`?tab=selesai&kategori=${kategori}&q=${q}`} className={cn("ag-tabs__btn", tab === "selesai" && "is-active")}>Selesai <span className="count">{done.length}</span></Link>
+          <Link href={`?tab=semua&kategori=${kategori}&q=${q}`} className={cn("ag-tabs__btn", tab === "semua" && "is-active")}>Semua <span className="count">{filtered.length}</span></Link>
         </div>
       </div>
 
       <div className="ag-controls">
         <div className="ag-chips">
-          <button className="ag-chip is-active"><span className="ag-chip__glyph" style={{ background: "var(--ink-000)", color: "var(--surface)", borderRadius: "3px" }}>★</span>Semua<span className="ag-chip__count">{all.length}</span></button>
-          <button className="ag-chip"><span className="ag-chip__glyph" style={{ background: "#4338ca", color: "#fff", borderRadius: "3px" }}>Y</span>Yayasan</button>
-          <button className="ag-chip"><span className="ag-chip__glyph" style={{ background: "var(--pos-500)", color: "#fff", borderRadius: "3px" }}>$</span>Keuangan</button>
-          <button className="ag-chip"><span className="ag-chip__glyph" style={{ background: "#0284c7", color: "#fff", borderRadius: "3px" }}>P</span>Pribadi</button>
+          <Link href={`?tab=${tab}&kategori=semua&q=${q}`} className={cn("ag-chip", kategori === "semua" && "is-active")}><span className="ag-chip__glyph" style={{ background: "var(--ink-000)", color: "var(--surface)", borderRadius: "3px" }}>★</span>Semua<span className="ag-chip__count">{filtered.length}</span></Link>
+          <Link href={`?tab=${tab}&kategori=yayasan&q=${q}`} className={cn("ag-chip", kategori === "yayasan" && "is-active")}><span className="ag-chip__glyph" style={{ background: "#4338ca", color: "#fff", borderRadius: "3px" }}>Y</span>Yayasan</Link>
+          <Link href={`?tab=${tab}&kategori=keuangan&q=${q}`} className={cn("ag-chip", kategori === "keuangan" && "is-active")}><span className="ag-chip__glyph" style={{ background: "var(--pos-500)", color: "#fff", borderRadius: "3px" }}>$</span>Keuangan</Link>
+          <Link href={`?tab=${tab}&kategori=personal&q=${q}`} className={cn("ag-chip", kategori === "personal" && "is-active")}><span className="ag-chip__glyph" style={{ background: "#0284c7", color: "#fff", borderRadius: "3px" }}>P</span>Pribadi</Link>
         </div>
       </div>
 
-      {overdue.length > 0 && (
+      {showBelum && overdue.length > 0 && (
         <div className="ag-section">
           <div className="ag-section__head">
             <span className="ag-section__label ag-section__label--urgent">
@@ -140,7 +164,7 @@ export default async function AgendaPage() {
         </div>
       )}
 
-      {pending.length > 0 && (
+      {showBelum && pending.length > 0 && (
         <div className="ag-section">
           <div className="ag-section__head">
             <span className="ag-section__label">
@@ -175,7 +199,7 @@ export default async function AgendaPage() {
         </div>
       )}
 
-      {done.length > 0 && (
+      {showSelesai && done.length > 0 && (
         <div className="ag-section" style={{ opacity: 0.8 }}>
           <div className="ag-section__head">
             <span className="ag-section__label">

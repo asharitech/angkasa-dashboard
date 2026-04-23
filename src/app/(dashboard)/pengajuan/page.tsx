@@ -9,6 +9,7 @@ import { History, Download, ChevronRight, Plus, Search, Filter } from "lucide-re
 import { PageHeader } from "@/components/page-header";
 import { ToneBadge } from "@/components/tone-badge";
 import { SummaryStrip, SummaryCell } from "@/components/summary-strip";
+import { ExportButton } from "@/components/export-button";
 import type { Obligation, Account } from "@/lib/types";
 import { PengajuanCreateButton, PengajuanDetailActions } from "@/components/pengajuan-row-actions";
 
@@ -49,7 +50,7 @@ export default async function PengajuanPage({
         subtitle={`${allInScope.length} permohonan · Filter: ${statusView !== "semua" ? statusView : "semua"}`}
       >
         <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat</button>
-        <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
+        <ExportButton data={allInScope} filename={`pengajuan-${monthView}`} />
         {isAdmin && <PengajuanCreateButton />}
       </PageHeader>
 

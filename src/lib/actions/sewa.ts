@@ -95,3 +95,58 @@ export async function updateSewaLocationAction(
     return actionError(err);
   }
 }
+
+export async function startNewSewaPeriodAction(): Promise<ActionResult> {
+  try {
+    const session = await requireAdmin();
+    const db = await getDb();
+    
+    const currentLedger = await db
+      .collection("ledgers")
+      .findOne({ type: "sewa", is_current: true });
+      
+    if (!currentLedger) return { error: "Ledger sewa aktif tidak ditemukan" };
+    
+    // Archive current ledger
+    await db.collection("ledgers").updateOne(
+      { _id: currentLedger._id },
+      { $set: { is_current: false } }
+    );
+    
+    // Create new period code
+    const now = new Date();
+    const periodCode = `SEWA_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}_${Math.floor(Math.random() * 1000)}`;
+    const [startYear, startMonth] = (currentLedger.period || "").split(" - ")[1]?.split("/") || [now.getFullYear().toString(), (now.getMonth() + 1).toString()];
+    
+    const newLedger = {
+      ...currentLedger,
+      _id: undefined,
+      period: `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} - ${now.getDate()}/${now.getMonth() + 2}/${now.getFullYear()}`,
+      period_code: periodCode,
+      is_current: true,
+      as_of: now.toISOString(),
+      updated_at: now,
+      updated_by: session.userId,
+      sewa: {
+        ...currentLedger.sewa,
+        locations: currentLedger.sewa.locations.map((loc: any) => ({
+          ...loc,
+          pipeline: {
+            stage: "belum_diterima",
+            holder: null,
+            expected_amount: loc.amount,
+            received_at: null,
+            notes: null
+          }
+        }))
+      }
+    };
+    
+    await db.collection("ledgers").insertOne(newLedger);
+    
+    revalidatePath("/sewa");
+    return { ok: true };
+  } catch (err) {
+    return actionError(err);
+  }
+}

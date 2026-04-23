@@ -4,6 +4,7 @@ import { FileOutput, ArrowRight, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
+import { ExportButton } from "@/components/export-button";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,32 @@ export default async function LaporanOpPage() {
 
   // Group obligations
   const kewajibanList = Object.entries(kewajiban as Record<string, number>)
-    .filter(([key, value]) => /^dana_pinjam_angkasa_tahap\d+$/.test(key) && value != null)
+    .filter(([key, value]) => key !== "total" && value != null && typeof value === "number")
     .sort((a, b) => {
-      const aNum = Number(a[0].match(/tahap(\d+)$/)?.[1] ?? 0);
-      const bNum = Number(b[0].match(/tahap(\d+)$/)?.[1] ?? 0);
-      return aNum - bNum;
+      const isATahap = a[0].startsWith("dana_pinjam_angkasa_tahap");
+      const isBTahap = b[0].startsWith("dana_pinjam_angkasa_tahap");
+      if (isATahap && !isBTahap) return -1;
+      if (!isATahap && isBTahap) return 1;
+      if (isATahap && isBTahap) {
+        const aNum = Number(a[0].match(/tahap(\d+)$/)?.[1] ?? 0);
+        const bNum = Number(b[0].match(/tahap(\d+)$/)?.[1] ?? 0);
+        return aNum - bNum;
+      }
+      return a[0].localeCompare(b[0]);
+    })
+    .map(([key, value]) => {
+      let label = key;
+      if (key.startsWith("dana_pinjam_angkasa_tahap")) {
+        const num = key.match(/tahap(\d+)$/)?.[1] ?? "?";
+        label = `Tahap ${num}`;
+      } else if (key === "lembar2_btn") {
+        label = "Lembar 2 BTN";
+      } else if (key === "pinjaman_btn") {
+        label = "Pinjaman BTN";
+      } else {
+        label = key.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+      }
+      return { label, amount: value };
     });
 
   const percentEfektif = totals.saldo > 0 ? (dana_efektif / totals.saldo) * 100 : 0;
@@ -38,7 +60,7 @@ export default async function LaporanOpPage() {
         title="Validasi Saldo & Kewajiban"
         subtitle={`Ledger & rekap keuangan operasional · ${entries.length} transaksi terakhir`}
       >
-        <button className="btn btn--secondary"><FileOutput className="btn__icon"/> Export</button>
+        <ExportButton data={entries} filename={`laporan-op-${ledger.period || "current"}`} />
       </PageHeader>
 
       {reconHasDiff && recon && (
@@ -162,10 +184,10 @@ export default async function LaporanOpPage() {
             <div className="t-eyebrow">Kewajiban Ditahan</div>
             <div className="divider"></div>
 
-            {kewajibanList.map(([key, val]) => (
-              <div className="row-between" style={{ marginBottom: 4 }} key={key}>
-                <span className="t-label">Tahap {key.match(/tahap(\d+)$/)?.[1]}</span>
-                <span className="mono">−{formatRupiah(val as number)}</span>
+            {kewajibanList.map(({ label, amount }) => (
+              <div className="row-between" style={{ marginBottom: 4 }} key={label}>
+                <span className="t-label">{label}</span>
+                <span className="mono">−{formatRupiah(amount)}</span>
               </div>
             ))}
             
