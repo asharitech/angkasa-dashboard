@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { getDanaCashSummary } from "@/lib/dana-cash";
 import { formatRupiah, formatDate } from "@/lib/format";
-import { PageHeader } from "@/components/page-header";
-import { PeriodPicker } from "@/components/period-picker";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
-import { SectionCard } from "@/components/section-card";
-import { EmptyState } from "@/components/empty-state";
-import { DataTable } from "@/components/data-table";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   Banknote,
   TrendingDown,
@@ -37,115 +31,76 @@ export default async function DanaCashPage({
   const totalAvailable = Math.max(saldoAwal, saldoSisa + totalTerpakai);
   const pctTerpakai = totalAvailable > 0 ? Math.round((totalTerpakai / totalAvailable) * 100) : 0;
 
-  const kpis: KpiItem[] = [
-    { label: "Saldo Awal", value: formatRupiah(saldoAwal), icon: Wallet, tone: "info" },
-    {
-      label: "Terpakai",
-      value: formatRupiah(totalTerpakai),
-      icon: TrendingDown,
-      tone: "danger",
-      hint: `${pctTerpakai}% dari awal`,
-    },
-    {
-      label: "Sisa Cash",
-      value: formatRupiah(saldoSisa),
-      icon: Banknote,
-      tone: "success",
-    },
-  ];
+
 
   return (
-    <div className="space-y-5">
-      <PageHeader title="Cash Yayasan" icon={Banknote} />
+    <main className="content" data-screen-label="07 Cash Yayasan">
+      <div className="page-head">
+        <div>
+          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Petty Cash</div>
+          <h1 className="page-head__title">Cash Yayasan</h1>
+          <div className="page-head__sub">Monitoring pemakaian kas kecil yayasan</div>
+        </div>
+        <div className="page-head__actions">
+          {pengajuan.length > 0 && (
+            <Link href="/pengajuan" className="btn btn--secondary">
+              <Inbox className="btn__icon" /> {pengajuan.length} pengajuan pending ({formatRupiah(pengajuan.reduce((s, o) => s + (o.amount ?? 0), 0))})
+            </Link>
+          )}
+        </div>
+      </div>
 
-      <PeriodPicker basePath="/dana-cash" current={period} />
+      <div className="tabs" style={{ marginBottom: "var(--sp-8)" }}>
+        <Link href="?" className={cn("tabs__item", !period && "is-active")}>Semua</Link>
+        <Link href="?period=2026-04" className={cn("tabs__item", period === "2026-04" && "is-active")}>Apr 2026</Link>
+        <Link href="?period=2026-03" className={cn("tabs__item", period === "2026-03" && "is-active")}>Mar 2026</Link>
+        <Link href="?period=2026-02" className={cn("tabs__item", period === "2026-02" && "is-active")}>Feb 2026</Link>
+        <Link href="?period=2026-01" className={cn("tabs__item", period === "2026-01" && "is-active")}>Jan 2026</Link>
+      </div>
 
-      <KpiStrip items={kpis} cols={3} />
+      <div className="sewa-summary">
+        <div className="ss-cell">
+          <div className="ss-cell__label">Saldo Awal</div>
+          <div className="ss-cell__value">{formatRupiah(saldoAwal)}</div>
+        </div>
+        <div className="ss-cell">
+          <div className="ss-cell__label">Terpakai</div>
+          <div className="ss-cell__value" style={{ color: "var(--warn-700)" }}>{formatRupiah(totalTerpakai)}</div>
+          <div className="ss-cell__sub">{pctTerpakai}% dari awal</div>
+          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--warn" style={{ width: `${Math.min(pctTerpakai, 100)}%` }}></div></div></div>
+        </div>
+        <div className="ss-cell">
+          <div className="ss-cell__label">Sisa Cash</div>
+          <div className="ss-cell__value" style={{ color: "var(--pos-700)" }}>{formatRupiah(saldoSisa)}</div>
+        </div>
+      </div>
 
-      {/* Progress */}
-      <Card className="shadow-sm">
-        <CardContent className="py-3">
-          <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-            <span>
-              Terpakai <span className="font-semibold">{formatRupiah(totalTerpakai)}</span>
-            </span>
-            <span>
-              Sisa <span className="font-semibold">{formatRupiah(saldoSisa)}</span>
-            </span>
+      <section className="section">
+        <div className="section__head">
+          <h2 className="section__title">Riwayat Pengeluaran Cash</h2>
+          <span className="section__meta">{pengeluaran.length} item</span>
+        </div>
+        <div className="ledger">
+          <div className="ledger-row ledger-row--header">
+            <div style={{ width: "120px" }}>Tanggal</div>
+            <div style={{ flex: "1" }}>Keterangan</div>
+            <div style={{ width: "150px", textAlign: "right" }}>Jumlah</div>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-2 rounded-full bg-rose-500/80 transition-all"
-              style={{ width: `${Math.min(pctTerpakai, 100)}%` }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <SectionCard
-        icon={History}
-        title="Riwayat Pengeluaran Cash"
-        badge={
-          <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-            {pengeluaran.length} item
-          </span>
-        }
-        bodyClassName="px-0 md:px-4"
-      >
-        <DataTable<Pengeluaran>
-          minWidth={520}
-          rows={pengeluaran}
-          rowKey={(r) => r._id}
-          empty={
-            <EmptyState
-              icon={Inbox}
-              title="Belum ada pengeluaran"
-              description={period ? "Periode terpilih kosong." : "Cash belum digunakan."}
-              className="border-none shadow-none"
-            />
-          }
-          columns={[
-            {
-              key: "date",
-              header: "Tanggal",
-              cell: (r) => <span className="text-sm tabular-nums">{formatDate(r.date)}</span>,
-              className: "w-32",
-            },
-            {
-              key: "desc",
-              header: "Keterangan",
-              cell: (r) => <span className="text-sm">{r.description}</span>,
-            },
-            {
-              key: "amount",
-              header: "Jumlah",
-              align: "right",
-              cell: (r) => (
-                <span className="text-sm font-semibold text-rose-600">
+          {pengeluaran.length === 0 ? (
+            <div className="p-8 text-center text-ink-500">Belum ada pengeluaran dicatat.</div>
+          ) : (
+            pengeluaran.map(r => (
+              <div className="ledger-row" key={r._id}>
+                <div style={{ width: "120px", fontFamily: "var(--font-mono)", color: "var(--ink-500)" }}>{formatDate(r.date)}</div>
+                <div style={{ flex: "1", color: "var(--ink-000)", fontWeight: 500 }}>{r.description}</div>
+                <div style={{ width: "150px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--neg-700)", fontWeight: 600 }}>
                   {formatRupiah(r.amount)}
-                </span>
-              ),
-            },
-          ]}
-        />
-      </SectionCard>
-
-      {pengajuan.length > 0 && (
-        <Link href="/pengajuan" className="block">
-          <Card className="shadow-sm transition-colors hover:bg-muted/30">
-            <CardContent className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-semibold">Pengajuan dari Cash</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {pengajuan.length} item belum lunas ·{" "}
-                  {formatRupiah(pengajuan.reduce((s, o) => s + (o.amount ?? 0), 0))}
-                </p>
+                </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </CardContent>
-          </Card>
-        </Link>
-      )}
-    </div>
+            ))
+          )}
+        </div>
+      </section>
+    </main>
   );
 }
