@@ -3,8 +3,9 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { KATEGORI_CONFIG } from "@/lib/agenda-config";
 import type { AgendaDoc } from "@/components/agenda-manager";
+import { AgendaCreateButton, AgendaCheckToggle, AgendaMenuActions } from "@/components/agenda-manager";
 import type { AgendaKategori } from "@/lib/actions/agenda";
-import { Plus, CheckCircle2, Circle, Search, LayoutGrid, Calendar, MoreHorizontal } from "lucide-react";
+import { Plus, CheckCircle2, Search, Calendar, MoreHorizontal } from "lucide-react";
 import { formatDateShort } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -43,9 +44,7 @@ export default async function AgendaPage() {
           <button className="btn btn--secondary">
             <Calendar className="btn__icon" /> Kalender
           </button>
-          <button className="btn btn--primary">
-            <Plus className="btn__icon"/> Tambah Agenda
-          </button>
+          <AgendaCreateButton />
         </div>
       </div>
 
@@ -121,7 +120,7 @@ export default async function AgendaPage() {
               const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
               return (
                 <div className={`ag-item ag-item--p-${task.priority === "tinggi" ? "tinggi" : "sedang"}`} key={task._id.toString()}>
-                  <div className="ag-check"></div>
+                  <AgendaCheckToggle agenda={task} />
                   <div>
                     <div className="ag-date">{new Date(task.due_date).getDate()} {new Date(task.due_date).toLocaleString('id-ID', { month: 'short' })}</div>
                     <span className="ag-countdown ag-countdown--late">Terlambat</span>
@@ -133,7 +132,7 @@ export default async function AgendaPage() {
                   <div className={`ag-pri ag-pri--${task.priority}`}><span className="ag-pri__dot"></span>{task.priority || "Normal"}</div>
                   <div className="ag-cat"><span className="ag-cat__glyph" style={{ background: "#4338ca" }}>{cfg.label.charAt(0)}</span>{cfg.label}</div>
                   <div className="ag-actions">
-                    <button className="ag-action-btn"><MoreHorizontal className="w-4 h-4" /></button>
+                    <AgendaMenuActions agenda={task} />
                   </div>
                 </div>
               );
@@ -156,7 +155,7 @@ export default async function AgendaPage() {
               const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
               return (
                 <div className={`ag-item ag-item--p-${task.priority === "tinggi" ? "tinggi" : "sedang"}`} key={task._id.toString()}>
-                  <div className="ag-check"></div>
+                  <AgendaCheckToggle agenda={task} />
                   <div>
                     <div className="ag-date">{new Date(task.due_date).getDate()} {new Date(task.due_date).toLocaleString('id-ID', { month: 'short' })}</div>
                     <span className="ag-countdown ag-countdown--normal">Pending</span>
@@ -168,7 +167,7 @@ export default async function AgendaPage() {
                   <div className={`ag-pri ag-pri--${task.priority}`}><span className="ag-pri__dot"></span>{task.priority || "Normal"}</div>
                   <div className="ag-cat"><span className="ag-cat__glyph" style={{ background: "var(--ink-400)" }}>{cfg.label.charAt(0)}</span>{cfg.label}</div>
                   <div className="ag-actions">
-                    <button className="ag-action-btn"><MoreHorizontal className="w-4 h-4" /></button>
+                    <AgendaMenuActions agenda={task} />
                   </div>
                 </div>
               );
@@ -191,9 +190,7 @@ export default async function AgendaPage() {
               const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
               return (
                 <div className="ag-item ag-item--done" key={task._id.toString()}>
-                  <div className="ag-check is-done">
-                    <CheckCircle2 className="w-3 h-3 text-white" />
-                  </div>
+                  <AgendaCheckToggle agenda={task} />
                   <div>
                     <div className="ag-date">{new Date(task.due_date).getDate()} {new Date(task.due_date).toLocaleString('id-ID', { month: 'short' })}</div>
                   </div>
@@ -203,7 +200,7 @@ export default async function AgendaPage() {
                   <div className="ag-pri ag-pri--rendah"><span className="ag-pri__dot"></span>Done</div>
                   <div className="ag-cat"><span className="ag-cat__glyph" style={{ background: "var(--pos-500)" }}>{cfg.label.charAt(0)}</span>{cfg.label}</div>
                   <div className="ag-actions">
-                    <button className="ag-action-btn"><MoreHorizontal className="w-4 h-4" /></button>
+                    <AgendaMenuActions agenda={task} />
                   </div>
                 </div>
               );

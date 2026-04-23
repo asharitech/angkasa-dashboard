@@ -36,6 +36,7 @@ import {
   RotateCcw,
   Loader2,
   AlertTriangle,
+  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -162,10 +163,10 @@ export function AgendaCreateButton() {
 
   return (
     <>
-      <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" />
+      <button className="btn btn--primary" onClick={() => setOpen(true)}>
+        <Plus className="btn__icon" />
         Tambah Agenda
-      </Button>
+      </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -199,17 +200,53 @@ export interface AgendaDoc {
 
 // ─── Row Actions ──────────────────────────────────────────────────────────────
 
-export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
+export function AgendaCheckToggle({ agenda }: { agenda: AgendaDoc }) {
   const [pending, startTransition] = useTransition();
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function handleToggle() {
     startTransition(async () => {
       await toggleAgendaStatusAction(agenda._id, agenda.status);
     });
   }
+
+  if (agenda.status === "selesai") {
+    return (
+      <button 
+        className={cn("ag-check is-done", pending && "opacity-50 cursor-wait")} 
+        onClick={handleToggle} 
+        disabled={pending}
+        title="Buka kembali"
+      >
+        {pending ? <Loader2 className="w-3 h-3 text-white animate-spin" /> : <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+      </button>
+    );
+  }
+
+  return (
+    <button 
+      className={cn("ag-check", pending && "opacity-50 cursor-wait")} 
+      onClick={handleToggle} 
+      disabled={pending}
+      title="Tandai selesai"
+    >
+      {pending && <Loader2 className="w-3 h-3 text-ink-300 animate-spin" />}
+    </button>
+  );
+}
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export function AgendaMenuActions({ agenda }: { agenda: AgendaDoc }) {
+  const [pending, startTransition] = useTransition();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -238,41 +275,21 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
 
   return (
     <>
-      {/* Checkbox toggle */}
-      <button
-        onClick={handleToggle}
-        disabled={pending}
-        title={agenda.status === "belum" ? "Tandai selesai" : "Buka kembali"}
-        className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-150",
-          agenda.status === "selesai"
-            ? "border-emerald-500 bg-emerald-500 text-white"
-            : "border-muted-foreground/40 text-transparent hover:border-emerald-400 hover:text-emerald-400",
-          pending && "opacity-50 cursor-wait",
-        )}
-      >
-        <Check className="h-2.5 w-2.5" strokeWidth={3} />
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="ag-action-btn">
+          <MoreHorizontal className="w-4 h-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-2 h-4 w-4" /> Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive focus:text-destructive">
+            <Trash2 className="mr-2 h-4 w-4" /> Hapus
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      {/* Edit */}
-      <button
-        onClick={() => setEditOpen(true)}
-        title="Edit"
-        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-muted hover:text-foreground transition-colors"
-      >
-        <Pencil className="h-3 w-3" />
-      </button>
-
-      {/* Delete */}
-      <button
-        onClick={() => setDeleteOpen(true)}
-        title="Hapus"
-        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive transition-colors"
-      >
-        <Trash2 className="h-3 w-3" />
-      </button>
-
-      {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -294,7 +311,6 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="max-w-xs">
           <DialogHeader>

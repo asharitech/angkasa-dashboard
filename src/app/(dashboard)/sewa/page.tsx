@@ -7,6 +7,7 @@ import { currentWitaMonth } from "@/lib/periods";
 import { cn } from "@/lib/utils";
 import { History, Download, Plus, Check } from "lucide-react";
 import type { SewaLocation } from "@/lib/types";
+import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -223,7 +224,7 @@ export default async function SewaPage({
                     {isDone ? (
                       <span className="badge badge--pos">Lunas</span>
                     ) : (
-                      <button className="btn btn--primary btn--sm">Proses</button>
+                      <SewaLocationEditButton location={loc} />
                     )}
                   </div>
                 </div>

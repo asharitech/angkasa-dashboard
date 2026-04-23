@@ -4,6 +4,7 @@ import { formatRupiah, formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Download, Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { EntryCreateButton } from "@/components/entry-row-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export default async function PribadiPage() {
         </div>
         <div className="page-head__actions">
           <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
-          <button className="btn btn--primary"><Plus className="btn__icon"/> Catat transaksi</button>
+          {isAdmin && <EntryCreateButton accounts={data.personalAccounts} label="Catat transaksi" />}
         </div>
       </div>
 

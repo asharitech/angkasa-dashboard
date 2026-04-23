@@ -7,13 +7,14 @@ import { currentWitaMonth } from "@/lib/periods";
 import { cn } from "@/lib/utils";
 import { Search, Filter, Calendar, Check, Download, Plus, ArrowRight } from "lucide-react";
 import type { Obligation, Account } from "@/lib/types";
+import { PengajuanCreateButton, PengajuanDetailActions } from "@/components/pengajuan-row-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function PengajuanPage({
   searchParams,
 }: {
-  searchParams: Promise<{ monthView?: string; statusView?: string }>;
+  searchParams: Promise<{ monthView?: string; statusView?: string; selected?: string }>;
 }) {
   const params = await searchParams;
   const monthView = params.monthView ?? currentWitaMonth();
@@ -34,8 +35,8 @@ export default async function PengajuanPage({
   const totalLunas = lunasItems.reduce((s, o) => s + (o.amount ?? 0), 0);
   const totalScope = allInScope.reduce((s, o) => s + (o.amount ?? 0), 0);
 
-  // Group items just for demo in the detail panel
-  const selectedItem = activeItems[0] || allInScope[0];
+  const selectedId = params.selected;
+  const selectedItem = selectedId ? activeItems.find(o => o._id === selectedId) || allInScope.find(o => o._id === selectedId) : (activeItems[0] || allInScope[0]);
 
   return (
     <main className="content" data-screen-label="03 Pengajuan">
@@ -47,11 +48,7 @@ export default async function PengajuanPage({
         </div>
         <div className="page-head__actions">
           <button className="btn btn--secondary"><Download className="btn__icon"/> Export laporan</button>
-          {isAdmin && (
-            <button className="btn btn--primary">
-              <Plus className="btn__icon" /> Buat Pengajuan
-            </button>
-          )}
+          {isAdmin && <PengajuanCreateButton />}
         </div>
       </div>
 
@@ -122,15 +119,15 @@ export default async function PengajuanPage({
             <div className="pj-header__amount">Jumlah</div>
           </div>
 
-          {activeItems.map((o, i) => {
-            const isSelected = i === 0; // Select first item for mockup display
+          {activeItems.map((o) => {
+            const isSelected = selectedItem?._id === o._id;
             const name = formatRequestorName(o.requestor);
             const initials = name.substring(0, 2).toUpperCase();
             const tone = o.status === "lunas" ? "pos" : o.status === "pending" ? "warn" : "neg";
             const toneLabel = o.status === "lunas" ? "Lunas" : o.status === "pending" ? "Menunggu" : "Ditolak";
             
             return (
-              <div className={cn("pj-row", isSelected && "is-selected")} key={o._id}>
+              <Link href={`?statusView=${statusView}${monthView !== currentWitaMonth() ? "&monthView=" + monthView : ""}&selected=${o._id}`} className={cn("pj-row", isSelected && "is-selected")} key={o._id}>
                 <div className="pj-row__check" style={isSelected ? { background: "var(--accent-700)", borderColor: "var(--accent-700)" } : {}}>
                   {isSelected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                 </div>
@@ -148,7 +145,7 @@ export default async function PengajuanPage({
                   <div className="pj-row__amount">{formatRupiah(o.amount || 0)}</div>
                   <div className="pj-row__date">{formatDateShort(o.created_at)}</div>
                 </div>
-              </div>
+              </Link>
             );
           })}
           
@@ -227,11 +224,8 @@ export default async function PengajuanPage({
               )}
             </div>
 
-            {isAdmin && selectedItem.status === "pending" && (
-              <div className="detail__actions">
-                <button className="btn btn--secondary">Tolak</button>
-                <button className="btn btn--primary" style={{ background: "var(--pos-700)" }}>Setujui & transfer</button>
-              </div>
+            {isAdmin && (
+              <PengajuanDetailActions obligation={selectedItem} accounts={accounts} />
             )}
           </div>
         )}
