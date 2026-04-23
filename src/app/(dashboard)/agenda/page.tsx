@@ -28,116 +28,189 @@ export default async function AgendaPage() {
 
   const overdue = all.filter(a => a.status !== "selesai" && new Date(a.due_date) < new Date(new Date().setHours(0,0,0,0)));
   const pending = all.filter(a => a.status === "belum" && a.priority !== "tinggi");
-  const inProgress = all.filter(a => a.status === "belum" && a.priority === "tinggi"); // Mock for demo
+  const inProgress = all.filter(a => a.status === "belum" && a.priority === "tinggi");
   const done = all.filter(a => a.status === "selesai");
 
   return (
     <main className="content" data-screen-label="07 Agenda & Tasks">
       <div className="page-head">
         <div>
-          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Personal Productivity · Workspace</div>
-          <h1 className="page-head__title">Agenda & Tasks</h1>
-          <div className="page-head__sub">{pending.length} pending · {done.length} selesai · sinkron dengan laporan yayasan</div>
+          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Pribadi · Task Tracker</div>
+          <h1 className="page-head__title">Agenda</h1>
+          <div className="page-head__sub">Catatan harian & deadline pribadi — sinkron dengan kalender WITA · {formatDateShort(new Date().toISOString())}</div>
         </div>
         <div className="page-head__actions">
-          <button className="btn btn--secondary"><LayoutGrid className="btn__icon"/> Board</button>
-          <button className="btn btn--primary"><Plus className="btn__icon"/> Task baru</button>
+          <button className="btn btn--secondary">
+            <Calendar className="btn__icon" /> Kalender
+          </button>
+          <button className="btn btn--primary">
+            <Plus className="btn__icon"/> Tambah Agenda
+          </button>
         </div>
       </div>
 
-      <div className="filter-bar">
-        <div className="input__wrap">
-          <Search className="input__icon" />
-          <input placeholder="Cari task, assign, atau tag…" />
-        </div>
-        <button className="btn btn--secondary">Kategori <span style={{ color: "var(--ink-400)", marginLeft: 4 }}>Semua</span></button>
-        <button className="btn btn--secondary">Due Date <span style={{ color: "var(--ink-400)", marginLeft: 4 }}>Any time</span></button>
-      </div>
-
-      <div className="board">
-        {/* Backlog/Pending */}
-        <div className="board-col">
-          <div className="board-col__head">
-            <span className="board-col__title">To Do</span>
-            <span className="board-col__count">{pending.length}</span>
-            <button className="btn btn--ghost" style={{ padding: 4, height: "auto" }}><Plus className="w-4 h-4"/></button>
+      <div className="ag-hero">
+        <div className="ag-hero__main">
+          <div className="ag-hero__eyebrow">Beban · Agenda Terbuka</div>
+          <div className="ag-hero__amount">
+            {pending.length + inProgress.length + overdue.length}<span className="total">/{all.length}</span>
           </div>
-          <div className="board-col__body">
+          <div className="ag-hero__sub">
+            <span><span className="fig">{done.length}</span> selesai total</span>
+            <span>Avg completion · <span className="fig">3.2 hari</span></span>
+          </div>
+        </div>
+        <div className="ag-hero__side">
+          <div className="ag-kpi">
+            <div className="ag-kpi__label">Mendesak</div>
+            <div className="ag-kpi__value ag-kpi__value--neg">{overdue.length}</div>
+            <div className="ag-kpi__meta">{overdue.length} terlambat</div>
+          </div>
+          <div className="ag-kpi">
+            <div className="ag-kpi__label">Selesai</div>
+            <div className="ag-kpi__value ag-kpi__value--pos">{done.length}</div>
+            <div className="ag-kpi__meta">Total agenda tertutup</div>
+          </div>
+          <div className="ag-progress">
+            <div className="ag-progress__head">
+              <span className="ag-progress__label">Progress Keseluruhan · {all.length} agenda</span>
+              <span className="ag-progress__value">{done.length}/{all.length} selesai <span className="pct">{Math.round((done.length / Math.max(all.length, 1)) * 100)}%</span></span>
+            </div>
+            <div className="ag-progress__bar"><div className="ag-progress__fill" style={{ width: `${(done.length / Math.max(all.length, 1)) * 100}%` }}></div></div>
+            <div className="ag-progress__ticks">
+              <span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="ag-toolbar">
+        <div className="ag-search">
+          <Search className="w-4 h-4 text-ink-400" />
+          <input placeholder="Cari judul, keterangan, tag..." />
+          <span className="badge badge--outline" style={{ fontFamily: "var(--font-mono)", padding: "0 5px", height: "18px", fontSize: "10px" }}>⌘F</span>
+        </div>
+        <div className="ag-tabs">
+          <button className="ag-tabs__btn is-active">Belum selesai <span className="count">{pending.length + inProgress.length + overdue.length}</span></button>
+          <button className="ag-tabs__btn">Selesai <span className="count">{done.length}</span></button>
+          <button className="ag-tabs__btn">Semua <span className="count">{all.length}</span></button>
+        </div>
+      </div>
+
+      <div className="ag-controls">
+        <div className="ag-chips">
+          <button className="ag-chip is-active"><span className="ag-chip__glyph" style={{ background: "var(--ink-000)", color: "var(--surface)", borderRadius: "3px" }}>★</span>Semua<span className="ag-chip__count">{all.length}</span></button>
+          <button className="ag-chip"><span className="ag-chip__glyph" style={{ background: "#4338ca", color: "#fff", borderRadius: "3px" }}>Y</span>Yayasan</button>
+          <button className="ag-chip"><span className="ag-chip__glyph" style={{ background: "var(--pos-500)", color: "#fff", borderRadius: "3px" }}>$</span>Keuangan</button>
+          <button className="ag-chip"><span className="ag-chip__glyph" style={{ background: "#0284c7", color: "#fff", borderRadius: "3px" }}>P</span>Pribadi</button>
+        </div>
+      </div>
+
+      {overdue.length > 0 && (
+        <div className="ag-section">
+          <div className="ag-section__head">
+            <span className="ag-section__label ag-section__label--urgent">
+              <span className="ag-section__glyph"></span>
+              Terlambat
+            </span>
+            <span className="ag-section__count">{overdue.length} agenda</span>
+            <span className="ag-section__total">Priority · High bias</span>
+          </div>
+          <div className="ag-frame">
+            {overdue.map(task => {
+              const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
+              return (
+                <div className={`ag-item ag-item--p-${task.priority === "tinggi" ? "tinggi" : "sedang"}`} key={task._id.toString()}>
+                  <div className="ag-check"></div>
+                  <div>
+                    <div className="ag-date">{new Date(task.due_date).getDate()} {new Date(task.due_date).toLocaleString('id-ID', { month: 'short' })}</div>
+                    <span className="ag-countdown ag-countdown--late">Terlambat</span>
+                  </div>
+                  <div className="ag-item__body">
+                    <div className="ag-item__title">{task.title}</div>
+                    {task.description && <div className="ag-item__desc">{task.description}</div>}
+                  </div>
+                  <div className={`ag-pri ag-pri--${task.priority}`}><span className="ag-pri__dot"></span>{task.priority || "Normal"}</div>
+                  <div className="ag-cat"><span className="ag-cat__glyph" style={{ background: "#4338ca" }}>{cfg.label.charAt(0)}</span>{cfg.label}</div>
+                  <div className="ag-actions">
+                    <button className="ag-action-btn"><MoreHorizontal className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {pending.length > 0 && (
+        <div className="ag-section">
+          <div className="ag-section__head">
+            <span className="ag-section__label">
+              <span className="ag-section__glyph"></span>
+              Mendatang
+            </span>
+            <span className="ag-section__count">{pending.length} agenda</span>
+          </div>
+          <div className="ag-frame">
             {pending.map(task => {
               const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
-              const isOverdue = new Date(task.due_date) < new Date(new Date().setHours(0,0,0,0));
               return (
-                <div className="card" key={task._id.toString()}>
-                  <div className="card__head">
-                    <span className="card__tag">{cfg.label}</span>
-                    <MoreHorizontal className="card__more" />
+                <div className={`ag-item ag-item--p-${task.priority === "tinggi" ? "tinggi" : "sedang"}`} key={task._id.toString()}>
+                  <div className="ag-check"></div>
+                  <div>
+                    <div className="ag-date">{new Date(task.due_date).getDate()} {new Date(task.due_date).toLocaleString('id-ID', { month: 'short' })}</div>
+                    <span className="ag-countdown ag-countdown--normal">Pending</span>
                   </div>
-                  <div className="card__title">{task.title}</div>
-                  {task.description && <div className="card__desc">{task.description}</div>}
-                  <div className="card__meta">
-                    <span className="card__date" style={{ color: isOverdue ? "var(--neg-700)" : undefined }}>
-                      <Calendar className="w-3.5 h-3.5" />
-                      {formatDateShort(task.due_date)} {isOverdue && "(Terlambat)"}
-                    </span>
+                  <div className="ag-item__body">
+                    <div className="ag-item__title">{task.title}</div>
+                    {task.description && <div className="ag-item__desc">{task.description}</div>}
+                  </div>
+                  <div className={`ag-pri ag-pri--${task.priority}`}><span className="ag-pri__dot"></span>{task.priority || "Normal"}</div>
+                  <div className="ag-cat"><span className="ag-cat__glyph" style={{ background: "var(--ink-400)" }}>{cfg.label.charAt(0)}</span>{cfg.label}</div>
+                  <div className="ag-actions">
+                    <button className="ag-action-btn"><MoreHorizontal className="w-4 h-4" /></button>
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
+      )}
 
-        {/* In Progress */}
-        <div className="board-col">
-          <div className="board-col__head">
-            <span className="board-col__title">In Progress</span>
-            <span className="board-col__count">{inProgress.length}</span>
-            <button className="btn btn--ghost" style={{ padding: 4, height: "auto" }}><Plus className="w-4 h-4"/></button>
+      {done.length > 0 && (
+        <div className="ag-section" style={{ opacity: 0.8 }}>
+          <div className="ag-section__head">
+            <span className="ag-section__label">
+              <span className="ag-section__glyph"></span>
+              Selesai
+            </span>
+            <span className="ag-section__count">{done.length} agenda</span>
           </div>
-          <div className="board-col__body">
-            {/* Empty state for demo if none */}
-            {inProgress.length === 0 && <div className="p-4 text-center text-sm text-ink-400">Drag task ke sini.</div>}
-            {inProgress.map(task => {
-              const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
-              return (
-                <div className="card" key={task._id.toString() + "_prog"}>
-                  <div className="card__head">
-                    <span className="card__tag" style={{ background: "var(--warn-100)", color: "var(--warn-800)" }}>{cfg.label}</span>
-                    <MoreHorizontal className="card__more" />
-                  </div>
-                  <div className="card__title">{task.title}</div>
-                  <div className="card__meta">
-                    <span className="card__date"><Calendar className="w-3.5 h-3.5" />{formatDateShort(task.due_date)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Done */}
-        <div className="board-col">
-          <div className="board-col__head">
-            <span className="board-col__title">Selesai</span>
-            <span className="board-col__count">{done.length}</span>
-          </div>
-          <div className="board-col__body">
+          <div className="ag-frame">
             {done.map(task => {
               const cfg = KATEGORI_CONFIG[task.kategori as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
               return (
-                <div className="card is-done" key={task._id.toString()}>
-                  <div className="card__head">
-                    <span className="card__tag" style={{ background: "var(--pos-100)", color: "var(--pos-800)" }}>{cfg.label}</span>
+                <div className="ag-item ag-item--done" key={task._id.toString()}>
+                  <div className="ag-check is-done">
+                    <CheckCircle2 className="w-3 h-3 text-white" />
                   </div>
-                  <div className="card__title" style={{ textDecoration: "line-through", color: "var(--ink-400)" }}>{task.title}</div>
-                  <div className="card__meta">
-                    <span className="card__date text-pos"><CheckCircle2 className="w-3.5 h-3.5" /> Selesai</span>
+                  <div>
+                    <div className="ag-date">{new Date(task.due_date).getDate()} {new Date(task.due_date).toLocaleString('id-ID', { month: 'short' })}</div>
+                  </div>
+                  <div className="ag-item__body">
+                    <div className="ag-item__title">{task.title}</div>
+                  </div>
+                  <div className="ag-pri ag-pri--rendah"><span className="ag-pri__dot"></span>Done</div>
+                  <div className="ag-cat"><span className="ag-cat__glyph" style={{ background: "var(--pos-500)" }}>{cfg.label.charAt(0)}</span>{cfg.label}</div>
+                  <div className="ag-actions">
+                    <button className="ag-action-btn"><MoreHorizontal className="w-4 h-4" /></button>
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }

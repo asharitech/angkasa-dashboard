@@ -137,47 +137,49 @@ export default async function LaporanOpPage() {
         </div>
 
         {/* Side summary */}
-        <div className="panel" style={{ position: "sticky", top: "var(--sp-6)" }}>
-          <div className="t-eyebrow">Rekapitulasi {ledger.period || "Bulan Ini"}</div>
-          <div className="divider"></div>
-          
-          <div style={{ marginBottom: "var(--sp-5)" }}>
-            <div className="row-between" style={{ marginBottom: 4 }}>
-              <span className="t-label">Saldo Awal</span>
-              <span className="mono" style={{ fontWeight: 600 }}>{formatRupiah(entries[0]?.saldo - (entries[0]?.masuk || 0) + (entries[0]?.keluar || 0) || 0)}</span>
+        <div className="detail">
+          <div className="detail__body">
+            <div className="t-eyebrow">Rekapitulasi {ledger.period || "Bulan Ini"}</div>
+            <div className="divider"></div>
+            
+            <div style={{ marginBottom: "var(--sp-5)" }}>
+              <div className="row-between" style={{ marginBottom: 4 }}>
+                <span className="t-label">Saldo Awal</span>
+                <span className="mono" style={{ fontWeight: 600 }}>{formatRupiah(entries[0]?.saldo - (entries[0]?.masuk || 0) + (entries[0]?.keluar || 0) || 0)}</span>
+              </div>
+              <div className="row-between" style={{ marginBottom: 4 }}>
+                <span className="t-label text-pos">Total Masuk</span>
+                <span className="mono text-pos">+{formatRupiah(totals.masuk)}</span>
+              </div>
+              <div className="row-between" style={{ marginBottom: 4 }}>
+                <span className="t-label text-neg">Total Keluar</span>
+                <span className="mono text-neg">−{formatRupiah(totals.keluar)}</span>
+              </div>
+              <div className="row-between" style={{ paddingTop: 8, marginTop: 8, borderTop: "1px dashed var(--ink-200)" }}>
+                <span className="t-label">Saldo Akhir</span>
+                <span className="mono" style={{ fontWeight: 600, fontSize: "var(--text-lg)" }}>{formatRupiah(totals.saldo)}</span>
+              </div>
             </div>
-            <div className="row-between" style={{ marginBottom: 4 }}>
-              <span className="t-label text-pos">Total Masuk</span>
-              <span className="mono text-pos">+{formatRupiah(totals.masuk)}</span>
-            </div>
-            <div className="row-between" style={{ marginBottom: 4 }}>
-              <span className="t-label text-neg">Total Keluar</span>
-              <span className="mono text-neg">−{formatRupiah(totals.keluar)}</span>
-            </div>
+
+            <div className="t-eyebrow">Kewajiban Ditahan</div>
+            <div className="divider"></div>
+
+            {kewajibanList.map(([key, val]) => (
+              <div className="row-between" style={{ marginBottom: 4 }} key={key}>
+                <span className="t-label">Tahap {key.match(/tahap(\d+)$/)?.[1]}</span>
+                <span className="mono">−{formatRupiah(val as number)}</span>
+              </div>
+            ))}
+            
             <div className="row-between" style={{ paddingTop: 8, marginTop: 8, borderTop: "1px dashed var(--ink-200)" }}>
-              <span className="t-label">Saldo Akhir</span>
-              <span className="mono" style={{ fontWeight: 600, fontSize: "var(--text-lg)" }}>{formatRupiah(totals.saldo)}</span>
+              <span className="t-label" style={{ fontWeight: 600 }}>Total Kewajiban</span>
+              <span className="mono text-neg" style={{ fontWeight: 600 }}>−{formatRupiah(kewajiban.total)}</span>
             </div>
-          </div>
 
-          <div className="t-eyebrow">Kewajiban Ditahan</div>
-          <div className="divider"></div>
-
-          {kewajibanList.map(([key, val]) => (
-            <div className="row-between" style={{ marginBottom: 4 }} key={key}>
-              <span className="t-label">Tahap {key.match(/tahap(\d+)$/)?.[1]}</span>
-              <span className="mono">−{formatRupiah(val as number)}</span>
+            <div className="alert-box" style={{ marginTop: "var(--sp-5)" }}>
+              <div className="alert-box__title">Dana Efektif: {formatRupiah(dana_efektif)}</div>
+              <div>Dana yang benar-benar bisa dipakai setelah dikurangi hutang.</div>
             </div>
-          ))}
-          
-          <div className="row-between" style={{ paddingTop: 8, marginTop: 8, borderTop: "1px dashed var(--ink-200)" }}>
-            <span className="t-label" style={{ fontWeight: 600 }}>Total Kewajiban</span>
-            <span className="mono text-neg" style={{ fontWeight: 600 }}>−{formatRupiah(kewajiban.total)}</span>
-          </div>
-
-          <div className="alert-box" style={{ marginTop: "var(--sp-5)" }}>
-            <div className="alert-box__title">Dana Efektif: {formatRupiah(dana_efektif)}</div>
-            <div>Dana yang benar-benar bisa dipakai setelah dikurangi hutang.</div>
           </div>
         </div>
       </div>
