@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 
 export const dynamic = "force-dynamic";
 
@@ -6,11 +7,12 @@ export async function GET() {
   try {
     const db = await getDb();
     await db.command({ ping: 1 });
+    const c = dbCollections(db);
     const counts = {
-      accounts: await db.collection("accounts").countDocuments(),
-      entries: await db.collection("entries").countDocuments(),
-      obligations: await db.collection("obligations").countDocuments(),
-      ledgers: await db.collection("ledgers").countDocuments(),
+      accounts: await c.accounts.countDocuments(),
+      entries: await c.entries.countDocuments(),
+      obligations: await c.obligations.countDocuments(),
+      ledgers: await c.ledgers.countDocuments(),
     };
     return Response.json({ status: "ok", db: counts });
   } catch (e) {

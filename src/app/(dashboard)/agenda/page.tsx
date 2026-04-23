@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
@@ -181,9 +182,8 @@ export default async function AgendaPage({
   const view = (params.view ?? "belum") as "belum" | "selesai" | "semua";
   const kategoriFilter = params.kategori ?? null;
 
-  const db = await getDb();
-  const rawDocs = await db
-    .collection("agenda")
+  const c = dbCollections(await getDb());
+  const rawDocs = await c.agenda
     .find({ owner: "angkasa" })
     .sort({ due_date: 1, created_at: -1 })
     .toArray();

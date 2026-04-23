@@ -4,6 +4,7 @@
  */
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
+import { dbCollections } from "../src/lib/db/collections";
 
 const uri = process.env.MONGODB_URI!;
 const dbName = process.env.MONGODB_DB || "agent-asharitech-angkasa";
@@ -11,9 +12,9 @@ const dbName = process.env.MONGODB_DB || "agent-asharitech-angkasa";
 async function seed() {
   const client = new MongoClient(uri);
   await client.connect();
-  const db = client.db(dbName);
+  const c = dbCollections(client.db(dbName));
 
-  const existing = await db.collection("users").findOne({ username: "angkasa" });
+  const existing = await c.users.findOne({ username: "angkasa" });
   if (existing) {
     console.log("Admin user 'angkasa' already exists, skipping.");
     await client.close();
@@ -21,7 +22,7 @@ async function seed() {
   }
 
   const password_hash = await bcrypt.hash("angkasa2024", 12);
-  await db.collection("users").insertOne({
+  await c.users.insertOne({
     username: "angkasa",
     password_hash,
     name: "Muhammad Angkasa Putra Ranu",

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
@@ -31,7 +32,7 @@ export interface AgendaInput {
 export async function createAgendaAction(input: AgendaInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
     const now = new Date();
 
     if (!input.title?.trim()) return { error: "Judul agenda wajib diisi" };
@@ -54,7 +55,7 @@ export async function createAgendaAction(input: AgendaInput): Promise<ActionResu
       updated_at: now,
     };
 
-    const result = await db.collection("agenda").insertOne(doc);
+    const result = await c.agenda.insertOne(doc as Parameters<typeof c.agenda.insertOne>[0]);
     revalidatePath("/agenda");
     return { ok: true, id: result.insertedId.toString() };
   } catch (err) {
@@ -68,8 +69,8 @@ export async function updateAgendaAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const existing = await db.collection("agenda").findOne({ _id: new ObjectId(id) });
+    const c = dbCollections(await getDb());
+    const existing = await c.agenda.findOne({ _id: new ObjectId(id) });
     if (!existing) return { error: "Agenda tidak ditemukan" };
 
     const update: Record<string, unknown> = {
@@ -79,7 +80,7 @@ export async function updateAgendaAction(
     };
     if (patch.title) update.title = patch.title.trim();
 
-    await db.collection("agenda").updateOne(
+    await c.agenda.updateOne(
       { _id: new ObjectId(id) },
       { $set: update },
     );
@@ -96,11 +97,11 @@ export async function toggleAgendaStatusAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
     const newStatus: AgendaStatus = currentStatus === "belum" ? "selesai" : "belum";
     const now = new Date();
 
-    await db.collection("agenda").updateOne(
+    await c.agenda.updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
@@ -121,8 +122,8 @@ export async function toggleAgendaStatusAction(
 export async function deleteAgendaAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
-    const result = await db.collection("agenda").deleteOne({ _id: new ObjectId(id) });
+    const c = dbCollections(await getDb());
+    const result = await c.agenda.deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return { error: "Agenda tidak ditemukan" };
     revalidatePath("/agenda");
     return { ok: true };

@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { getDb } from "./mongodb";
+import { dbCollections } from "./db/collections";
 import bcrypt from "bcryptjs";
 
 if (!process.env.JWT_SECRET) {
@@ -53,8 +54,8 @@ export async function login(
   username: string,
   password: string
 ): Promise<{ success: boolean; error?: string; user?: User }> {
-  const db = await getDb();
-  const user = await db.collection("users").findOne({ username });
+  const c = dbCollections(await getDb());
+  const user = await c.users.findOne({ username });
   if (!user) return { success: false, error: "Username tidak ditemukan" };
 
   const valid = await bcrypt.compare(password, user.password_hash as string);
@@ -83,7 +84,10 @@ export async function login(
       name: user.name as string,
       role: user.role as string,
       phone: user.phone as string | undefined,
-      created_at: (user.created_at as Date).toISOString(),
+      created_at:
+        user.created_at instanceof Date
+          ? user.created_at.toISOString()
+          : String(user.created_at ?? ""),
     } as User,
   };
 }

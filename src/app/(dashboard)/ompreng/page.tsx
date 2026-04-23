@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { getSession } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
@@ -36,13 +37,15 @@ export default async function OmprengPage() {
   if (!session) redirect("/login");
   const isAdmin = session?.role === "admin";
 
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
-  const rawDocs = await db
-    .collection("ompreng")
+  const rawDocs = await c.ompreng
     .find({ month: { $in: MONTHS.map((m) => m.value) } })
     .sort({ month: 1, dapur: 1 })
     .toArray();
+
+  const iso = (v: unknown) =>
+    v instanceof Date ? v.toISOString() : typeof v === "string" ? v : "";
 
   const docs: OmprengDoc[] = rawDocs.map((d) => ({
     _id: d._id.toString(),
@@ -53,8 +56,8 @@ export default async function OmprengPage() {
     kekurangan_ompreng: d.kekurangan_ompreng ?? 0,
     alasan_tambah: d.alasan_tambah ?? "",
     notes: d.notes ?? "",
-    created_at: d.created_at ?? "",
-    updated_at: d.updated_at ?? "",
+    created_at: iso(d.created_at),
+    updated_at: iso(d.updated_at),
   }));
 
   const lookup = new Map<string, OmprengDoc>();

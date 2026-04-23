@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { DapurLocation } from "@/lib/ompreng-constants";
 
@@ -22,9 +23,9 @@ export async function upsertOmpreng(data: {
   } catch {
     return actionError("Unauthorized");
   }
-  const db = await getDb();
+  const c = dbCollections(await getDb());
   const now = new Date().toISOString();
-  await db.collection("ompreng").updateOne(
+  await c.ompreng.updateOne(
     { dapur: data.dapur, month: data.month },
     {
       $set: {
@@ -49,8 +50,8 @@ export async function deleteOmpreng(id: string): Promise<ActionResult> {
   } catch {
     return actionError("Unauthorized");
   }
-  const db = await getDb();
-  await db.collection("ompreng").deleteOne({ _id: new ObjectId(id) });
+  const c = dbCollections(await getDb());
+  await c.ompreng.deleteOne({ _id: new ObjectId(id) });
   revalidatePath("/ompreng");
   return { ok: true };
 }

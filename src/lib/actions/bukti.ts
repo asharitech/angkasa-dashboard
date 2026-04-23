@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { randomUUID } from "crypto";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 
 type ActionResult = { ok: true; url?: string } | { error: string };
@@ -65,7 +66,7 @@ export async function uploadBuktiAction(
 ): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
 
     const file = formData.get("file") as File | null;
     if (!file || !file.size) return { error: "File tidak ditemukan" };
@@ -83,13 +84,14 @@ export async function uploadBuktiAction(
     const { publicUrl } = r2Config();
     const url = `${publicUrl}/${key}`;
 
-    const existing = await db
-      .collection("obligations")
-      .findOne({ _id: new ObjectId(obligationId) }, { projection: { bukti_url: 1 } });
+    const existing = await c.obligations.findOne(
+      { _id: new ObjectId(obligationId) },
+      { projection: { bukti_url: 1 } },
+    );
 
     const oldKey = keyFromUrl(existing?.bukti_url as string | undefined);
 
-    await db.collection("obligations").updateOne(
+    await c.obligations.updateOne(
       { _id: new ObjectId(obligationId) },
       {
         $set: {
@@ -114,15 +116,16 @@ export async function uploadBuktiAction(
 export async function deleteBuktiAction(obligationId: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
 
-    const doc = await db
-      .collection("obligations")
-      .findOne({ _id: new ObjectId(obligationId) }, { projection: { bukti_url: 1 } });
+    const doc = await c.obligations.findOne(
+      { _id: new ObjectId(obligationId) },
+      { projection: { bukti_url: 1 } },
+    );
 
     const key = keyFromUrl(doc?.bukti_url as string | undefined);
 
-    await db.collection("obligations").updateOne(
+    await c.obligations.updateOne(
       { _id: new ObjectId(obligationId) },
       {
         $unset: { bukti_url: "" },

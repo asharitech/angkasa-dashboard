@@ -1,131 +1,119 @@
 import { getDb } from "./mongodb";
-import type { DbDate } from "./db/schema";
+import { dbCollections } from "./db/collections";
+import type { DbDate, EntryDirection, EntryFields, ObligationDoc } from "./db/schema";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
-import type { Document } from "mongodb";
+import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
 import { validateObligation, validateEntry } from "./validate";
 
 export async function getNumpang(): Promise<Numpang[]> {
-  const db = await getDb();
-  return db.collection("numpang").find({}).sort({ amount: -1 }).toArray() as unknown as Numpang[];
+  const c = dbCollections(await getDb());
+  return c.numpang.find({}).sort({ amount: -1 }).toArray();
 }
 
 export async function getNumpangActive(): Promise<Numpang[]> {
-  const db = await getDb();
-  return db.collection("numpang").find({ status: "active" }).sort({ amount: -1 }).toArray() as unknown as Numpang[];
+  const c = dbCollections(await getDb());
+  return c.numpang.find({ status: "active" }).sort({ amount: -1 }).toArray();
 }
 
 export async function computeBriKas(): Promise<{ briBalance: number; numpangTotal: number; briKas: number }> {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
   const [bri, numpang] = await Promise.all([
-    db.collection("accounts").findOne({ _id: "bri_angkasa" as unknown as import("mongodb").ObjectId }),
+    c.accounts.findOne({ _id: "bri_angkasa" }),
     getNumpangActive(),
   ]);
-  const briBalance = (bri as unknown as Account)?.balance ?? 0;
+  const briBalance = bri?.balance ?? 0;
   const numpangTotal = numpang.reduce((s, n) => s + n.amount, 0);
   return { briBalance, numpangTotal, briKas: briBalance - numpangTotal };
 }
 
 export async function getAccounts(): Promise<Account[]> {
-  const db = await getDb();
-  return db.collection("accounts").find().toArray() as unknown as Account[];
+  const c = dbCollections(await getDb());
+  return c.accounts.find().toArray();
 }
 
 export async function getLedger(type: string, current = true): Promise<Ledger | null> {
-  const db = await getDb();
-  return db.collection("ledgers").findOne({
+  const c = dbCollections(await getDb());
+  return c.ledgers.findOne({
     type,
     is_current: current,
-  }) as unknown as Ledger | null;
+  });
 }
 
 export async function getLedgerByCode(type: string, period_code: string): Promise<Ledger | null> {
-  const db = await getDb();
-  return db.collection("ledgers").findOne({
+  const c = dbCollections(await getDb());
+  return c.ledgers.findOne({
     type,
     period_code,
-  }) as unknown as Ledger | null;
+  });
 }
 
 export async function getAllLedgers(): Promise<Ledger[]> {
-  const db = await getDb();
-  return db.collection("ledgers").find({ is_current: true }).toArray() as unknown as Ledger[];
+  const c = dbCollections(await getDb());
+  return c.ledgers.find({ is_current: true }).toArray();
 }
 
-export async function getObligations(filter: Record<string, unknown> = {}): Promise<Obligation[]> {
-  const db = await getDb();
-  return db
-    .collection("obligations")
-    .find(filter)
-    .sort({ month: 1, created_at: -1 })
-    .toArray() as unknown as Obligation[];
+export async function getObligations(filter: Filter<ObligationDoc> = {}): Promise<Obligation[]> {
+  const c = dbCollections(await getDb());
+  return c.obligations.find(filter).sort({ month: 1, created_at: -1 }).toArray();
 }
 
 export async function getObligationById(id: string): Promise<Obligation | null> {
-  const db = await getDb();
-  const { ObjectId } = await import("mongodb");
-  return db.collection("obligations").findOne({ _id: new ObjectId(id) }) as unknown as Obligation | null;
+  const c = dbCollections(await getDb());
+  return c.obligations.findOne({ _id: new ObjectId(id) });
 }
 
 export async function updateObligation(id: string, data: Record<string, unknown>): Promise<void> {
-  const db = await getDb();
-  const { ObjectId } = await import("mongodb");
-  const existing = await db.collection("obligations").findOne({ _id: new ObjectId(id) });
+  const c = dbCollections(await getDb());
+  const existing = await c.obligations.findOne({ _id: new ObjectId(id) });
   validateObligation({ ...(existing ?? {}), ...data });
-  await db.collection("obligations").updateOne(
+  await c.obligations.updateOne(
     { _id: new ObjectId(id) },
     { $set: { ...data, updated_at: new Date() } }
   );
 }
 
 export async function deleteObligation(id: string): Promise<void> {
-  const db = await getDb();
-  const { ObjectId } = await import("mongodb");
-  await db.collection("obligations").deleteOne({ _id: new ObjectId(id) });
+  const c = dbCollections(await getDb());
+  await c.obligations.deleteOne({ _id: new ObjectId(id) });
 }
 
 export async function createObligation(data: Record<string, unknown>): Promise<string> {
   validateObligation(data);
-  const db = await getDb();
-  const result = await db.collection("obligations").insertOne({
+  const c = dbCollections(await getDb());
+  const result = await c.obligations.insertOne({
     ...data,
     created_at: new Date(),
     updated_at: new Date(),
-  });
+  } as Parameters<typeof c.obligations.insertOne>[0]);
   return result.insertedId.toString();
 }
 
-export async function getEntries(filter: Record<string, unknown> = {}, limit = 50): Promise<Entry[]> {
-  const db = await getDb();
-  return db
-    .collection("entries")
-    .find(filter)
-    .sort({ date: -1 })
-    .limit(limit)
-    .toArray() as unknown as Entry[];
+export async function getEntries(filter: Filter<EntryFields> = {}, limit = 50): Promise<Entry[]> {
+  const c = dbCollections(await getDb());
+  return c.entries.find(filter).sort({ date: -1 }).limit(limit).toArray();
 }
 
 export async function createEntry(data: Record<string, unknown>): Promise<string> {
   validateEntry(data);
-  const db = await getDb();
-  const result = await db.collection("entries").insertOne({
+  const c = dbCollections(await getDb());
+  const result = await c.entries.insertOne({
     ...data,
     created_at: new Date(),
     updated_at: new Date(),
-  });
+  } as Parameters<typeof c.entries.insertOne>[0]);
   return result.insertedId.toString();
 }
 
 export async function deleteEntry(id: string): Promise<void> {
-  const db = await getDb();
-  const { ObjectId } = await import("mongodb");
-  await db.collection("entries").deleteOne({ _id: new ObjectId(id) });
+  const c = dbCollections(await getDb());
+  await c.entries.deleteOne({ _id: new ObjectId(id) });
 }
 
 export async function updateAccount(id: string, data: Record<string, unknown>): Promise<void> {
-  const db = await getDb();
-  await db.collection("accounts").updateOne(
-    { _id: id as unknown as import("mongodb").ObjectId },
+  const c = dbCollections(await getDb());
+  await c.accounts.updateOne(
+    { _id: id },
     { $set: { ...data, updated_at: new Date() } }
   );
 }
@@ -155,7 +143,7 @@ function serializeDates<T>(obj: T): T {
 }
 
 export async function getPribadiSummary() {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
   const [accounts, entries, savings, loans, recurring, piutangByMonth, savingsTotal, numpang] =
     await Promise.all([
@@ -164,12 +152,12 @@ export async function getPribadiSummary() {
       getEntries({ category: "savings" }, 50),
       getObligations({ type: "loan", status: "active" }),
       getObligations({ type: "recurring", status: "active" }),
-      db.collection("obligations").aggregate([
+      c.obligations.aggregate([
         { $match: { type: "pengajuan", status: "pending", sumber_dana: "BRI_ANGKASA" } },
         { $group: { _id: "$month", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { _id: 1 } },
       ]).toArray(),
-      db.collection("entries").aggregate([
+      c.entries.aggregate([
         { $match: { category: "savings" } },
         { $group: {
             _id: "$owner",
@@ -200,37 +188,36 @@ export async function getPribadiSummary() {
 }
 
 export async function getWajibBulanan(): Promise<Obligation[]> {
-  const db = await getDb();
-  return db
-    .collection("obligations")
+  const c = dbCollections(await getDb());
+  return c.obligations
     .find({ type: "recurring", org: "yrbb" })
     .sort({ category: 1, created_at: -1 })
-    .toArray() as unknown as Obligation[];
+    .toArray();
 }
 
 export async function getDashboardSummary() {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
   const [accounts, laporanOp, sewa, pengajuanPending, pengajuanTotal, pengajuanByRequestor, cashAccount, wajibBulanan] =
     await Promise.all([
       getAccounts(),
       getLedger("laporan_op"),
       getLedger("sewa"),
-      db.collection("obligations").countDocuments({ type: "pengajuan", status: "pending" }),
-      db.collection("obligations").aggregate([
+      c.obligations.countDocuments({ type: "pengajuan", status: "pending" }),
+      c.obligations.aggregate([
         { $match: { type: "pengajuan", status: "pending" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]).toArray(),
-      db.collection("obligations").aggregate([
+      c.obligations.aggregate([
         { $match: { type: "pengajuan", status: "pending" } },
         { $group: { _id: "$requestor", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { total: -1 } },
       ]).toArray(),
-      db.collection("accounts").findOne({ _id: "cash_yayasan" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
-      db.collection("obligations").find({ type: "recurring", org: "yrbb", status: "active" }).toArray(),
+      c.accounts.findOne({ _id: "cash_yayasan" }),
+      c.obligations.find({ type: "recurring", org: "yrbb", status: "active" }).toArray(),
     ]);
 
-  const cashAwal = (cashAccount as unknown as { meta?: { initial_amount?: number } })?.meta?.initial_amount ?? 0;
+  const cashAwal = Number(cashAccount?.meta?.initial_amount ?? 0) || 0;
   const cashSisa = cashAccount?.balance ?? 0;
 
   return {
@@ -241,7 +228,7 @@ export async function getDashboardSummary() {
     pengajuanTotalAmount: pengajuanTotal[0]?.total ?? 0,
     pengajuanByRequestor: pengajuanByRequestor as { _id: string; count: number; total: number }[],
     cashYayasan: { awal: cashAwal, sisa: cashSisa, terpakai: cashAwal - cashSisa },
-    wajibBulanan: wajibBulanan as unknown as { _id: string; item: string; amount: number; category?: string }[],
+    wajibBulanan,
   };
 }
 
@@ -249,25 +236,25 @@ export async function getActivityFeed(
   limit = 30,
   opts: { domain?: string; period?: string } = {},
 ): Promise<ActivityEvent[]> {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
   // Fetch a larger pool sorted by the timestamp we'll display, so the merged
   // feed isn't missing items whose `date` is recent but `created_at` is old.
   const pool = limit * 3;
 
-  const entryFilter: Record<string, unknown> = {};
+  const entryFilter: Filter<EntryFields> = {};
   if (opts.domain) entryFilter.domain = opts.domain;
   if (opts.period) entryFilter.month = opts.period;
 
-  const obligationFilter: Record<string, unknown> = {};
+  const obligationFilter: Filter<ObligationDoc> = {};
   if (opts.period) obligationFilter.month = opts.period;
 
   const [entries, obligations] = await Promise.all([
-    db.collection("entries").find(entryFilter).sort({ date: -1, created_at: -1 }).limit(pool).toArray(),
+    c.entries.find(entryFilter).sort({ date: -1, created_at: -1 }).limit(pool).toArray(),
     // Obligations don't carry a domain field; only include them when no domain filter is applied.
     opts.domain
-      ? Promise.resolve([] as Document[])
-      : db.collection("obligations").find(obligationFilter).sort({ updated_at: -1 }).limit(pool).toArray(),
+      ? Promise.resolve([] as Obligation[])
+      : c.obligations.find(obligationFilter).sort({ updated_at: -1 }).limit(pool).toArray(),
   ]);
 
   const events: ActivityEvent[] = [];
@@ -280,7 +267,7 @@ export async function getActivityFeed(
       title: e.description ?? "Transaksi",
       subtitle: [e.domain, e.category?.replace(/_/g, " ")].filter(Boolean).join(" · "),
       amount: e.amount ?? null,
-      direction: e.direction,
+      direction: e.direction as EntryDirection,
       domain: e.domain,
       category: e.category,
       created_at: e.created_at?.toString() ?? e.date?.toString(),
@@ -312,22 +299,21 @@ export async function getActivityFeed(
 }
 
 export async function getDanaPribadiSummary() {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
   const [bcaAccount, briAccount, personalEntries, numpangActive] = await Promise.all([
-    db.collection("accounts").findOne({ _id: "bca_angkasa" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
-    db.collection("accounts").findOne({ _id: "bri_angkasa" as unknown as import("mongodb").ObjectId }) as unknown as Promise<Account | null>,
-    db
-      .collection("entries")
+    c.accounts.findOne({ _id: "bca_angkasa" }),
+    c.accounts.findOne({ _id: "bri_angkasa" }),
+    c.entries
       .find({ domain: "personal" })
       .sort({ date: -1 })
       .limit(50)
-      .toArray() as unknown as Promise<Entry[]>,
+      .toArray(),
     getNumpangActive(),
   ]);
 
-  const bcaBalance = (bcaAccount as unknown as Account)?.balance ?? 0;
-  const briEstatement = (briAccount as unknown as Account)?.balance ?? 0;
+  const bcaBalance = bcaAccount?.balance ?? 0;
+  const briEstatement = briAccount?.balance ?? 0;
   const numpangTotal = numpangActive.reduce((s, n) => s + n.amount, 0);
   const briKas = briEstatement - numpangTotal;
   const briBersih = briKas;
@@ -336,8 +322,8 @@ export async function getDanaPribadiSummary() {
   const numpangEntries = numpangActive.map((n) => ({ key: n._id, amount: n.amount, description: n.description }));
 
   return {
-    bcaAccount: bcaAccount as unknown as Account | null,
-    briAccount: briAccount as unknown as Account | null,
+    bcaAccount,
+    briAccount,
     bcaBalance,
     briKas,
     briEstatement,
@@ -345,7 +331,7 @@ export async function getDanaPribadiSummary() {
     numpangTotal,
     numpangEntries,
     totalCashBersih,
-    personalEntries: personalEntries as unknown as Entry[],
+    personalEntries,
   };
 }
 
@@ -361,12 +347,12 @@ export interface LaporanOpReconciliation {
 }
 
 export async function getLaporanOpReconciliation(): Promise<LaporanOpReconciliation | null> {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
   const ledger = await getLedger("laporan_op");
   if (!ledger?.laporan_op) return null;
 
   const account = "btn_yayasan";
-  const agg = await db.collection("entries").aggregate([
+  const agg = await c.entries.aggregate([
     { $match: { account } },
     { $group: {
         _id: "$direction",
@@ -390,11 +376,11 @@ export async function getLaporanOpReconciliation(): Promise<LaporanOpReconciliat
 }
 
 export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
   const issues: DataIntegrityIssue[] = [];
 
   // 1. Lunas obligations missing resolved_at
-  const lunasOrphan = await db.collection("obligations").find({
+  const lunasOrphan = await c.obligations.find({
     status: "lunas",
     $or: [{ resolved_at: { $in: [null] } }, { resolved_at: { $exists: false } }],
   }).toArray();
@@ -409,7 +395,7 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
   }
 
   // 2. Pengajuan tanpa sumber_dana
-  const pengajuanNoSumber = await db.collection("obligations").countDocuments({
+  const pengajuanNoSumber = await c.obligations.countDocuments({
     type: "pengajuan", status: "pending",
     $or: [{ sumber_dana: null }, { sumber_dana: { $exists: false } }],
   });
@@ -423,7 +409,7 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
   }
 
   // 3. sewa_masuk entries tanpa tahap_sewa
-  const sewaUntagged = await db.collection("entries").countDocuments({
+  const sewaUntagged = await c.entries.countDocuments({
     category: "sewa_masuk",
     $or: [{ tahap_sewa: null }, { tahap_sewa: { $exists: false } }, { tahap_sewa: "UNKNOWN" }],
   });
@@ -437,7 +423,7 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
   }
 
   // 4. Sewa entries in T5_PRE gap (Mar 10-29) — needs Pak Angkasa review
-  const t5pre = await db.collection("entries").countDocuments({
+  const t5pre = await c.entries.countDocuments({
     category: "sewa_masuk", tahap_sewa: "2026-T5_PRE",
   });
   if (t5pre > 0) {
@@ -450,7 +436,7 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
   }
 
   // 5. Active loans without schedule
-  const loanNoSchedule = await db.collection("obligations").countDocuments({
+  const loanNoSchedule = await c.obligations.countDocuments({
     type: "loan", status: "active",
     $or: [{ schedule: null }, { schedule: { $size: 0 } }],
   });
@@ -463,7 +449,7 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
   }
 
   // 6. Stale balance ledger references (should be fully archived)
-  const oldBalance = await db.collection("ledgers").countDocuments({ type: "balance" });
+  const oldBalance = await c.ledgers.countDocuments({ type: "balance" });
   if (oldBalance > 0) {
     issues.push({
       kind: "stale_balance_ledger",
@@ -477,40 +463,38 @@ export async function getDataIntegrityIssues(): Promise<DataIntegrityIssue[]> {
 }
 
 export async function getSewaHistory(): Promise<Ledger[]> {
-  const db = await getDb();
-  return db
-    .collection("ledgers")
+  const c = dbCollections(await getDb());
+  return c.ledgers
     .find({ type: "sewa" })
     .sort({ updated_at: -1 })
-    .toArray() as unknown as Ledger[];
+    .toArray();
 }
 
 export async function getSewaDanaUsage(tahap?: string) {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
   const sewaLedger = await getLedger("sewa");
   const targetTahap = tahap ?? sewaLedger?.period_code ?? sewaLedger?.period;
 
   // Source of truth: sum entries.in for that tahap (live; ledger is snapshot only).
-  const masukAgg = await db.collection("entries").aggregate([
+  const masukAgg = await c.entries.aggregate([
     { $match: { category: "sewa_masuk", direction: "in",
                 ...(targetTahap ? { tahap_sewa: targetTahap } : {}) } },
     { $group: { _id: null, total: { $sum: "$amount" } } },
   ]).toArray();
   const totalMasuk = masukAgg[0]?.total ?? sewaLedger?.sewa?.total ?? 0;
 
-  const filter: Record<string, unknown> = {
+  const filter: Filter<EntryFields> = {
     domain: "yayasan",
     direction: "out",
     dana_sumber: "sewa",
+    ...(targetTahap ? { tahap_sewa: targetTahap } : {}),
   };
-  if (targetTahap) filter.tahap_sewa = targetTahap;
 
-  const pengeluaranSewa = await db
-    .collection("entries")
+  const pengeluaranSewa = await c.entries
     .find(filter)
     .sort({ date: -1 })
-    .toArray() as unknown as Entry[];
+    .toArray();
 
   const totalTerpakai = pengeluaranSewa.reduce((s, e) => s + e.amount, 0);
   const sisaDana = totalMasuk - totalTerpakai;
@@ -545,16 +529,15 @@ export interface DuplicateGroup {
 }
 
 export async function findDuplicateEntries(opts: { period?: string } = {}): Promise<DuplicateGroup[]> {
-  const db = await getDb();
-  const filter: Record<string, unknown> = {};
+  const c = dbCollections(await getDb());
+  const filter: Filter<EntryFields> = {};
   if (opts.period) filter.month = opts.period;
 
-  const entries = (await db
-    .collection("entries")
+  const entries = await c.entries
     .find(filter)
     .sort({ date: -1 })
     .limit(500)
-    .toArray()) as unknown as Entry[];
+    .toArray();
 
   const groups = new Map<string, Entry[]>();
   for (const e of entries) {
@@ -589,15 +572,14 @@ export interface DataQualityReport {
 }
 
 export async function findDuplicateObligations(opts: { month?: string } = {}): Promise<DuplicateObligation[]> {
-  const db = await getDb();
-  const filter: Record<string, unknown> = { type: "pengajuan" };
+  const c = dbCollections(await getDb());
+  const filter: Filter<ObligationDoc> = { type: "pengajuan" };
   if (opts.month) filter.month = opts.month;
 
-  const obligations = (await db
-    .collection("obligations")
+  const obligations = await c.obligations
     .find(filter)
     .sort({ created_at: -1 })
-    .toArray()) as unknown as Obligation[];
+    .toArray();
 
   const byAmount = new Map<number, Obligation[]>();
   for (const ob of obligations) {
@@ -619,14 +601,11 @@ export async function findDuplicateObligations(opts: { month?: string } = {}): P
 }
 
 export async function validateObligationData(opts: { month?: string } = {}): Promise<DataQualityReport> {
-  const db = await getDb();
-  const filter: Record<string, unknown> = { type: "pengajuan" };
+  const c = dbCollections(await getDb());
+  const filter: Filter<ObligationDoc> = { type: "pengajuan" };
   if (opts.month) filter.month = opts.month;
 
-  const obligations = (await db
-    .collection("obligations")
-    .find(filter)
-    .toArray()) as unknown as Obligation[];
+  const obligations = await c.obligations.find(filter).toArray();
 
   const missingFields: Record<string, number> = {};
   const requiredFields = ['item', 'amount', 'category', 'requestor', 'sumber_dana'];
@@ -652,7 +631,7 @@ export async function validateObligationData(opts: { month?: string } = {}): Pro
 }
 
 export async function removeDuplicateObligations(keepFirst: boolean = true): Promise<{ removed: number; savedAmount: number }> {
-  const db = await getDb();
+  const c = dbCollections(await getDb());
 
   const duplicates = await findDuplicateObligations();
   let removed = 0;
@@ -662,8 +641,7 @@ export async function removeDuplicateObligations(keepFirst: boolean = true): Pro
     const toRemove = keepFirst ? dup.obligations.slice(1) : dup.obligations.slice(0, -1);
 
     for (const ob of toRemove) {
-      const { ObjectId } = await import("mongodb");
-      await db.collection("obligations").deleteOne({ _id: new ObjectId(ob._id) });
+      await c.obligations.deleteOne({ _id: new ObjectId(String(ob._id)) });
       removed++;
       savedAmount += ob.amount ?? 0;
     }

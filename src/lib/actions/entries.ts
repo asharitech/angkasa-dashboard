@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { Entry } from "@/lib/types";
@@ -14,8 +15,8 @@ export async function getEntryByIdAction(
 ): Promise<{ entry: Entry } | { error: string }> {
   try {
     await requireAdmin();
-    const db = await getDb();
-    const doc = await db.collection("entries").findOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const doc = await c.entries.findOne({ _id: toObjectId(id) });
     if (!doc) return { error: "Entry tidak ditemukan" };
     return {
       entry: {
@@ -55,7 +56,7 @@ export interface EntryInput {
 export async function createEntryAction(input: EntryInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
     const now = new Date();
     const doc: Record<string, unknown> = {
       date: input.date,
@@ -78,7 +79,7 @@ export async function createEntryAction(input: EntryInput): Promise<ActionResult
       updated_at: now,
     };
     validateEntry(doc);
-    const result = await db.collection("entries").insertOne(doc);
+    const result = await c.entries.insertOne(doc as Parameters<typeof c.entries.insertOne>[0]);
     revalidatePath("/aktivitas");
     revalidatePath("/");
     revalidatePath("/laporan-op");
@@ -94,8 +95,8 @@ export async function updateEntryAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const existing = await db.collection("entries").findOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const existing = await c.entries.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Entry tidak ditemukan" };
     const merged = { ...existing, ...patch };
     if (patch.date) (merged as Record<string, unknown>).month = monthFromDate(patch.date);
@@ -106,7 +107,7 @@ export async function updateEntryAction(
       updated_at: new Date(),
     };
     if (patch.date) update.month = monthFromDate(patch.date);
-    await db.collection("entries").updateOne({ _id: toObjectId(id) }, { $set: update });
+    await c.entries.updateOne({ _id: toObjectId(id) }, { $set: update });
     revalidatePath("/aktivitas");
     revalidatePath("/");
     revalidatePath("/laporan-op");
@@ -124,8 +125,8 @@ export async function updateEntryAction(
 export async function deleteEntryAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
-    const entry = await db.collection("entries").findOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const entry = await c.entries.findOne({ _id: toObjectId(id) });
     if (!entry) return { error: "Entry tidak ditemukan" };
     if (entry.obligation_id) {
       return {
@@ -133,7 +134,7 @@ export async function deleteEntryAction(id: string): Promise<ActionResult> {
           "Entry ini terkait dengan pengajuan yang sudah lunas. Batalkan lunas-nya dulu dari halaman Pengajuan.",
       };
     }
-    await db.collection("entries").deleteOne({ _id: toObjectId(id) });
+    await c.entries.deleteOne({ _id: toObjectId(id) });
     revalidatePath("/aktivitas");
     revalidatePath("/");
     revalidatePath("/laporan-op");

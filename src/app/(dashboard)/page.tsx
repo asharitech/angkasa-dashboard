@@ -7,7 +7,7 @@ import {
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
 import { kewajibanRows } from "@/lib/kewajiban-display";
-import { cn } from "@/lib/utils";
+import { cn, idString } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
@@ -290,7 +290,7 @@ export default async function DashboardPage() {
         >
           <div className="divide-y divide-border/60">
             {data.wajibBulanan.map((w) => (
-              <div key={w._id} className="flex items-center justify-between py-2.5">
+              <div key={idString(w._id)} className="flex items-center justify-between py-2.5">
                 <div className="min-w-0">
                   <span className="truncate text-sm text-muted-foreground">{w.item}</span>
                   {w.category && (

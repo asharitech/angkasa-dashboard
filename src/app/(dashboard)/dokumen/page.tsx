@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
@@ -85,9 +86,8 @@ export default async function DokumenPage({
   const params = await searchParams;
   const kategoriFilter = params.kategori ?? null;
 
-  const db = await getDb();
-  const all = (await db
-    .collection("documents")
+  const c = dbCollections(await getDb());
+  const all = (await c.documents
     .find({ org: "yrbb" })
     .sort({ created_at: -1 })
     .toArray()) as unknown as DocumentDoc[];

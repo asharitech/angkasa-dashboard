@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { validateObligation, validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 
@@ -43,7 +44,7 @@ export interface PengajuanInput {
 export async function createObligationAction(input: PengajuanInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
     const now = new Date();
     const doc: Record<string, unknown> = {
       type: input.type,
@@ -68,7 +69,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
       updated_at: now,
     };
     validateObligation(doc);
-    const result = await db.collection("obligations").insertOne(doc);
+    const result = await c.obligations.insertOne(doc as unknown as Parameters<typeof c.obligations.insertOne>[0]);
     revalidatePath("/pengajuan");
     revalidatePath("/wajib-bulanan");
     revalidatePath("/");
@@ -87,12 +88,12 @@ export async function updateObligationAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const existing = await db.collection("obligations").findOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const existing = await c.obligations.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Pengajuan tidak ditemukan" };
     const merged = { ...existing, ...patch };
     validateObligation(merged);
-    await db.collection("obligations").updateOne(
+    await c.obligations.updateOne(
       { _id: toObjectId(id) },
       {
         $set: {
@@ -118,14 +119,14 @@ export async function updateObligationAction(
 export async function deleteObligationAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
-    const linkedEntries = await db.collection("entries").countDocuments({ obligation_id: id });
+    const c = dbCollections(await getDb());
+    const linkedEntries = await c.entries.countDocuments({ obligation_id: id });
     if (linkedEntries > 0) {
       return {
         error: `Pengajuan ini punya ${linkedEntries} entry terkait. Hapus atau lepaskan entry-nya dulu.`,
       };
     }
-    const result = await db.collection("obligations").deleteOne({ _id: toObjectId(id) });
+    const result = await c.obligations.deleteOne({ _id: toObjectId(id) });
     if (result.deletedCount === 0) return { error: "Pengajuan tidak ditemukan" };
     revalidatePath("/pengajuan");
     revalidatePath("/wajib-bulanan");
@@ -161,8 +162,8 @@ export interface MarkLunasInput {
 export async function markLunasAction(input: MarkLunasInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const oblig = await db.collection("obligations").findOne({ _id: toObjectId(input.obligationId) });
+    const c = dbCollections(await getDb());
+    const oblig = await c.obligations.findOne({ _id: toObjectId(input.obligationId) });
     if (!oblig) return { error: "Pengajuan tidak ditemukan" };
     if (oblig.status === "lunas") return { error: "Pengajuan sudah lunas" };
 
@@ -193,8 +194,8 @@ export async function markLunasAction(input: MarkLunasInput): Promise<ActionResu
     validateEntry(entryDoc);
 
     const now = new Date();
-    const entryResult = await db.collection("entries").insertOne(entryDoc);
-    await db.collection("obligations").updateOne(
+    const entryResult = await c.entries.insertOne(entryDoc as Parameters<typeof c.entries.insertOne>[0]);
+    await c.obligations.updateOne(
       { _id: toObjectId(input.obligationId) },
       {
         $set: {
@@ -224,12 +225,12 @@ export async function markLunasAction(input: MarkLunasInput): Promise<ActionResu
 export async function unmarkLunasAction(id: string): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const existing = await db.collection("obligations").findOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const existing = await c.obligations.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Pengajuan tidak ditemukan" };
     if (existing.status !== "lunas") return { error: "Pengajuan belum lunas" };
 
-    await db.collection("obligations").updateOne(
+    await c.obligations.updateOne(
       { _id: toObjectId(id) },
       {
         $set: {

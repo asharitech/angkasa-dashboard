@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { SewaLocation, SewaPipelineStage } from "@/lib/types";
 
@@ -34,10 +35,8 @@ export async function updateSewaLocationAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const ledger = await db
-      .collection("ledgers")
-      .findOne({ type: "sewa", is_current: true });
+    const c = dbCollections(await getDb());
+    const ledger = await c.ledgers.findOne({ type: "sewa", is_current: true });
     if (!ledger) return { error: "Ledger sewa aktif tidak ditemukan" };
 
     const locations: SewaLocation[] = ledger.sewa?.locations ?? [];
@@ -76,7 +75,7 @@ export async function updateSewaLocationAction(
     nextLocations[idx] = next;
     const nextTotal = nextLocations.reduce((s, l) => s + (l.amount ?? 0), 0);
 
-    await db.collection("ledgers").updateOne(
+    await c.ledgers.updateOne(
       { _id: ledger._id },
       {
         $set: {

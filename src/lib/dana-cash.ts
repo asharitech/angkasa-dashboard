@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
-import type { EntryDoc, ObligationDoc } from "@/lib/db/schema";
+import type { EntryFields, ObligationDoc } from "@/lib/db/schema";
 import type { Account, Obligation } from "@/lib/types";
 import type { Filter } from "mongodb";
 
@@ -16,7 +16,7 @@ export async function getDanaCashSummary(opts: { period?: string } = {}) {
   const db = await getDb();
   const c = dbCollections(db);
 
-  const entryFilter: Filter<EntryDoc> = {
+  const entryFilter: Filter<EntryFields> = {
     account: "cash_yayasan",
     direction: "out",
     ...(opts.period ? { month: opts.period } : {}),

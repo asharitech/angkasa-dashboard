@@ -3,7 +3,7 @@
  * Derived from live collection sampling (scripts/introspect_mongo_schema.py) plus
  * fields only present on subsets of documents (see comments).
  */
-import type { ObjectId } from "mongodb";
+import type { ObjectId, WithId } from "mongodb";
 
 /** Timestamps may be BSON Date in DB or ISO strings after serializeDates / JSON. */
 export type DbDate = Date | string;
@@ -35,9 +35,8 @@ export interface EntryBankDetail {
   raw_description?: string;
 }
 
-/** entries */
-export interface EntryDoc {
-  _id: ObjectId;
+/** entries — stored fields (`_id` added by Mongo on insert). */
+export interface EntryFields {
   date: string;
   month: string;
   owner: string;
@@ -56,9 +55,14 @@ export interface EntryDoc {
   tahap_sewa?: string | null;
   obligation_id?: ObjectId | string | null;
   bank_detail?: EntryBankDetail | null;
+  created_by?: string;
+  updated_by?: string;
+  notes?: string | null;
   created_at: DbDate;
   updated_at: DbDate;
 }
+
+export type EntryDoc = WithId<EntryFields>;
 
 export type ObligationType = "pengajuan" | "loan" | "recurring" | string;
 
@@ -215,22 +219,25 @@ export interface NumpangHistoryEventDoc {
   ref: string;
 }
 
-export interface NumpangDoc {
-  _id: ObjectId | string;
+/** numpang stored fields (`_id` assigned by Mongo). */
+export interface NumpangFields {
   description: string;
   amount: number;
   parked_in: string;
   status: "active" | "settled" | string;
-  notes?: string;
+  notes?: string | null;
   source?: string;
   history?: NumpangHistoryEventDoc[];
+  created_by?: string;
+  updated_by?: string;
   created_at?: DbDate;
   updated_at?: DbDate;
 }
 
-/** users */
-export interface UserDoc {
-  _id: ObjectId;
+export type NumpangDoc = NumpangFields & { _id: ObjectId | string };
+
+/** users — stored fields (`_id` added by Mongo on insert). */
+export interface UserFields {
   username: string;
   name: string;
   role: string;
@@ -239,6 +246,9 @@ export interface UserDoc {
   created_at: DbDate;
   updated_at: DbDate;
 }
+
+/** users row including `_id` */
+export type UserDoc = WithId<UserFields>;
 
 export type AgendaPriority = "tinggi" | "sedang" | "rendah" | string;
 export type AgendaStatus = "belum" | "selesai" | string;

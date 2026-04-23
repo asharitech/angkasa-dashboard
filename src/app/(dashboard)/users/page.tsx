@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Shield, Users } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { ForbiddenState } from "@/components/forbidden-state";
 import { PageHeader } from "@/components/page-header";
 import { UsersManager, type UserRow } from "@/components/users-manager";
@@ -21,9 +22,8 @@ export default async function UsersPage() {
     );
   }
 
-  const db = await getDb();
-  const rows = await db
-    .collection("users")
+  const c = dbCollections(await getDb());
+  const rows = await c.users
     .find({}, { projection: { password_hash: 0 } })
     .sort({ created_at: -1 })
     .toArray();

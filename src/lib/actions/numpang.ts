@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
+import type { NumpangFields } from "@/lib/db/schema";
 import { validateNumpang } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 
@@ -23,7 +25,7 @@ export interface NumpangInput {
 export async function createNumpangAction(input: NumpangInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
     const now = new Date();
     const doc: Record<string, unknown> = {
       description: input.description.trim(),
@@ -37,7 +39,7 @@ export async function createNumpangAction(input: NumpangInput): Promise<ActionRe
       updated_at: now,
     };
     validateNumpang(doc);
-    const result = await db.collection("numpang").insertOne(doc);
+    const result = await c.numpang.insertOne(doc as unknown as import("@/lib/db/schema").NumpangFields);
     revalidatePath("/pribadi");
     revalidatePath("/");
     return { ok: true, id: result.insertedId.toString() };
@@ -52,12 +54,12 @@ export async function updateNumpangAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const existing = await db.collection("numpang").findOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const existing = await c.numpang.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Numpang tidak ditemukan" };
     const merged = { ...existing, ...patch };
     validateNumpang(merged);
-    await db.collection("numpang").updateOne(
+    await c.numpang.updateOne(
       { _id: toObjectId(id) },
       {
         $set: {
@@ -81,8 +83,8 @@ export async function settleNumpangAction(id: string): Promise<ActionResult> {
 export async function deleteNumpangAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
-    const result = await db.collection("numpang").deleteOne({ _id: toObjectId(id) });
+    const c = dbCollections(await getDb());
+    const result = await c.numpang.deleteOne({ _id: toObjectId(id) });
     if (result.deletedCount === 0) return { error: "Numpang tidak ditemukan" };
     revalidatePath("/pribadi");
     return { ok: true };

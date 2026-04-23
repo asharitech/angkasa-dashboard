@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { randomUUID } from "crypto";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 
 type ActionResult = { ok: true; id?: string; url?: string } | { error: string };
@@ -71,7 +72,7 @@ function keyFromUrl(url: string | null | undefined): string | null {
 export async function uploadDocumentAction(formData: FormData): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
 
     const file = formData.get("file") as File | null;
     const judul = (formData.get("judul") as string)?.trim();
@@ -112,7 +113,7 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
       updated_at: now,
     };
 
-    const result = await db.collection("documents").insertOne(doc);
+    const result = await c.documents.insertOne(doc as Parameters<typeof c.documents.insertOne>[0]);
     revalidatePath("/dokumen");
     return { ok: true, id: result.insertedId.toString(), url: fileUrl };
   } catch (err) {
@@ -126,11 +127,11 @@ export async function updateDocumentAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
-    const existing = await db.collection("documents").findOne({ _id: new ObjectId(id) });
+    const c = dbCollections(await getDb());
+    const existing = await c.documents.findOne({ _id: new ObjectId(id) });
     if (!existing) return { error: "Dokumen tidak ditemukan" };
 
-    await db.collection("documents").updateOne(
+    await c.documents.updateOne(
       { _id: new ObjectId(id) },
       { $set: { ...patch, updated_by: session.userId, updated_at: new Date() } },
     );
@@ -144,12 +145,12 @@ export async function updateDocumentAction(
 export async function deleteDocumentAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const db = await getDb();
-    const doc = await db.collection("documents").findOne({ _id: new ObjectId(id) });
+    const c = dbCollections(await getDb());
+    const doc = await c.documents.findOne({ _id: new ObjectId(id) });
     if (!doc) return { error: "Dokumen tidak ditemukan" };
 
     const key = keyFromUrl(doc.file_url as string);
-    const result = await db.collection("documents").deleteOne({ _id: new ObjectId(id) });
+    const result = await c.documents.deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return { error: "Dokumen tidak ditemukan" };
 
     if (key) await r2Delete(key).catch(() => void 0);

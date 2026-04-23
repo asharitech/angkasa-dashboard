@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/mongodb";
+import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 
 type ActionResult = { ok: true } | { error: string };
@@ -37,7 +38,7 @@ export async function adjustAccountBalanceAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const db = await getDb();
+    const c = dbCollections(await getDb());
 
     if (!Number.isFinite(input.newBalance)) {
       return { error: "Saldo baru tidak valid" };
@@ -46,9 +47,7 @@ export async function adjustAccountBalanceAction(
       return { error: "Alasan penyesuaian wajib diisi" };
     }
 
-    const account = await db
-      .collection("accounts")
-      .findOne({ _id: input.accountId as unknown as never });
+    const account = await c.accounts.findOne({ _id: input.accountId });
     if (!account) return { error: "Rekening tidak ditemukan" };
 
     const current = (account as { balance?: number }).balance ?? 0;
@@ -67,7 +66,7 @@ export async function adjustAccountBalanceAction(
     const now = new Date();
     const description = input.reason.trim();
 
-    await db.collection("entries").insertOne({
+    await c.entries.insertOne({
       date: today,
       month: today.slice(0, 7),
       account: input.accountId,
@@ -89,8 +88,8 @@ export async function adjustAccountBalanceAction(
       updated_at: now,
     });
 
-    await db.collection("accounts").updateOne(
-      { _id: input.accountId as unknown as never },
+    await c.accounts.updateOne(
+      { _id: input.accountId },
       {
         $set: {
           balance: input.newBalance,
