@@ -140,39 +140,45 @@ export default async function DokumenPage({
 
       {displayed.length > 0 && (
         <section className="section">
-          <div className="ledger">
-            <div className="ledger-row ledger-row--header">
-              <div style={{ width: "300px" }}>Nama File</div>
-              <div style={{ flex: "1" }}>Keterangan</div>
-              <div style={{ width: "120px" }}>Tipe</div>
-              <div style={{ width: "100px", textAlign: "right" }}>Ukuran</div>
-              <div style={{ width: "120px", textAlign: "right" }}>Tanggal</div>
-              <div style={{ width: "80px" }}></div>
-            </div>
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th style={{ width: "300px" }}>Nama File</th>
+                <th>Keterangan</th>
+                <th style={{ width: "120px" }}>Tipe</th>
+                <th className="num" style={{ width: "100px" }}>Ukuran</th>
+                <th className="num" style={{ width: "120px" }}>Tanggal</th>
+                <th style={{ width: "80px" }}></th>
+              </tr>
+            </thead>
+            <tbody>
             {displayed.map((doc) => (
-              <div className="ledger-row" key={doc._id.toString()}>
-                <div style={{ width: "300px", fontWeight: 600, color: "var(--ink-000)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <tr key={doc._id.toString()}>
+                <td style={{ fontWeight: 600, color: "var(--ink-000)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {doc.judul}
-                </div>
-                <div style={{ flex: "1", color: "var(--ink-400)", fontSize: "var(--text-xs)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                </td>
+                <td style={{ color: "var(--ink-400)", fontSize: "var(--text-xs)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {doc.keterangan || "—"}
-                </div>
-                <div style={{ width: "120px" }}>
+                </td>
+                <td>
                   <DocTypeTag mimeType={doc.file_type} />
-                </div>
-                <div style={{ width: "100px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--ink-400)" }}>
+                </td>
+                <td className="num" style={{ color: "var(--ink-400)" }}>
                   {formatFileSize(doc.file_size ?? 0)}
-                </div>
-                <div style={{ width: "120px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--ink-400)" }}>
+                </td>
+                <td className="num" style={{ color: "var(--ink-400)" }}>
                   {formatDate(doc.created_at)}
-                </div>
-                <div style={{ width: "80px", textAlign: "right", display: "flex", justifyContent: "flex-end", gap: "var(--sp-2)" }}>
-                   <a href={doc.file_url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink-400)" }}><ExternalLink className="w-4 h-4" /></a>
-                   <DocumentRowActions doc={doc} />
-                </div>
-              </div>
+                </td>
+                <td style={{ textAlign: "right" }}>
+                  <div style={{ display: "inline-flex", gap: "var(--sp-2)" }}>
+                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink-400)" }}><ExternalLink className="w-4 h-4" /></a>
+                    <DocumentRowActions doc={doc} />
+                  </div>
+                </td>
+              </tr>
             ))}
-          </div>
+            </tbody>
+          </table>
         </section>
       )}
     </main>

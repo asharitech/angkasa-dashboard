@@ -87,7 +87,7 @@ export default async function DashboardPage() {
     }) : [];
 
   return (
-    <main className="content content--narrow" data-screen-label="01 Dashboard">
+    <main className="content" data-screen-label="01 Dashboard">
       {/* Page head */}
       <div className="page-head">
         <div>

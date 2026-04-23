@@ -80,26 +80,30 @@ export default async function DanaCashPage({
           <h2 className="section__title">Riwayat Pengeluaran Cash</h2>
           <span className="section__meta">{pengeluaran.length} item</span>
         </div>
-        <div className="ledger">
-          <div className="ledger-row ledger-row--header">
-            <div style={{ width: "120px" }}>Tanggal</div>
-            <div style={{ flex: "1" }}>Keterangan</div>
-            <div style={{ width: "150px", textAlign: "right" }}>Jumlah</div>
-          </div>
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th style={{ width: "120px" }}>Tanggal</th>
+              <th>Keterangan</th>
+              <th className="num" style={{ width: "150px" }}>Jumlah</th>
+            </tr>
+          </thead>
+          <tbody>
           {pengeluaran.length === 0 ? (
-            <div className="p-8 text-center text-ink-500">Belum ada pengeluaran dicatat.</div>
+            <tr>
+              <td colSpan={3} className="text-center" style={{ padding: "var(--sp-8)", color: "var(--ink-500)" }}>Belum ada pengeluaran dicatat.</td>
+            </tr>
           ) : (
             pengeluaran.map(r => (
-              <div className="ledger-row" key={r._id}>
-                <div style={{ width: "120px", fontFamily: "var(--font-mono)", color: "var(--ink-500)" }}>{formatDate(r.date)}</div>
-                <div style={{ flex: "1", color: "var(--ink-000)", fontWeight: 500 }}>{r.description}</div>
-                <div style={{ width: "150px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--neg-700)", fontWeight: 600 }}>
-                  {formatRupiah(r.amount)}
-                </div>
-              </div>
+              <tr key={r._id}>
+                <td className="num" style={{ color: "var(--ink-500)" }}>{formatDate(r.date)}</td>
+                <td style={{ fontWeight: 500 }}>{r.description}</td>
+                <td className="num text-neg">{formatRupiah(r.amount)}</td>
+              </tr>
             ))
           )}
-        </div>
+          </tbody>
+        </table>
       </section>
     </main>
   );

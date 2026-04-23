@@ -121,47 +121,53 @@ export default async function OmprengPage() {
                 <h2 className="section__title">{MONTH_LABELS[m.value]}</h2>
                 <span className="section__meta">Ompreng: {mt.total_ompreng.toLocaleString("id-ID")} · Sasaran: {mt.total_sasaran.toLocaleString("id-ID")} {mt.total_kekurangan > 0 && `· Kurang: ${mt.total_kekurangan}`}</span>
               </div>
-              <div className="ledger">
-                <div className="ledger-row ledger-row--header">
-                  <div style={{ flex: "1" }}>Dapur</div>
-                  <div style={{ width: "100px", textAlign: "right" }}>Ompreng</div>
-                  <div style={{ width: "100px", textAlign: "right" }}>Sasaran</div>
-                  <div style={{ width: "100px", textAlign: "right" }}>Kekurangan</div>
-                  <div style={{ width: "200px" }}>Alasan Tambah</div>
-                  {isAdmin && <div style={{ width: "40px" }} />}
-                </div>
+              <table className="ledger">
+                <thead>
+                  <tr>
+                    <th>Dapur</th>
+                    <th className="num" style={{ width: "100px" }}>Ompreng</th>
+                    <th className="num" style={{ width: "100px" }}>Sasaran</th>
+                    <th className="num" style={{ width: "100px" }}>Kekurangan</th>
+                    <th style={{ width: "200px" }}>Alasan Tambah</th>
+                    {isAdmin && <th style={{ width: "40px" }} />}
+                  </tr>
+                </thead>
+                <tbody>
                 {DAPUR_LOCATIONS.map((dapur) => {
                   const doc = lookup.get(`${dapur}::${m.value}`);
                   return (
-                    <div className={cn("ledger-row", !doc && "is-disabled")} key={dapur}>
-                      <div style={{ flex: "1", fontWeight: 600, color: "var(--ink-000)" }}>{DAPUR_LABELS[dapur]}</div>
-                      <div style={{ width: "100px", textAlign: "right", fontFamily: "var(--font-mono)" }}>{doc ? doc.jumlah_ompreng.toLocaleString("id-ID") : "—"}</div>
-                      <div style={{ width: "100px", textAlign: "right", fontFamily: "var(--font-mono)" }}>{doc ? doc.jumlah_sasaran.toLocaleString("id-ID") : "—"}</div>
-                      <div style={{ width: "100px", textAlign: "right", fontFamily: "var(--font-mono)", color: doc?.kekurangan_ompreng ? "var(--warn-700)" : "inherit" }}>
+                    <tr className={cn(!doc && "opacity-50")} key={dapur}>
+                      <td style={{ fontWeight: 600, color: "var(--ink-000)" }}>{DAPUR_LABELS[dapur]}</td>
+                      <td className="num">{doc ? doc.jumlah_ompreng.toLocaleString("id-ID") : "—"}</td>
+                      <td className="num">{doc ? doc.jumlah_sasaran.toLocaleString("id-ID") : "—"}</td>
+                      <td className="num" style={{ color: doc?.kekurangan_ompreng ? "var(--warn-700)" : "inherit" }}>
                         {doc?.kekurangan_ompreng ? doc.kekurangan_ompreng.toLocaleString("id-ID") : "—"}
-                      </div>
-                      <div style={{ width: "200px", color: "var(--ink-400)", fontSize: "var(--text-xs)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      </td>
+                      <td style={{ color: "var(--ink-400)", fontSize: "var(--text-xs)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {doc?.alasan_tambah || "—"}
-                      </div>
+                      </td>
                       {isAdmin && (
-                        <div style={{ width: "40px", textAlign: "right" }}>
+                        <td style={{ textAlign: "right" }}>
                           {doc && <OmprengRowActions row={doc} />}
-                        </div>
+                        </td>
                       )}
-                    </div>
+                    </tr>
                   );
                 })}
-                <div className="ledger-row ledger-row--footer">
-                  <div style={{ flex: "1" }}>Total</div>
-                  <div style={{ width: "100px", textAlign: "right" }}>{mt.total_ompreng.toLocaleString("id-ID")}</div>
-                  <div style={{ width: "100px", textAlign: "right" }}>{mt.total_sasaran.toLocaleString("id-ID")}</div>
-                  <div style={{ width: "100px", textAlign: "right", color: "var(--warn-700)" }}>
-                    {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
-                  </div>
-                  <div style={{ width: "200px" }} />
-                  {isAdmin && <div style={{ width: "40px" }} />}
-                </div>
-              </div>
+                </tbody>
+                <tfoot>
+                  <tr style={{ fontWeight: 600 }}>
+                    <td>Total</td>
+                    <td className="num">{mt.total_ompreng.toLocaleString("id-ID")}</td>
+                    <td className="num">{mt.total_sasaran.toLocaleString("id-ID")}</td>
+                    <td className="num" style={{ color: "var(--warn-700)" }}>
+                      {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
+                    </td>
+                    <td />
+                    {isAdmin && <td />}
+                  </tr>
+                </tfoot>
+              </table>
             </section>
           );
         })}

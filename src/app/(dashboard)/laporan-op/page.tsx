@@ -137,7 +137,7 @@ export default async function LaporanOpPage() {
         </div>
 
         {/* Side summary */}
-        <div className="detail" style={{ position: "sticky", top: "var(--sp-6)" }}>
+        <div className="panel" style={{ position: "sticky", top: "var(--sp-6)" }}>
           <div className="t-eyebrow">Rekapitulasi {ledger.period || "Bulan Ini"}</div>
           <div className="divider"></div>
           
