@@ -78,6 +78,8 @@ export interface Ledger {
       dana_pinjam_angkasa_tahap1?: number;
       dana_pinjam_angkasa_tahap2?: number;
       dana_pinjam_angkasa_tahap3?: number;
+      dana_pinjam_angkasa_tahap4?: number;
+      [key: string]: number | undefined;
       // legacy fields
       lembar2_btn?: number;
       pinjaman_btn?: number;

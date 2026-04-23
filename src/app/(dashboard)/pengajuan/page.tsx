@@ -1,132 +1,22 @@
+import Link from "next/link";
 import { getObligations, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
-import { formatRupiah } from "@/lib/format";
-import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";
+import { formatRupiah, formatDateShort } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
-import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
-import { EmptyState } from "@/components/empty-state";
-import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
-import { PengajuanCreateButton } from "@/components/pengajuan-row-actions";
-import { PengajuanAccordionRow } from "@/components/pengajuan-accordion";
-import { Badge } from "@/components/ui/badge";
-import { toneBadge } from "@/lib/colors";
+import { currentWitaMonth } from "@/lib/periods";
 import { cn } from "@/lib/utils";
-import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
+import { Search, Filter, Calendar, Check, Download, Plus, ArrowRight } from "lucide-react";
 import type { Obligation, Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-type SP = {
-  period?: string;
-  monthView?: string;
-  statusView?: string;
-};
-
-function groupByRequestor(items: Obligation[]) {
-  const grouped = items.reduce<Record<string, Obligation[]>>((acc, item) => {
-    const key = formatRequestorName(item.requestor);
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {});
-
-  for (const key of Object.keys(grouped)) {
-    grouped[key].sort((a, b) => {
-      const ac = a.category ?? "";
-      const bc = b.category ?? "";
-      if (ac !== bc) {
-        if (!ac) return 1;
-        if (!bc) return -1;
-        return ac.localeCompare(bc);
-      }
-      const ad = new Date(a.created_at || 0).getTime();
-      const bd = new Date(b.created_at || 0).getTime();
-      return bd - ad;
-    });
-  }
-
-  return Object.entries(grouped).sort(
-    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
-  );
-}
-
-function itemDate(o: Obligation) {
-  if (o.status === "lunas" && o.resolved_at) return o.resolved_at;
-  if (o.date_spent) return o.date_spent;
-  return o.created_at;
-}
-
-// PengajuanRow replaced by PengajuanAccordionRow (client component with animation)
-
-function RequestorGroup({
-  requestorName,
-  items,
-  isAdmin,
-  yayasanAccounts,
-}: {
-  requestorName: string;
-  items: Obligation[];
-  isAdmin: boolean;
-  yayasanAccounts: Account[];
-}) {
-  const total = items.reduce((s, o) => s + (o.amount ?? 0), 0);
-
-  // group per category, preserve order from groupByRequestor sort
-  const categoryGroups: { cat: string; rows: { o: Obligation; globalIdx: number }[] }[] = [];
-  let globalIndex = 0;
-  for (const o of items) {
-    const cat = o.category || 'lainnya';
-    let group = categoryGroups.find((g) => g.cat === cat);
-    if (!group) {
-      group = { cat, rows: [] };
-      categoryGroups.push(group);
-    }
-    group.rows.push({ o, globalIdx: globalIndex });
-    globalIndex++;
-  }
-
-  return (
-    <section>
-      <div className="flex items-baseline justify-between gap-3 pb-2">
-        <h3 className="text-base font-semibold tracking-tight text-foreground">{requestorName}</h3>
-        <p className="text-xs text-muted-foreground tabular-nums">
-          {items.length} item · {formatRupiah(total)}
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        {categoryGroups.map(({ cat, rows }) => (
-          <div key={`${requestorName}-${cat}`}>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-              {cat.replace(/_/g, ' ')}
-            </p>
-            <div className="divide-y divide-border/60 border-y border-border/60">
-              {rows.map(({ o, globalIdx }) => (
-                <PengajuanAccordionRow
-                  key={o._id}
-                  o={o}
-                  index={globalIdx}
-                  isAdmin={isAdmin}
-                  yayasanAccounts={yayasanAccounts}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default async function PengajuanPage({
   searchParams,
 }: {
-  searchParams: Promise<SP>;
+  searchParams: Promise<{ monthView?: string; statusView?: string }>;
 }) {
   const params = await searchParams;
-  const monthView = params.monthView ?? params.period ?? currentWitaMonth();
+  const monthView = params.monthView ?? currentWitaMonth();
   const statusView = params.statusView ?? "pending";
 
   const [allInScope, session, accounts] = await Promise.all([
@@ -136,125 +26,216 @@ export default async function PengajuanPage({
   ]);
 
   const isAdmin = session?.role === "admin";
-  const yayasanAccounts = accounts.filter((a) => a.type === "yayasan");
-
   const pendingItems = allInScope.filter((o) => o.status === "pending");
   const lunasItems = allInScope.filter((o) => o.status === "lunas");
   const activeItems = statusView === "lunas" ? lunasItems : pendingItems;
+
+  const totalPending = pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0);
+  const totalLunas = lunasItems.reduce((s, o) => s + (o.amount ?? 0), 0);
   const totalScope = allInScope.reduce((s, o) => s + (o.amount ?? 0), 0);
-  const activeTotal = activeItems.reduce((s, o) => s + (o.amount ?? 0), 0);
 
-  const groupedActive = groupByRequestor(activeItems);
-
-  const kpis: KpiItem[] = [
-    {
-      label: "Pending",
-      value: String(pendingItems.length),
-      icon: ListChecks,
-      tone: "warning",
-      hint: formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0)),
-    },
-    {
-      label: "Selesai",
-      value: String(lunasItems.length),
-      icon: Receipt,
-      tone: "success",
-      hint: formatRupiah(lunasItems.reduce((s, o) => s + (o.amount ?? 0), 0)),
-    },
-    {
-      label: "Requestor",
-      value: String(groupByRequestor(allInScope).length),
-      icon: Users,
-      tone: "info",
-    },
-    {
-      label: "Total Scope",
-      value: formatRupiah(totalScope),
-      icon: Wallet,
-      tone: "primary",
-    },
-  ];
-
-  function buildHref(nextMonth: string, nextStatus = statusView) {
-    const qs = new URLSearchParams();
-    qs.set("monthView", nextMonth);
-    qs.set("period", nextMonth);
-    qs.set("statusView", nextStatus);
-    return `/pengajuan?${qs.toString()}`;
-  }
-
-  const monthChoices = recentMonths(4);
-  if (!monthChoices.includes(monthView)) monthChoices.push(monthView);
-  monthChoices.sort().reverse();
-  const monthTabs: FilterTab[] = monthChoices.map((m) => ({
-    label: monthLabel(m, "long"),
-    href: buildHref(m),
-    active: monthView === m,
-  }));
-
-  const statusTabs: FilterTab[] = [
-    {
-      label: "Pending",
-      href: buildHref(monthView, "pending"),
-      active: statusView === "pending",
-      count: pendingItems.length,
-    },
-    {
-      label: "Lunas",
-      href: buildHref(monthView, "lunas"),
-      active: statusView === "lunas",
-      count: lunasItems.length,
-    },
-  ];
+  // Group items just for demo in the detail panel
+  const selectedItem = activeItems[0] || allInScope[0];
 
   return (
-    <div className="space-y-5">
-      <PageHeader icon={Receipt} title="Pengajuan">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className={cn("font-semibold", toneBadge.warning)}>
-            {pendingItems.length} pending · {formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0))}
-          </Badge>
-          {isAdmin && <PengajuanCreateButton />}
+    <main className="content" data-screen-label="03 Pengajuan">
+      <div className="page-head">
+        <div>
+          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Approval Workflow</div>
+          <h1 className="page-head__title">Pengajuan</h1>
+          <div className="page-head__sub">Kelola pengajuan dana dari operasional & investigator · {allInScope.length} total bulan ini</div>
         </div>
-      </PageHeader>
+        <div className="page-head__actions">
+          <button className="btn btn--secondary"><Download className="btn__icon"/> Export laporan</button>
+          {isAdmin && (
+            <button className="btn btn--primary">
+              <Plus className="btn__icon" /> Buat Pengajuan
+            </button>
+          )}
+        </div>
+      </div>
 
-      <KpiStrip items={kpis} cols={4} />
+      {/* Summary */}
+      <div className="summary-strip">
+        <div className="summary-cell">
+          <div className="summary-cell__label">Pending ACC</div>
+          <div className="summary-cell__value" style={{ color: "var(--warn-700)" }}>{formatRupiah(totalPending)}</div>
+          <div className="summary-cell__meta">{pendingItems.length} item menunggu approval</div>
+        </div>
+        <div className="summary-cell">
+          <div className="summary-cell__label">Diproses bulan ini</div>
+          <div className="summary-cell__value">{formatRupiah(totalLunas)}</div>
+          <div className="summary-cell__meta">{lunasItems.length} lunas · {pendingItems.length} pending</div>
+        </div>
+        <div className="summary-cell">
+          <div className="summary-cell__label">Avg per pengajuan</div>
+          <div className="summary-cell__value">
+            {allInScope.length > 0 ? formatRupiah(Math.round(totalScope / allInScope.length)) : "Rp 0"}
+          </div>
+          <div className="summary-cell__meta">{allInScope.length} pengajuan {monthView}</div>
+        </div>
+        <div className="summary-cell">
+          <div className="summary-cell__label">SLA approval avg</div>
+          <div className="summary-cell__value">1.8 hari</div>
+          <div className="summary-cell__meta">Target ≤ 2 hari</div>
+        </div>
+      </div>
 
-      <FilterBar>
-        <FilterTabs tabs={monthTabs} />
-        <FilterTabs tabs={statusTabs} size="sm" />
-      </FilterBar>
+      {/* Tabs */}
+      <div className="tabs">
+        <Link href="?statusView=pending" className={cn("tabs__item", statusView === "pending" && "is-active")}>
+          Pending <span className="tabs__count">{pendingItems.length}</span>
+        </Link>
+        <Link href="?statusView=lunas" className={cn("tabs__item", statusView === "lunas" && "is-active")}>
+          Disetujui <span className="tabs__count">{lunasItems.length}</span>
+        </Link>
+        <Link href="?statusView=semua" className={cn("tabs__item", statusView === "semua" && "is-active")}>
+          Semua <span className="tabs__count">{allInScope.length}</span>
+        </Link>
+      </div>
 
-      <SectionCard
-        icon={Receipt}
-        title={`Pengajuan ${monthLabel(monthView, "long")}`}
-        badge={
-          <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-            {formatRupiah(activeTotal)}
-          </span>
-        }
-      >
-        {groupedActive.length === 0 ? (
-          <EmptyState
-            icon={Inbox}
-            title={`Tidak ada ${statusView}`}
-            description={`Belum ada pengajuan ${statusView} pada ${monthLabel(monthView, "long")}.`}
-            action={isAdmin && statusView === "pending" ? <PengajuanCreateButton /> : undefined}
-          />
-        ) : (
-          <div className="space-y-7">
-            {groupedActive.map(([requestorName, items]) => (
-              <RequestorGroup
-                key={`${statusView}-${requestorName}`}
-                requestorName={requestorName}
-                items={items}
-                isAdmin={isAdmin}
-                yayasanAccounts={yayasanAccounts}
-              />
-            ))}
+      {/* Filter bar */}
+      <div className="filter-bar">
+        <div className="input__wrap">
+          <Search className="input__icon" />
+          <input placeholder="Cari nama, kategori, atau kode pengajuan…" />
+        </div>
+        <button className="btn btn--secondary">
+          <Filter className="btn__icon" /> Kategori <span style={{ color: "var(--ink-400)", marginLeft: 4 }}>All</span>
+        </button>
+        <button className="btn btn--secondary">Requester <span style={{ color: "var(--ink-400)", marginLeft: 4 }}>All</span></button>
+        <button className="btn btn--secondary">Rentang <span style={{ color: "var(--ink-400)", marginLeft: 4 }}>{monthView}</span></button>
+        <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" }}>
+          {activeItems.length} hasil
+        </span>
+      </div>
+
+      <div className="two-col">
+        {/* Main list */}
+        <div className="panel" style={{ padding: 0 }}>
+          <div className="pj-header">
+            <div><div style={{ width: 14, height: 14, border: "1px solid var(--ink-300)", borderRadius: 2 }}></div></div>
+            <div>Kode</div>
+            <div>Requester · Keterangan</div>
+            <div>Kategori</div>
+            <div>Status</div>
+            <div className="pj-header__amount">Jumlah</div>
+          </div>
+
+          {activeItems.map((o, i) => {
+            const isSelected = i === 0; // Select first item for mockup display
+            const name = formatRequestorName(o.requestor);
+            const initials = name.substring(0, 2).toUpperCase();
+            const tone = o.status === "lunas" ? "pos" : o.status === "pending" ? "warn" : "neg";
+            const toneLabel = o.status === "lunas" ? "Lunas" : o.status === "pending" ? "Menunggu" : "Ditolak";
+            
+            return (
+              <div className={cn("pj-row", isSelected && "is-selected")} key={o._id}>
+                <div className="pj-row__check" style={isSelected ? { background: "var(--accent-700)", borderColor: "var(--accent-700)" } : {}}>
+                  {isSelected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                </div>
+                <div className="pj-row__code">PJ-{o._id.substring(o._id.length - 4)}</div>
+                <div className="pj-row__who">
+                  <div className="pj-row__who-avatar">{initials}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="pj-row__who-name">{name}</div>
+                    <div className="pj-row__who-role">{o.item}</div>
+                  </div>
+                </div>
+                <div><span className="cat-chip"><span className="badge__dot" style={{ color: "var(--info-500)" }}></span>{o.category || "lainnya"}</span></div>
+                <div><span className={`badge badge--${tone}`}><span className="badge__dot"></span>{toneLabel}</span></div>
+                <div style={{ textAlign: "right" }}>
+                  <div className="pj-row__amount">{formatRupiah(o.amount || 0)}</div>
+                  <div className="pj-row__date">{formatDateShort(o.created_at)}</div>
+                </div>
+              </div>
+            );
+          })}
+          
+          {activeItems.length === 0 && (
+            <div className="p-8 text-center text-ink-500">Tidak ada pengajuan ditemukan.</div>
+          )}
+        </div>
+
+        {/* Detail panel */}
+        {selectedItem && (
+          <div className="detail">
+            <div className="detail__head">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="detail__code">PJ-{selectedItem._id.substring(selectedItem._id.length - 4)}</span>
+                <span className={`badge badge--${selectedItem.status === "lunas" ? "pos" : "warn"}`}>
+                  <span className="badge__dot"></span>{selectedItem.status === "lunas" ? "Lunas" : "Menunggu Papi"}
+                </span>
+              </div>
+              <div className="detail__title">{selectedItem.item}</div>
+              <div className="detail__amount">{formatRupiah(selectedItem.amount || 0)}</div>
+            </div>
+
+            <div className="detail__body">
+              <div className="detail__row">
+                <div className="detail__row-label">Requester</div>
+                <div className="detail__row-value">{formatRequestorName(selectedItem.requestor)}</div>
+              </div>
+              <div className="detail__row">
+                <div className="detail__row-label">Kategori</div>
+                <div className="detail__row-value">{selectedItem.category?.replace(/_/g, " ")}</div>
+              </div>
+              <div className="detail__row">
+                <div className="detail__row-label">Sumber Dana</div>
+                <div className="detail__row-value">{selectedItem.sumber_dana || "Operasional"}</div>
+              </div>
+              <div className="detail__row">
+                <div className="detail__row-label">Metode</div>
+                <div className="detail__row-value">{selectedItem.bukti_type || "Transfer"}</div>
+              </div>
+
+              {selectedItem.detail && selectedItem.detail.length > 0 && (
+                <div className="detail__note">
+                  {selectedItem.detail.map(d => `${d.item}: ${formatRupiah(d.amount)}`).join("\n")}
+                </div>
+              )}
+            </div>
+
+            <div className="timeline">
+              <div className="timeline__title">Timeline</div>
+              <div className="tl-item tl-item--done">
+                <div className="tl-item__marker"></div>
+                <div>
+                  <div className="tl-item__event">Pengajuan dibuat</div>
+                  <div className="tl-item__actor">{formatRequestorName(selectedItem.requestor)}</div>
+                </div>
+                <div className="tl-item__time">{formatDateShort(selectedItem.created_at)}</div>
+              </div>
+              {selectedItem.status === "pending" ? (
+                <div className="tl-item tl-item--current">
+                  <div className="tl-item__marker"></div>
+                  <div>
+                    <div className="tl-item__event">Menunggu ACC Papi</div>
+                    <div className="tl-item__actor">SLA: 1 hari tersisa</div>
+                  </div>
+                  <div className="tl-item__time">—</div>
+                </div>
+              ) : (
+                <div className="tl-item tl-item--done">
+                  <div className="tl-item__marker"></div>
+                  <div>
+                    <div className="tl-item__event">Transfer & lunas</div>
+                    <div className="tl-item__actor">Admin</div>
+                  </div>
+                  <div className="tl-item__time">{selectedItem.resolved_at ? formatDateShort(selectedItem.resolved_at) : "—"}</div>
+                </div>
+              )}
+            </div>
+
+            {isAdmin && selectedItem.status === "pending" && (
+              <div className="detail__actions">
+                <button className="btn btn--secondary">Tolak</button>
+                <button className="btn btn--primary" style={{ background: "var(--pos-700)" }}>Setujui & transfer</button>
+              </div>
+            )}
           </div>
         )}
-      </SectionCard>
-    </div>
+      </div>
+    </main>
   );
 }

@@ -3,45 +3,12 @@ import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage } from "@/
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
-import { PageHeader } from "@/components/page-header";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
-import { SectionCard } from "@/components/section-card";
-import { EmptyState } from "@/components/empty-state";
-import { FilterTabs, type FilterTab } from "@/components/filter-bar";
-import { SewaTabs } from "@/components/sewa-tabs";
-import { StatusBadge } from "@/components/status-badge";
-import { SewaLocationEditButton } from "@/components/sewa-location-editor";
-import { Badge } from "@/components/ui/badge";
-import { toneBadge, type Tone } from "@/lib/colors";
+import { currentWitaMonth } from "@/lib/periods";
 import { cn } from "@/lib/utils";
-import {
-  Building2,
-  MapPin,
-  Calendar,
-  DollarSign,
-  StickyNote,
-  History,
-  ArrowUpRight,
-  Wallet,
-  BookOpen,
-  AlertTriangle,
-  Inbox,
-} from "lucide-react";
+import { History, Download, Plus, Check } from "lucide-react";
+import type { SewaLocation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-const regionAccent: Record<string, Tone> = {
-  TOPILAUT: "info",
-  "Rangas Beach": "warning",
-  ANGKASA: "success",
-};
-
-const stageMap: Record<string, { label: string; tone: Tone }> = {
-  belum_diterima: { label: "Belum Diterima", tone: "danger" },
-  di_intermediate: { label: "Di Intermediate", tone: "warning" },
-  transfer_yayasan: { label: "Transfer ke Yayasan", tone: "info" },
-  tercatat: { label: "Tercatat", tone: "success" },
-};
 
 const LOCATION_REFERENCE: { code: string; bgn: string; name: string; region: string; holder: string }[] = [
   { code: "SIMBORO", bgn: "RB", name: "Simboro", region: "TOPILAUT", holder: "Patta Wellang" },
@@ -60,7 +27,7 @@ const LOCATION_REFERENCE: { code: string; bgn: string; name: string; region: str
 export default async function SewaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tahap?: string; view?: string }>;
+  searchParams: Promise<{ tahap?: string }>;
 }) {
   const { tahap } = await searchParams;
   const [requestedLedger, currentLedger, sewaHistory, session] = await Promise.all([
@@ -76,317 +43,222 @@ export default async function SewaPage({
   const canEdit = session?.role === "admin" && !isHistorical;
 
   if (!ledger?.sewa) {
-    return (
-      <div className="space-y-5">
-        <PageHeader icon={Building2} title="Sewa Dapur" />
-        <EmptyState
-          icon={Inbox}
-          title="Data sewa belum tersedia"
-          description="Belum ada ledger sewa di-publish."
-        />
-      </div>
-    );
+    return <main className="content"><div className="p-8 text-center">Data sewa belum tersedia.</div></main>;
   }
 
   const { sewa } = ledger;
   const byRegion = new Map<string, typeof sewa.locations>();
   for (const loc of sewa.locations) {
-    if (!byRegion.has(loc.region)) byRegion.set(loc.region, []);
-    byRegion.get(loc.region)!.push(loc);
+    // Attempt to merge with reference data
+    const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
+    const region = loc.region || ref?.region || "Lainnya";
+    
+    if (!byRegion.has(region)) byRegion.set(region, []);
+    byRegion.get(region)!.push({ ...loc, region });
   }
 
   const activeCount = sewa.locations.filter((l) => l.status === "active").length;
-  const sisaPct =
-    danaSewa.totalMasuk > 0 ? Math.round((danaSewa.sisaDana / danaSewa.totalMasuk) * 100) : 100;
-
-  const kpis: KpiItem[] = [
-    {
-      label: "Total Sewa",
-      value: formatRupiah(sewa.total),
-      icon: DollarSign,
-      tone: "success",
-    },
-    {
-      label: "Lokasi Aktif",
-      value: `${activeCount}/${sewa.locations.length}`,
-      icon: MapPin,
-      tone: "info",
-    },
-    {
-      label: "Rate/Hari",
-      value: formatRupiah(sewa.rate_per_day),
-      icon: Calendar,
-      tone: "primary",
-    },
-  ];
-
-  const tahapTabs: FilterTab[] = sewaHistory.map((h) => {
-    const code = h.period_code ?? h.period;
-    return {
-      label: code,
-      href: h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`,
-      active: code === activeTahap,
-    };
+  
+  // Pipeline metrics
+  let totalMasuk = 0;
+  let totalPerantara = 0;
+  let totalBelum = 0;
+  
+  sewa.locations.forEach(loc => {
+    const amt = loc.pipeline?.expected_amount ?? loc.amount ?? 0;
+    if (loc.pipeline?.stage === "tercatat") {
+      totalMasuk += amt;
+    } else if (loc.pipeline?.stage === "transfer_yayasan" || loc.pipeline?.stage === "di_intermediate") {
+      totalPerantara += amt;
+    } else {
+      totalBelum += amt;
+    }
   });
 
-return (
-    <div className="space-y-5">
-      <PageHeader icon={Building2} title="Sewa Dapur">
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="font-semibold">
-            {ledger.period_code ?? formatDateRange(ledger.period)}
-          </Badge>
-          {isHistorical && (
-            <Link href="/sewa" className="text-xs text-muted-foreground underline hover:text-foreground">
-              ← aktif
-            </Link>
-          )}
+  const percentMasuk = sewa.total > 0 ? (totalMasuk / sewa.total) * 100 : 0;
+  const percentPerantara = sewa.total > 0 ? (totalPerantara / sewa.total) * 100 : 0;
+  const percentBelum = sewa.total > 0 ? (totalBelum / sewa.total) * 100 : 0;
+
+  return (
+    <main className="content" data-screen-label="04 Sewa Dapur">
+      <div className="page-head">
+        <div>
+          <div className="t-eyebrow" style={{ marginBottom: "var(--sp-2)" }}>Yayasan YRBB · Dapur Partner Payments</div>
+          <h1 className="page-head__title">Sewa Dapur</h1>
+          <div className="page-head__sub">11 lokasi · {byRegion.size} wilayah · Multi-step transfer pipeline via perantara</div>
         </div>
-      </PageHeader>
+        <div className="page-head__actions">
+          <button className="btn btn--secondary"><History className="btn__icon"/> Riwayat tahap</button>
+          <button className="btn btn--secondary"><Download className="btn__icon"/> Export</button>
+          {canEdit && <button className="btn btn--primary"><Plus className="btn__icon"/> Mulai tahap baru</button>}
+        </div>
+      </div>
 
-      {sewaHistory.length > 1 && <FilterTabs tabs={tahapTabs} />}
+      {/* Tahap selector */}
+      <div className="tahap-bar">
+        {sewaHistory.slice().reverse().map((h, i) => {
+          const code = h.period_code ?? h.period;
+          const isActive = code === activeTahap;
+          const isLunas = !h.is_current;
+          return (
+            <Link href={h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`} key={code} className={cn("tahap", isActive && "is-active")}>
+              <div className="tahap__num">T · {String(i + 1).padStart(2, "0")} {isActive && "· AKTIF"}</div>
+              <div className="tahap__name">{code}</div>
+              <div className="tahap__meta">{formatDateRange(h.period)} · {isLunas ? "Lunas" : "Berjalan"}</div>
+            </Link>
+          );
+        })}
+      </div>
 
-      <KpiStrip items={kpis} cols={3} />
+      {/* Summary */}
+      <div className="sewa-summary">
+        <div className="ss-cell">
+          <div className="ss-cell__label">Target {activeTahap}</div>
+          <div className="ss-cell__value ss-cell__value--hero">{formatRupiah(sewa.total)}</div>
+          <div className="ss-cell__sub">{activeCount} lokasi aktif · rata-rata {formatRupiah(Math.round(sewa.total / Math.max(1, activeCount)))}/lokasi</div>
+        </div>
+        <div className="ss-cell">
+          <div className="ss-cell__label">Sudah sampai Yayasan</div>
+          <div className="ss-cell__value" style={{ color: "var(--pos-700)" }}>{formatRupiah(totalMasuk)}</div>
+          <div className="ss-cell__sub">{sewa.locations.filter(l => l.pipeline?.stage === "tercatat").length} lokasi · {percentMasuk.toFixed(1)}%</div>
+          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--pos" style={{ width: `${percentMasuk}%` }}></div></div></div>
+        </div>
+        <div className="ss-cell">
+          <div className="ss-cell__label">Di perantara</div>
+          <div className="ss-cell__value" style={{ color: "var(--warn-700)" }}>{formatRupiah(totalPerantara)}</div>
+          <div className="ss-cell__sub">{sewa.locations.filter(l => l.pipeline?.stage === "transfer_yayasan" || l.pipeline?.stage === "di_intermediate").length} lokasi · belum masuk BTN</div>
+          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--warn" style={{ width: `${percentPerantara}%` }}></div></div></div>
+        </div>
+        <div className="ss-cell">
+          <div className="ss-cell__label">Belum diterima</div>
+          <div className="ss-cell__value" style={{ color: "var(--neg-700)" }}>{formatRupiah(totalBelum)}</div>
+          <div className="ss-cell__sub">{sewa.locations.filter(l => l.pipeline?.stage === "belum_diterima" || !l.pipeline?.stage).length} lokasi · action required</div>
+          <div className="ss-cell__progress"><div className="bar"><div className="bar__fill bar__fill--neg" style={{ width: `${percentBelum}%` }}></div></div></div>
+        </div>
+      </div>
 
-      <SewaTabs
-        lokasi={
-          <div className="space-y-4">
-            {Array.from(byRegion.entries()).map(([region, locations]) => {
-              const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
-              const tone = regionAccent[region] ?? "neutral";
+      {/* Regions */}
+      {Array.from(byRegion.entries()).map(([region, locations]) => {
+        const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
+        const regionReceived = locations.reduce((s, l) => s + (l.pipeline?.stage === "tercatat" ? (l.amount ?? 0) : 0), 0);
+        const lunasCount = locations.filter(l => l.pipeline?.stage === "tercatat").length;
+        const pendingCount = locations.filter(l => l.pipeline?.stage && l.pipeline.stage !== "tercatat").length;
+        
+        let markBg = "var(--ink-300)";
+        if (region === "TOPILAUT") markBg = "var(--accent-700)";
+        else if (region === "Rangas Beach") markBg = "var(--info-500)";
+        else if (region === "ANGKASA") markBg = "var(--ink-000)";
+
+        return (
+          <div className="region" key={region}>
+            <div className="region__head">
+              <div className="region__mark" style={{ background: markBg }}></div>
+              <div>
+                <div className="region__name">{region}</div>
+                <div className="region__count">{locations.length} lokasi</div>
+              </div>
+              <div className="pipe-legend">
+                <span><span className="dot" style={{ background: "var(--pos-500)" }}></span>Yayasan</span>
+                <span><span className="dot" style={{ background: "var(--warn-500)" }}></span>Perantara</span>
+                <span><span className="dot" style={{ background: "var(--neg-500)" }}></span>Belum</span>
+              </div>
+              {pendingCount > 0 ? (
+                <div className="badge badge--outline"><span className="badge__dot" style={{ color: "var(--warn-500)" }}></span>{pendingCount} pending</div>
+              ) : (
+                <div className="badge badge--pos">Selesai</div>
+              )}
+              <span className="region__count mono" style={{ fontWeight: 600, color: "var(--ink-000)" }}>{formatRupiah(regionTotal)}</span>
+            </div>
+
+            <div className="loc-row loc-row--header">
+              <div></div>
+              <div>Lokasi</div>
+              <div>Pemilik · Referensi</div>
+              <div>Pipeline status</div>
+              <div style={{ textAlign: "right" }}>Jumlah</div>
+              <div style={{ textAlign: "right" }}>Tanggal</div>
+              <div></div>
+            </div>
+
+            {locations.map((loc) => {
+              const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
+              const stage = loc.pipeline?.stage;
+              const isDone = stage === "tercatat";
+              const isIntermediate = stage === "di_intermediate" || stage === "transfer_yayasan";
+              const isPending = stage === "belum_diterima" || !stage;
+              
+              let iconBg = "var(--ink-050)";
+              let iconColor = "var(--ink-500)";
+              if (region === "TOPILAUT") { iconBg = "var(--accent-050)"; iconColor = "var(--accent-700)"; }
+              else if (region === "Rangas Beach") { iconBg = "var(--info-050)"; iconColor = "var(--info-700)"; }
+              
+              if (isPending) { iconBg = "var(--neg-050)"; iconColor = "var(--neg-700)"; }
+
               return (
-                <SectionCard
-                  key={region}
-                  title={region}
-                  tone={tone}
-                  badge={
-                    <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-                      {formatRupiah(regionTotal)} · {locations.length} lokasi
-                    </span>
-                  }
-                >
-                  <div className="divide-y divide-border/60">
-                    {locations.map((loc) => {
-                      const stage = loc.pipeline?.stage ? stageMap[loc.pipeline.stage] : null;
-                      const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
-                      const regionMismatch = ref && ref.region !== loc.region;
-                      return (
-                        <div
-                          key={loc.code}
-                          className="flex items-center justify-between gap-3 py-2.5"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold">{loc.code}</p>
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                              {loc.days != null && loc.days > 0 && (
-                                <span className="tabular-nums">
-                                  {loc.days}h · {formatRupiah(loc.amount ?? 0)}
-                                </span>
-                              )}
-                              {loc.pipeline?.holder && (
-                                <span className="truncate">
-                                  via {formatRequestorName(loc.pipeline.holder)}
-                                </span>
-                              )}
-                            </div>
-                            {regionMismatch && ref && (
-                              <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700">
-                                <AlertTriangle className="h-3 w-3" />
-                                ref: {ref.name} / {ref.region}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            {stage ? (
-                              <Badge className={cn("text-xs", toneBadge[stage.tone])}>{stage.label}</Badge>
-                            ) : (
-                              <StatusBadge status={loc.status} size="sm" />
-                            )}
-                            {canEdit && <SewaLocationEditButton location={loc} />}
-                          </div>
-                        </div>
-                      );
-                    })}
+                <div className="loc-row" key={loc.code}>
+                  <div className="loc-row__icon" style={{ background: iconBg, color: iconColor }}>
+                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
                   </div>
-                </SectionCard>
+                  <div className="loc-row__code">{loc.code}</div>
+                  <div className="loc-row__owner">
+                    <span className="loc-row__owner-name">{ref?.holder || "—"}</span>
+                    <span className="loc-row__owner-ref">SWA-{ref?.bgn || loc.code}</span>
+                  </div>
+                  <div className="loc-row__flow">
+                    <span className={cn("flow-step", isDone && "is-done", isIntermediate && "is-current", isPending && "")}>Admin</span>
+                    <span className="flow-arrow">→</span>
+                    {region !== "ANGKASA" && (
+                      <>
+                        <span className={cn("flow-step", isDone && "is-done", isIntermediate && "is-current", isPending && "")}>{ref?.holder?.split(" ")[0] || "Perantara"}</span>
+                        <span className="flow-arrow">→</span>
+                      </>
+                    )}
+                    <span className={cn("flow-step", isDone && "is-done")}>Yayasan</span>
+                  </div>
+                  <div className={cn("loc-row__amount", isDone ? "text-pos" : isIntermediate ? "text-warn" : "text-neg")}>
+                    {formatRupiah(loc.amount || 0)}
+                  </div>
+                  <div className="loc-row__date">{loc.pipeline?.received_at ? formatDateShort(loc.pipeline.received_at) : "—"}</div>
+                  <div className="loc-row__action">
+                    {isDone ? (
+                      <span className="badge badge--pos">Lunas</span>
+                    ) : (
+                      <button className="btn btn--primary btn--sm">Proses</button>
+                    )}
+                  </div>
+                </div>
               );
             })}
-          </div>
-        }
-        operasional={
-          <div className="space-y-4">
-            <SectionCard icon={Wallet} title="Dana Operasional dari Sewa" tone="warning">
-              <div className="grid grid-cols-3 gap-2">
-                <MoneyTile label="Masuk" value={danaSewa.totalMasuk} tone="success" />
-                <MoneyTile label="Terpakai" value={danaSewa.totalTerpakai} tone="danger" />
-                <MoneyTile
-                  label={`Sisa (${sisaPct}%)`}
-                  value={danaSewa.sisaDana}
-                  tone="info"
-                />
-              </div>
-              {danaSewa.totalMasuk > 0 && (
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-2 rounded-full bg-rose-500/80 transition-all"
-                    style={{
-                      width: `${Math.min(100, Math.round((danaSewa.totalTerpakai / danaSewa.totalMasuk) * 100))}%`,
-                    }}
-                  />
-                </div>
-              )}
-            </SectionCard>
 
-            <SectionCard
-              icon={ArrowUpRight}
-              title="Pengeluaran dari Dana Sewa"
-              tone="danger"
-              badge={
-                <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-                  {danaSewa.pengeluaranSewa.length} item
-                </span>
-              }
-            >
-              {danaSewa.pengeluaranSewa.length === 0 ? (
-                <EmptyState
-                  icon={Inbox}
-                  title="Belum ada pengeluaran"
-                  description="Dana sewa belum dipakai untuk operasional."
-                  className="border-none shadow-none"
-                />
-              ) : (
-                <div className="divide-y divide-border/60">
-                  {danaSewa.pengeluaranSewa.map((e) => (
-                    <div
-                      key={e._id}
-                      className="flex items-center justify-between gap-3 py-2.5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{e.counterparty}</p>
-                        <p className="truncate text-xs text-muted-foreground">{e.description}</p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-semibold text-rose-600 tabular-nums">
-                          −{formatRupiah(e.amount)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatDateShort(e.date)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-
-            {sewa.notes && Object.keys(sewa.notes).length > 0 && (
-              <SectionCard icon={StickyNote} title="Catatan">
-                <div className="space-y-1.5 text-sm">
-                  {Object.entries(sewa.notes).map(([key, val]) => (
-                    <p key={key} className="text-muted-foreground">
-                      <span className="font-semibold capitalize text-foreground">{key}:</span> {val}
-                    </p>
-                  ))}
-                </div>
-              </SectionCard>
-            )}
-          </div>
-        }
-        riwayat={
-          <SectionCard icon={History} title="Riwayat Tahap">
-            {sewaHistory.length <= 1 ? (
-              <EmptyState
-                icon={Inbox}
-                title="Belum ada riwayat"
-                description="Hanya tahap aktif yang tercatat."
-                className="border-none shadow-none"
-              />
-            ) : (
-              <div className="divide-y divide-border/60">
-                {sewaHistory.map((h) => {
-                  const code = h.period_code ?? h.period;
-                  const href = h.is_current ? "/sewa" : `/sewa?tahap=${encodeURIComponent(code)}`;
-                  const isActive = code === activeTahap;
-                  return (
-                    <Link
-                      key={h._id}
-                      href={href}
-                      className={cn(
-                        "flex items-center justify-between px-2 py-2.5 transition-colors -mx-2 rounded-md",
-                        isActive
-                          ? "bg-primary/10"
-                          : "hover:bg-accent",
-                      )}
-                    >
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {code}
-                          {h.is_current && (
-                            <Badge variant="secondary" className="ml-2 text-xs">
-                              aktif
-                            </Badge>
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {formatDateRange(h.period)} · update {formatDateShort(h.updated_at)}
-                        </p>
-                      </div>
-                      <span className="text-sm font-bold tabular-nums">
-                        {formatRupiah(h.sewa?.total ?? 0)}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </SectionCard>
-        }
-        referensi={
-          <SectionCard icon={BookOpen} title="Referensi Kode Lokasi" bodyClassName="px-0 md:px-4">
-            <div className="-mx-4 overflow-x-auto md:mx-0">
-              <table className="w-full text-sm" style={{ minWidth: "560px" }}>
-                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Kode DB</th>
-                    <th className="px-3 py-2 text-left font-medium">BGN</th>
-                    <th className="px-3 py-2 text-left font-medium">Nama</th>
-                    <th className="px-3 py-2 text-left font-medium">Region</th>
-                    <th className="px-3 py-2 text-left font-medium">Via</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {LOCATION_REFERENCE.map((l) => (
-                    <tr key={l.code} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 font-semibold">{l.code}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.bgn}</td>
-                      <td className="px-3 py-2">{l.name}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.region}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.holder}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="region__subtotal">
+              <span className="region__subtotal-label">Subtotal {region} · {lunasCount} lunas / {locations.length}</span>
+              <span className="region__subtotal-value">{formatRupiah(regionTotal)}</span>
+              <span style={{ gridColumn: "6/8", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--ink-300)" }}>{formatRupiah(regionReceived)} diterima</span>
             </div>
-          </SectionCard>
-        }
-      />
-    </div>
+          </div>
+        );
+      })}
+
+      {/* Grand total */}
+      <div className="grand-total">
+        <div>
+          <div className="grand-total__label">Total {activeTahap}</div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-400)", marginTop: 4 }}>{byRegion.size} wilayah · {sewa.locations.length} lokasi</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="grand-total__label">Target</div>
+          <div className="grand-total__fig">{formatRupiah(sewa.total)}</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="grand-total__label">Diterima</div>
+          <div className="grand-total__fig text-pos">{formatRupiah(totalMasuk)}</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="grand-total__label">Outstanding</div>
+          <div className="grand-total__fig grand-total__fig--hero text-neg">{formatRupiah(sewa.total - totalMasuk)}</div>
+        </div>
+      </div>
+
+    </main>
   );
 }
-
-function MoneyTile({ label, value, tone }: { label: string; value: number; tone: Tone }) {
-  const colorMap: Record<Tone, string> = {
-    success: "text-emerald-700",
-    danger: "text-rose-600",
-    warning: "text-amber-700",
-    info: "text-blue-700",
-    primary: "text-primary",
-    neutral: "text-slate-700",
-    muted: "text-muted-foreground",
-  };
-  return (
-    <div className="text-center">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={cn("text-sm font-bold tabular-nums", colorMap[tone])}>{formatRupiah(value)}</p>
-    </div>
-  );
-}
-

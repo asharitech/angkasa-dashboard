@@ -148,7 +148,7 @@ function serializeDates<T>(obj: T): T {
 export async function getPribadiSummary() {
   const db = await getDb();
 
-  const [accounts, entries, savings, loans, recurring, piutangByMonth, savingsTotal, numpang] =
+  const [accounts, entries, savings, loans, recurring, piutangByMonth, piutangItems, savingsTotal, numpang] =
     await Promise.all([
       getAccounts(),
       getEntries({ owner: "angkasa", domain: { $ne: "yayasan" } }, 50),
@@ -160,6 +160,10 @@ export async function getPribadiSummary() {
         { $group: { _id: "$month", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { _id: 1 } },
       ]).toArray(),
+      db.collection("obligations")
+        .find({ type: "pengajuan", status: "pending", sumber_dana: "BRI_ANGKASA" })
+        .sort({ month: 1, date_spent: 1, created_at: 1 })
+        .toArray(),
       db.collection("entries").aggregate([
         { $match: { category: "savings" } },
         { $group: {
@@ -186,6 +190,7 @@ export async function getPribadiSummary() {
     loans,
     recurring,
     piutangByMonth: piutangByMonth as { _id: string; count: number; total: number }[],
+    piutangItems: piutangItems as unknown as Obligation[],
     numpang,
   });
 }
@@ -468,16 +473,17 @@ export async function getSewaHistory(): Promise<Ledger[]> {
 export async function getSewaDanaUsage(tahap?: string) {
   const db = await getDb();
 
-  const sewaLedger = await getLedger("sewa");
+  const sewaLedger = tahap ? await getLedgerByCode("sewa", tahap) : await getLedger("sewa");
   const targetTahap = tahap ?? sewaLedger?.period_code ?? sewaLedger?.period;
 
-  // Source of truth: sum entries.in for that tahap (live; ledger is snapshot only).
+  // Prefer ledger snapshot for per-tahap dashboard display, because some tahap totals
+  // are confirmed manually before/without full entry backfill.
   const masukAgg = await db.collection("entries").aggregate([
     { $match: { category: "sewa_masuk", direction: "in",
                 ...(targetTahap ? { tahap_sewa: targetTahap } : {}) } },
     { $group: { _id: null, total: { $sum: "$amount" } } },
   ]).toArray();
-  const totalMasuk = masukAgg[0]?.total ?? sewaLedger?.sewa?.total ?? 0;
+  const totalMasuk = sewaLedger?.sewa?.total ?? masukAgg[0]?.total ?? 0;
 
   const filter: Record<string, unknown> = {
     domain: "yayasan",
