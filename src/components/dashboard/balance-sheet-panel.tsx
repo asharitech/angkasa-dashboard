@@ -81,7 +81,7 @@ export function BalanceSheetPanel({
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Kewajiban
           </p>
-          <p className="mt-2 text-[22px] font-bold tabular-nums leading-tight text-warning">
+          <p className="mt-2 text-[22px] font-bold tabular-nums leading-tight text-muted-foreground">
             − {formatRupiahCompact(kewajiban)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">Tertunggak</p>
@@ -115,6 +115,9 @@ export function BalanceSheetPanel({
 
       {/* Equation stacked bar — single shared scale */}
       <div className="border-t border-border/60 px-5 py-3 space-y-1.5">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+          <span>Saldo {formatRupiahCompact(saldo)}</span>
+        </div>
         <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
           <div
             className="h-full bg-primary/70"
@@ -132,11 +135,10 @@ export function BalanceSheetPanel({
             {Math.round(danaEfektifPct)}%
           </span>
           <span>
-            <span className="font-semibold text-warning">Kewajiban</span>
+            <span className="font-semibold text-muted-foreground">Kewajiban</span>
             {" "}
             {Math.round(kewajibanPct)}%
           </span>
-          <span>Saldo {formatRupiahCompact(saldo)}</span>
         </div>
       </div>
     </div>

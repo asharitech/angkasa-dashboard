@@ -7,7 +7,6 @@ import {
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRupiahCompact, formatDate, formatDateShort } from "@/lib/format";
-import { idString } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import { SectionCard } from "@/components/section-card";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
@@ -164,13 +163,15 @@ export default async function DashboardPage() {
       </div>
 
       <div className="hidden md:flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Landmark className="h-3.5 w-3.5 text-primary"/>
-            Yayasan YRBB
-            {displayDate && <> · per {formatDate(displayDate)}</>}
+        <div className="flex items-center gap-3">
+          <IconBadge icon={Landmark} tone="primary" size="md" />
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              Yayasan YRBB
+              {displayDate && <> · per {formatDate(displayDate)}</>}
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight">Ringkasan Keuangan</h1>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Ringkasan Keuangan</h1>
         </div>
       </div>
 
@@ -209,7 +210,7 @@ export default async function DashboardPage() {
       )}
 
       {/* 2-col: Pengajuan table | Task list */}
-      <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-4 md:grid-cols-[1.4fr_1fr] md:items-start">
         {/* Pengajuan table */}
         {data.pengajuanPending > 0 && (
           <SectionCard
@@ -347,26 +348,13 @@ export default async function DashboardPage() {
             }
             action={<NavChevronLink href="/sewa" />}
           >
-            <div className="space-y-3">
-              <div>
-                <span className="text-xl font-bold tabular-nums">
-                  {formatRupiahCompact(sewaTotal)}
-                </span>
-                <span className="text-xs text-muted-foreground ml-2">
-                  · {activeCount}/{sewaLocations.length} aktif
-                </span>
-              </div>
-              {sewaLocations.length > 0 && (
-                <div className="flex gap-1">
-                  {sewaLocations.map((loc) => (
-                    <div
-                      key={loc.code}
-                      className={`h-4 flex-1 rounded-sm ${loc.status === "active" ? "bg-success" : "bg-muted"}`}
-                      title={loc.code}
-                    />
-                  ))}
-                </div>
-              )}
+            <div>
+              <span className="text-xl font-bold tabular-nums">
+                {formatRupiahCompact(sewaTotal)}
+              </span>
+              <span className="text-xs text-muted-foreground ml-2">
+                · {activeCount}/{sewaLocations.length} aktif
+              </span>
             </div>
           </SectionCard>
         )}
@@ -384,38 +372,26 @@ export default async function DashboardPage() {
             }
             action={<NavChevronLink href="/wajib-bulanan" />}
           >
-            <div className="space-y-3">
-              {runway !== null ? (
-                <div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold tabular-nums">
-                      {runway.toFixed(1).replace(".", ",")}
-                    </span>
-                    <span className="text-sm font-medium text-muted-foreground">bln runway</span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Komitmen ≈ {wajibPct}% dari dana efektif
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <span className="text-xl font-bold tabular-nums">
-                    {formatRupiahCompact(wajibTotal)}
+            {runway !== null ? (
+              <div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold tabular-nums">
+                    {runway.toFixed(1).replace(".", ",")}
                   </span>
-                  <span className="text-xs text-muted-foreground ml-1">/bln</span>
+                  <span className="text-sm font-medium text-muted-foreground">bln runway</span>
                 </div>
-              )}
-              <div className="divide-y divide-border/60">
-                {data.wajibBulanan.map((w) => (
-                  <div key={idString(w._id)} className="flex items-center justify-between py-2">
-                    <span className="truncate text-xs text-muted-foreground">{w.item}</span>
-                    <span className="text-xs font-semibold tabular-nums">
-                      {formatRupiahCompact(w.amount ?? 0)}
-                    </span>
-                  </div>
-                ))}
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Komitmen ≈ {wajibPct}% dari dana efektif
+                </p>
               </div>
-            </div>
+            ) : (
+              <div>
+                <span className="text-xl font-bold tabular-nums">
+                  {formatRupiahCompact(wajibTotal)}
+                </span>
+                <span className="text-xs text-muted-foreground ml-1">/bln</span>
+              </div>
+            )}
           </SectionCard>
         )}
       </div>
