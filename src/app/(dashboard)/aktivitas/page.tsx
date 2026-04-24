@@ -16,6 +16,7 @@ import { formatStatusLabel } from "@/lib/names";
 import { cn } from "@/lib/utils";
 import { FeedEventIcon } from "@/components/feed-event-icon";
 import { Activity, Inbox } from "lucide-react";
+import { SectionGroupHeader } from "@/components/section-group-header";
 
 export const dynamic = "force-dynamic";
 
@@ -114,9 +115,7 @@ export default async function AktivitasPage({
       ) : (
         Array.from(grouped.entries()).map(([day, dayEvents]) => (
           <section key={day} className="space-y-2">
-            <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {formatDateShort(day)}
-            </p>
+            <SectionGroupHeader label={formatDateShort(day)} count={dayEvents.length} />
             <SectionCard bodyClassName="p-0">
               <ul className="divide-y divide-border/50">
                 {dayEvents.map((event) => {

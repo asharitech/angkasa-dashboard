@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { toneIcon, toneText, type Tone } from "@/lib/colors";
+import { IconBadge } from "@/components/primitives/icon-badge";
+import { toneText, type Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 import { formatRupiahCompact } from "@/lib/format";
 
@@ -43,13 +44,11 @@ export function KpiStrip({
 
 function KpiCard({ item }: { item: KpiItem }) {
   const tone = item.tone ?? "primary";
-  const t = toneIcon[tone];
-  const Icon = item.icon;
   const body = (
     <Card
       className={cn(
         "h-full shadow-sm transition-colors",
-        item.href && "hover:border-primary/30 hover:shadow",
+        item.href && "hover:border-primary/30 hover:shadow-md",
       )}
     >
       <CardContent className="p-3 md:p-4">
@@ -57,15 +56,7 @@ function KpiCard({ item }: { item: KpiItem }) {
           <span className="text-xs font-medium text-muted-foreground md:text-sm">
             {item.label}
           </span>
-          <div
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg md:h-9 md:w-9",
-              t.bg,
-              t.fg,
-            )}
-          >
-            <Icon className="h-4 w-4 md:h-[18px] md:w-[18px]" />
-          </div>
+          <IconBadge icon={item.icon} tone={tone} size="md" />
         </div>
         <p
           className={cn(

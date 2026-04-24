@@ -28,15 +28,8 @@ import {
   type AgendaKategori,
 } from "@/lib/actions/agenda";
 import { KATEGORI_CONFIG } from "@/lib/agenda-config";
-import {
-  Plus,
-  Check,
-  Trash2,
-  Pencil,
-  RotateCcw,
-  Loader2,
-  AlertTriangle,
-} from "lucide-react";
+import { Plus, Check, Trash2, Pencil, RotateCcw, Loader2, AlertTriangle } from "lucide-react";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { cn, idString } from "@/lib/utils";
 
 function AgendaForm({
@@ -295,25 +288,18 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
-            <DialogTitle>Hapus Agenda?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">&ldquo;{agenda.title}&rdquo;</span>{" "}
-            akan dihapus permanen.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Batal</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={pending}>
-              {pending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-              Hapus
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Hapus Agenda?"
+        description={<>
+          <span className="font-medium text-foreground">&ldquo;{agenda.title}&rdquo;</span>{" "}
+          akan dihapus permanen.
+        </>}
+        confirmLabel="Hapus"
+        onConfirm={handleDelete}
+        pending={pending}
+      />
     </>
   );
 }

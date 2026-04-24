@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { toneIcon, type Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
 export function NavChevronLink({ href }: { href: string }) {
@@ -17,29 +18,25 @@ export function NavChevronLink({ href }: { href: string }) {
 
 export function InsightLinkCard({
   href,
-  tone,
+  tone = "danger",
   icon: Icon,
   title,
   hint,
 }: {
   href: string;
-  tone: "danger" | "warning";
+  tone?: Tone;
   icon: LucideIcon;
   title: string;
   hint: string;
 }) {
-  const cls =
-    tone === "danger"
-      ? "border-rose-200 bg-rose-50/50 hover:bg-rose-50"
-      : "border-amber-200 bg-amber-50/50 hover:bg-amber-50";
-  const fg = tone === "danger" ? "text-rose-700" : "text-amber-700";
+  const t = toneIcon[tone];
   return (
     <Link href={href} className="block">
-      <Card className={cn("shadow-sm transition-colors", cls)}>
+      <Card className={cn("shadow-sm transition-colors", t.bg, "border-current/20 hover:opacity-90")}>
         <CardContent className="flex items-center gap-3 py-2.5">
-          <Icon className={cn("h-4 w-4 shrink-0", fg)} />
+          <Icon className={cn("h-4 w-4 shrink-0", t.fg)} />
           <div className="min-w-0 flex-1">
-            <p className={cn("truncate text-sm font-semibold", fg)}>{title}</p>
+            <p className={cn("truncate text-sm font-semibold", t.fg)}>{title}</p>
             <p className="truncate text-xs text-muted-foreground">{hint}</p>
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

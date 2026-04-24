@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AgendaRowActions, AgendaReopenButton } from "./agenda-manager";
 import type { AgendaDoc } from "./agenda-manager";
-import { KATEGORI_CONFIG } from "@/lib/agenda-config";
+import { KATEGORI_CONFIG, getDueStatus } from "@/lib/agenda-config";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -39,22 +39,6 @@ const PRIORITY_CONFIG = {
     bar: "bg-success",
   },
 };
-
-type DueStatus = "terlambat" | "hari_ini" | "besok" | "segera" | "normal" | "selesai";
-
-function getDueStatus(dueDate: string, status: string): DueStatus {
-  if (status === "selesai") return "selesai";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  const diff = Math.round((due.getTime() - today.getTime()) / 86_400_000);
-  if (diff < 0) return "terlambat";
-  if (diff === 0) return "hari_ini";
-  if (diff === 1) return "besok";
-  if (diff <= 5) return "segera";
-  return "normal";
-}
 
 function getDiffDays(dueDate: string): number {
   const today = new Date();
@@ -201,6 +185,7 @@ export function AgendaCard({
                   {detailItems.length > 3 && (
                     <button
                       onClick={() => setExpanded((v) => !v)}
+                      aria-expanded={expanded}
                       className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
                     >
                       {expanded ? (
@@ -230,6 +215,7 @@ export function AgendaCard({
                   </p>
                   <button
                     onClick={() => setExpanded((v) => !v)}
+                    aria-expanded={expanded}
                     className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
                   >
                     {expanded ? (

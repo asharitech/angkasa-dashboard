@@ -10,6 +10,7 @@ export type Tone =
   | "info"
   | "muted";
 
+/** @deprecated Use `<Badge variant={toneVariant(tone)}>` instead. */
 export const toneBadge: Record<Tone, string> = {
   neutral: "bg-secondary text-secondary-foreground border-border",
   primary: "bg-primary/10 text-primary border-primary/20",

@@ -1,5 +1,5 @@
 import { ArrowDownLeft, ArrowUpRight, Receipt, CreditCard, Repeat } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { IconBadge } from "@/components/primitives/icon-badge";
 
 export function FeedEventIcon({
   event,
@@ -8,31 +8,18 @@ export function FeedEventIcon({
 }) {
   if (event.type === "entry") {
     return event.direction === "in" ? (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15 text-success">
-        <ArrowDownLeft className="h-4 w-4" />
-      </span>
+      <IconBadge icon={ArrowDownLeft} tone="success" size="md" shape="circle" />
     ) : (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/15 text-destructive">
-        <ArrowUpRight className="h-4 w-4" />
-      </span>
+      <IconBadge icon={ArrowUpRight} tone="danger" size="md" shape="circle" />
     );
   }
-  const iconMap: Record<string, { icon: typeof Receipt; bg: string; color: string }> = {
-    pengajuan: { icon: Receipt, bg: "bg-warning/15", color: "text-warning" },
-    loan: { icon: CreditCard, bg: "bg-primary/10", color: "text-primary" },
-    recurring: { icon: Repeat, bg: "bg-info/15", color: "text-info" },
+
+  const domainMap: Record<string, { icon: typeof Receipt; tone: "warning" | "primary" | "info" }> = {
+    pengajuan: { icon: Receipt,    tone: "warning" },
+    loan:      { icon: CreditCard, tone: "primary" },
+    recurring: { icon: Repeat,     tone: "info" },
   };
-  const cfg = iconMap[event.domain ?? ""] ?? iconMap.pengajuan;
-  const Icon = cfg.icon;
-  return (
-    <span
-      className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-full",
-        cfg.bg,
-        cfg.color,
-      )}
-    >
-      <Icon className="h-4 w-4" />
-    </span>
-  );
+  const cfg = domainMap[event.domain ?? ""] ?? domainMap.pengajuan;
+
+  return <IconBadge icon={cfg.icon} tone={cfg.tone} size="md" shape="circle" />;
 }

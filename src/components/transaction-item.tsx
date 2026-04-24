@@ -1,19 +1,14 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { IconBadge } from "@/components/primitives/icon-badge";
 
 export function TransactionIcon({ direction }: { direction: string }) {
-  const isOut = direction === "out";
   return (
-    <div
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-        isOut ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success"
-      }`}
-    >
-      {isOut ? (
-        <TrendingDown className="h-5 w-5" />
-      ) : (
-        <TrendingUp className="h-5 w-5" />
-      )}
-    </div>
+    <IconBadge
+      icon={direction === "out" ? TrendingDown : TrendingUp}
+      tone={direction === "out" ? "danger" : "success"}
+      size="lg"
+      shape="circle"
+    />
   );
 }
 

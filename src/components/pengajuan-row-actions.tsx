@@ -7,13 +7,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { PengajuanForm } from "./pengajuan-form";
 import { MarkLunasForm } from "./mark-lunas-form";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { deleteObligationAction } from "@/lib/actions/obligations";
 import type { Obligation, Account } from "@/lib/types";
 import { idString } from "@/lib/utils";
@@ -61,7 +61,7 @@ export function PengajuanRowActions({
         <Button
           variant="ghost"
           size="icon-sm"
-          className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+          className="text-success hover:bg-success/10 hover:text-success"
           onClick={() => setOpen("lunas")}
           aria-label="Tandai lunas"
           title="Tandai lunas"
@@ -80,7 +80,7 @@ export function PengajuanRowActions({
       <Button
         variant="ghost"
         size="icon-sm"
-        className="text-destructive hover:bg-rose-50 hover:text-destructive"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         onClick={() => setOpen("delete")}
         aria-label="Hapus"
       >
@@ -113,39 +113,21 @@ export function PengajuanRowActions({
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={open === "delete"}
-        onOpenChange={(o) => {
-          if (!o && !pending) close();
-        }}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                <AlertTriangle className="h-4 w-4" />
-              </div>
-              <DialogTitle>Hapus pengajuan?</DialogTitle>
-            </div>
-            <DialogDescription>
-              <span className="font-semibold">{obligation.item}</span> akan dihapus permanen.
-              Tidak bisa dibatalkan.
-            </DialogDescription>
-          </DialogHeader>
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={close} disabled={pending}>
-              Batal
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={pending}>
-              {pending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Hapus
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(o) => !o && close()}
+        title="Hapus pengajuan?"
+        description={
+          <>
+            <span className="font-semibold">{obligation.item}</span> akan dihapus permanen.
+            Tidak bisa dibatalkan.
+          </>
+        }
+        confirmLabel="Hapus"
+        onConfirm={confirmDelete}
+        pending={pending}
+        error={error}
+      />
     </div>
   );
 }

@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { TabBar } from "@/components/primitives/tab-bar";
 
 export type SewaView = "lokasi" | "operasional" | "riwayat" | "referensi";
 
-const VIEWS: SewaView[] = ["lokasi", "operasional", "riwayat", "referensi"];
-const VIEW_LABEL: Record<SewaView, string> = {
-  lokasi: "Lokasi",
-  operasional: "Operasional",
-  riwayat: "Riwayat",
-  referensi: "Referensi",
-};
+const TABS: { value: SewaView; label: string }[] = [
+  { value: "lokasi",      label: "Lokasi" },
+  { value: "operasional", label: "Operasional" },
+  { value: "riwayat",     label: "Riwayat" },
+  { value: "referensi",   label: "Referensi" },
+];
 
 export function SewaTabs({
   lokasi,
@@ -35,28 +34,7 @@ export function SewaTabs({
 
   return (
     <>
-      {/* Tab bar */}
-      <div className="inline-flex w-full max-w-full overflow-hidden">
-        <div className="inline-flex min-w-0 gap-1 overflow-x-auto rounded-lg bg-muted/60 p-1 scrollbar-none">
-          {VIEWS.map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setActiveView(v)}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-                activeView === v
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {VIEW_LABEL[v]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Active panel */}
+      <TabBar tabs={TABS} value={activeView} onChange={setActiveView} />
       {panels[activeView]}
     </>
   );

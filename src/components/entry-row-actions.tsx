@@ -7,12 +7,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, Loader2 } from "lucide-react";
 import { EntryForm } from "./entry-form";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { deleteEntryAction, getEntryByIdAction } from "@/lib/actions/entries";
 import type { Entry, Account } from "@/lib/types";
 
@@ -102,7 +102,7 @@ export function EntryRowActions({
             </div>
           )}
           {error && !loading && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
           )}
           {entry && !loading && (
             <EntryForm
@@ -115,38 +115,16 @@ export function EntryRowActions({
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={open === "delete"}
-        onOpenChange={(o) => {
-          if (!o && !pending) close();
-        }}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                <AlertTriangle className="h-4 w-4" />
-              </div>
-              <DialogTitle>Hapus transaksi?</DialogTitle>
-            </div>
-            <DialogDescription>
-              Aksi ini tidak bisa dibatalkan dan akan memengaruhi saldo rekening.
-            </DialogDescription>
-          </DialogHeader>
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={close} disabled={pending}>
-              Batal
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={pending}>
-              {pending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Hapus
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(o) => !o && close()}
+        title="Hapus transaksi?"
+        description="Aksi ini tidak bisa dibatalkan dan akan memengaruhi saldo rekening."
+        confirmLabel="Hapus"
+        onConfirm={confirmDelete}
+        pending={pending}
+        error={error}
+      />
     </div>
   );
 }

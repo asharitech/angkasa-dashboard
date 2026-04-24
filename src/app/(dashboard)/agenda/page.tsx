@@ -9,35 +9,20 @@ import {
   type AgendaDoc,
 } from "@/components/agenda-manager";
 import { AgendaCard } from "@/components/agenda-card";
-import { KATEGORI_CONFIG } from "@/lib/agenda-config";
+import { KATEGORI_CONFIG, getDueStatus } from "@/lib/agenda-config";
 import { MeterBar, agendaMeterFillClass } from "@/components/meter-bar";
+import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import { KategoriChips } from "@/components/kategori-chips";
+import { SectionGroupHeader } from "@/components/section-group-header";
 import { cn } from "@/lib/utils";
 import type { AgendaKategori } from "@/lib/actions/agenda";
-import { CalendarCheck2, ListChecks, AlertCircle, Flame } from "lucide-react";
+import { CalendarCheck2, ListChecks, AlertCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const PRIORITY_ORDER = { tinggi: 0, sedang: 1, rendah: 2 };
-
-type DueStatus = "terlambat" | "hari_ini" | "besok" | "segera" | "normal" | "selesai";
-
-function getDueStatus(dueDate: string, status: string): DueStatus {
-  if (status === "selesai") return "selesai";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  const diff = Math.round((due.getTime() - today.getTime()) / 86_400_000);
-  if (diff < 0) return "terlambat";
-  if (diff === 0) return "hari_ini";
-  if (diff === 1) return "besok";
-  if (diff <= 5) return "segera";
-  return "normal";
-}
-
-// ─── Group by date section ────────────────────────────────────────────────────
 
 function getGroupLabel(dueDate: string): string {
   const today = new Date();
@@ -72,102 +57,6 @@ function groupAgenda(items: AgendaDoc[]) {
   );
 }
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
-
-function ProgressBar({ done, total }: { done: number; total: number }) {
-  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">Progress keseluruhan</span>
-        <span className="text-xs font-bold tabular-nums">
-          {done}/{total}{" "}
-          <span className="font-normal text-muted-foreground">selesai</span>{" "}
-          <span
-            className={cn(
-              "font-bold",
-              pct === 100
-                ? "text-success"
-                : pct >= 60
-                ? "text-info"
-                : pct >= 30
-                ? "text-warning"
-                : "text-destructive",
-            )}
-          >
-            ({pct}%)
-          </span>
-        </span>
-      </div>
-      <MeterBar
-        percent={pct}
-        fillClassName={cn(agendaMeterFillClass(pct), "duration-700 ease-out")}
-        heightClassName="h-2.5"
-      />
-    </div>
-  );
-}
-
-// ─── Kategori filter chips ────────────────────────────────────────────────────
-
-function KategoriChips({
-  items,
-  activeKategori,
-  baseHref,
-}: {
-  items: AgendaDoc[];
-  activeKategori: string | null;
-  baseHref: string;
-}) {
-  const counts = new Map<string, number>();
-  for (const a of items) {
-    const k = a.kategori ?? "lainnya";
-    counts.set(k, (counts.get(k) ?? 0) + 1);
-  }
-  if (counts.size <= 1) return null;
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {[...counts.entries()].map(([key, count]) => {
-        const cfg = KATEGORI_CONFIG[key as AgendaKategori] ?? KATEGORI_CONFIG.lainnya;
-        const isActive = activeKategori === key;
-        return (
-          <a
-            key={key}
-            href={isActive ? baseHref : `${baseHref}&kategori=${key}`}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all",
-              isActive
-                ? cn(cfg.cls, "shadow-sm scale-[1.02]")
-                : "border-border/50 bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <span>{cfg.emoji}</span>
-            <span>{cfg.label}</span>
-            <span className="ml-0.5 rounded-full bg-background/60 px-1 tabular-nums">{count}</span>
-          </a>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Section header with count ────────────────────────────────────────────────
-
-function SectionLabel({ label, count }: { label: string; count: number }) {
-  return (
-    <div className="flex items-center gap-2 pb-0.5">
-      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <span className="rounded-full bg-muted px-1.5 py-px text-[10px] font-semibold tabular-nums text-muted-foreground">
-        {count}
-      </span>
-      <div className="flex-1 h-px bg-border/60" />
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function AgendaPage({
@@ -188,7 +77,6 @@ export default async function AgendaPage({
     .sort({ due_date: 1, created_at: -1 })
     .toArray();
 
-  // Serialize MongoDB Date objects → ISO strings so they can be passed to client components
   const all = rawDocs.map((d) => ({
     ...d,
     _id: d._id.toString(),
@@ -200,12 +88,10 @@ export default async function AgendaPage({
   const belum = all.filter((a) => a.status === "belum");
   const selesai = all.filter((a) => a.status === "selesai");
 
-  // Sort belum: priority first → due_date ascending
   belum.sort((a, b) => {
-    const po = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+    const po = PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] - PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER];
     return po !== 0 ? po : a.due_date.localeCompare(b.due_date);
   });
-  // Sort selesai: most recently completed first
   selesai.sort((a, b) => {
     const ca = a.completed_at ?? a.due_date;
     const cb = b.completed_at ?? b.due_date;
@@ -217,10 +103,11 @@ export default async function AgendaPage({
     ? baseItems.filter((a) => (a.kategori ?? "lainnya") === kategoriFilter)
     : baseItems;
 
-  // Stats
   const terlambat = belum.filter((a) => getDueStatus(a.due_date, a.status) === "terlambat").length;
   const hariIni   = belum.filter((a) => getDueStatus(a.due_date, a.status) === "hari_ini").length;
   const mendesak  = terlambat + hariIni;
+
+  const pct = all.length === 0 ? 0 : Math.round((selesai.length / all.length) * 100);
 
   const baseHref = `/agenda?view=${view}`;
   const grouped = (view === "belum" || view === "semua") && !kategoriFilter
@@ -233,70 +120,73 @@ export default async function AgendaPage({
     { label: "Semua",         href: "/agenda?view=semua",  active: view === "semua",  count: all.length },
   ];
 
+  const kpis: KpiItem[] = [
+    {
+      label: "Mendesak",
+      value: String(mendesak),
+      icon: AlertCircle,
+      tone: mendesak > 0 ? "danger" : "muted",
+      valueTone: mendesak > 0 ? "danger" : undefined,
+      hint: mendesak > 0 ? `${terlambat} terlambat · ${hariIni} hari ini` : "Tidak ada",
+    },
+    {
+      label: "Belum Selesai",
+      value: String(belum.length),
+      icon: ListChecks,
+      tone: "neutral",
+    },
+    {
+      label: "Selesai",
+      value: String(selesai.length),
+      icon: CalendarCheck2,
+      tone: "success",
+      valueTone: "success",
+    },
+  ];
+
   return (
     <div className="space-y-5">
-      {/* ── Header ── */}
       <PageHeader icon={CalendarCheck2} title="Agenda Saya">
         <AgendaCreateButton />
       </PageHeader>
 
-      {/* ── KPI tiles ── */}
+      {all.length > 0 && <KpiStrip items={kpis} cols={3} />}
+
       {all.length > 0 && (
-        <div className="grid grid-cols-3 gap-2.5">
-          {/* Mendesak */}
-          <div
-            className={cn(
-              "flex flex-col items-center justify-center rounded-2xl border p-3 text-center shadow-sm",
-              mendesak > 0
-                ? "border-destructive/40 bg-gradient-to-b from-destructive/8 to-destructive/4"
-                : "border-border/60 bg-card",
-            )}
-          >
-            {mendesak > 0 ? (
-              <AlertCircle className="mb-1 h-4 w-4 text-destructive" />
-            ) : (
-              <Flame className="mb-1 h-4 w-4 text-muted-foreground/30" />
-            )}
-            <p className={cn("text-2xl font-bold tabular-nums leading-none", mendesak > 0 ? "text-destructive" : "text-foreground")}>
-              {mendesak}
-            </p>
-            <p className="mt-1 text-[10px] text-muted-foreground">Mendesak</p>
+        <div className="rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+            <span className="font-medium">Progress keseluruhan</span>
+            <span>
+              <span className="font-bold tabular-nums text-foreground">{selesai.length}/{all.length}</span>
+              {" "}selesai{" "}
+              <span className={cn(
+                "font-bold",
+                pct === 100 ? "text-success" : pct >= 60 ? "text-info" : pct >= 30 ? "text-warning" : "text-destructive",
+              )}>
+                ({pct}%)
+              </span>
+            </span>
           </div>
-          {/* Belum */}
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card p-3 text-center shadow-sm">
-            <ListChecks className="mb-1 h-4 w-4 text-muted-foreground/50" />
-            <p className="text-2xl font-bold tabular-nums leading-none">{belum.length}</p>
-            <p className="mt-1 text-[10px] text-muted-foreground">Belum selesai</p>
-          </div>
-          {/* Selesai */}
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-success/20 bg-success/5 p-3 text-center shadow-sm">
-            <CalendarCheck2 className="mb-1 h-4 w-4 text-success" />
-            <p className="text-2xl font-bold tabular-nums leading-none text-success">{selesai.length}</p>
-            <p className="mt-1 text-[10px] text-muted-foreground">Selesai</p>
-          </div>
+          <MeterBar
+            percent={pct}
+            fillClassName={cn(agendaMeterFillClass(pct), "duration-700 ease-out")}
+            heightClassName="h-2.5"
+          />
         </div>
       )}
 
-      {/* ── Progress bar ── */}
-      {all.length > 0 && (
-        <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-          <ProgressBar done={selesai.length} total={all.length} />
-        </div>
-      )}
-
-      {/* ── View tabs ── */}
       <FilterTabs tabs={tabs} />
 
-      {/* ── Kategori filter chips ── */}
       {baseItems.length > 0 && (
         <KategoriChips
           items={baseItems}
-          activeKategori={kategoriFilter}
+          getKey={(a) => (a.kategori ?? "lainnya") as string}
+          configMap={KATEGORI_CONFIG as Record<string, { label: string; emoji: string; cls: string }>}
+          activeKey={kategoriFilter}
           baseHref={baseHref}
         />
       )}
 
-      {/* ── Empty state ── */}
       {displayed.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/60 py-16 text-center">
           <ListChecks className="h-10 w-10 text-muted-foreground/20" />
@@ -319,12 +209,11 @@ export default async function AgendaPage({
         </div>
       )}
 
-      {/* ── Grouped list (belum / semua) ── */}
       {grouped && grouped.length > 0 && (
         <div className="space-y-6">
           {grouped.map(([groupLabel, items]) => (
             <div key={groupLabel} className="space-y-2.5">
-              <SectionLabel label={groupLabel} count={items.length} />
+              <SectionGroupHeader label={groupLabel} count={items.length} />
               <div className="space-y-2">
                 {items.map((agenda) => (
                   <AgendaCard key={agenda._id.toString()} agenda={agenda} />
@@ -333,10 +222,9 @@ export default async function AgendaPage({
             </div>
           ))}
 
-          {/* Selesai section in "semua" view */}
           {view === "semua" && selesai.length > 0 && (
             <div className="space-y-2.5">
-              <SectionLabel label="✅ Selesai" count={selesai.length} />
+              <SectionGroupHeader label="✅ Selesai" count={selesai.length} />
               <div className="space-y-2 opacity-75">
                 {selesai.map((agenda) => (
                   <AgendaCard key={agenda._id.toString()} agenda={agenda} />
@@ -347,7 +235,6 @@ export default async function AgendaPage({
         </div>
       )}
 
-      {/* ── Flat list (selesai view / kategori filter) ── */}
       {!grouped && displayed.length > 0 && (
         <div className="space-y-2">
           {displayed.map((agenda) => (

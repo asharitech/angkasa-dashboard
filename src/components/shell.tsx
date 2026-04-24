@@ -155,41 +155,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-3">
-          <p className="px-3 pb-1.5 pt-1 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Yayasan
-          </p>
-          <div className="space-y-0.5">
-            {yayasanNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Pribadi
-          </p>
-          <div className="space-y-0.5">
-            {pribadiNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Monitor
-          </p>
-          <div className="space-y-0.5">
-            {monitorNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-
-          <p className="px-3 pb-1.5 pt-4 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-            Admin
-          </p>
-          <div className="space-y-0.5">
-            {adminNav.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
+          {(
+            [
+              { label: "Yayasan", items: yayasanNav, first: true },
+              { label: "Pribadi", items: pribadiNav, first: false },
+              { label: "Monitor", items: monitorNav, first: false },
+              { label: "Admin",   items: adminNav,   first: false },
+            ] as const
+          ).map(({ label, items, first }) => (
+            <div key={label}>
+              <p className={cn("px-3 pb-1.5 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider", first ? "pt-1" : "pt-4")}>
+                {label}
+              </p>
+              <div className="space-y-0.5">
+                {items.map((item) => (
+                  <NavLink key={item.href} {...item} />
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
         <div className="border-t border-border/60 p-3">
           <button
