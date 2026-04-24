@@ -5,18 +5,18 @@ import {
   getLaporanOpReconciliation,
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
-import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
-import { kewajibanRows } from "@/lib/kewajiban-display";
+import { formatRupiah, formatRupiahCompact, formatDate, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
-import { StatusBadge } from "@/components/status-badge";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
-import { InsightLinkCard, NavChevronLink } from "@/components/link-insight";
+import { NavChevronLink } from "@/components/link-insight";
 import { StatRowRupiah } from "@/components/stat-row";
 import { Badge } from "@/components/ui/badge";
+import { IconBadge } from "@/components/primitives/icon-badge";
+import { BalanceSheetPanel } from "@/components/dashboard/balance-sheet-panel";
+import { TaskListPanel } from "@/components/dashboard/task-list-panel";
 import {
   Landmark,
   Building2,
@@ -24,8 +24,6 @@ import {
   Receipt,
   Banknote,
   Truck,
-  ShieldAlert,
-  GitCompare,
   Wallet,
   FileText,
   CalendarDays,
@@ -54,7 +52,6 @@ export default async function DashboardPage() {
   const activeCount = sewaLocations.filter((l) => l.status === "active").length;
   const cashSisa = data.cashYayasan.sisa;
 
-  // dana_efektif is already saldo − kewajiban per ledger schema. Do not subtract again.
   const healthRatio = saldo > 0 ? danaEfektif / saldo : 0;
   const health = (() => {
     if (healthRatio >= 0.8) return { label: "Sangat Sehat", tone: "success" as const };
@@ -76,148 +73,171 @@ export default async function DashboardPage() {
 
   const yayasanAccounts = data.accounts.filter((a) => a.type === "yayasan");
 
-  const kpis: KpiItem[] = [
-    {
-      label: "Saldo BTN",
-      value: formatRupiah(saldo),
-      rawAmount: saldo,
-      icon: FileText,
-      tone: "primary",
-      hint: "Per Laporan Op",
-      href: "/laporan-op",
-      compact: true,
-    },
-    {
-      label: "Sewa Aktif",
-      value: formatRupiah(sewaTotal),
-      rawAmount: sewaTotal,
-      icon: Building2,
-      tone: "success",
-      hint: `${activeCount}/${sewaLocations.length} lokasi`,
-      href: "/sewa",
-      compact: true,
-    },
-    {
-      label: "Cash Yayasan",
-      value: formatRupiah(cashSisa),
-      rawAmount: cashSisa,
-      icon: Banknote,
-      tone: "warning",
-      hint: `Terpakai ${formatRupiah(data.cashYayasan.terpakai)}`,
-      href: "/dana-cash",
-      compact: true,
-    },
-    {
-      label: "Pengajuan",
-      value: String(data.pengajuanPending),
-      icon: Receipt,
-      tone: "danger",
-      hint: data.pengajuanTotalAmount > 0 ? formatRupiah(data.pengajuanTotalAmount) : "Tidak ada pending",
-      href: "/pengajuan",
-    },
-  ];
+  const wajibTotal = data.wajibBulanan.reduce((s, w) => s + (w.amount ?? 0), 0);
+  const runway = wajibTotal > 0 ? danaEfektif / wajibTotal : null;
+  const wajibPct = danaEfektif > 0 && wajibTotal > 0
+    ? Math.round((wajibTotal / danaEfektif) * 100)
+    : 0;
+
+  // Pengajuan by requestor: max amount for bar scaling
+  const pengajuanMax = data.pengajuanByRequestor[0]?.total ?? 1;
 
   return (
     <div className="space-y-5">
-      <PageHeader icon={Landmark} title="Yayasan YRBB" />
-
-      {/* Hero tile — Dana Efektif */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/5 to-transparent p-5 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-muted-foreground">Dana Efektif</p>
-            <p className="mt-1 text-3xl font-bold tabular-nums md:text-4xl">
-              {formatRupiah(danaEfektif)}
-            </p>
-            {displayDate && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                per {formatDate(displayDate)}
-              </p>
-            )}
-          </div>
-          <div className="shrink-0">
-            <Badge
-              variant={
-                health.tone === "success"
-                  ? "success"
-                  : health.tone === "warning"
-                    ? "warning"
-                    : "destructive"
-              }
-              className="px-2.5 py-1 text-xs font-semibold"
-            >
-              {health.label}
-            </Badge>
-          </div>
+      {/* Mobile-only hero card */}
+      <div className="md:hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-5 shadow-md">
+        <div className="text-xs font-medium opacity-75 flex items-center gap-1.5">
+          <Landmark className="h-3 w-3" />
+          Yayasan YRBB
+          {displayDate && ` · per ${formatDate(displayDate)}`}
         </div>
-        {totalKewajiban > 0 && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Saldo {formatRupiah(saldo)} − kewajiban {formatRupiah(totalKewajiban)}
-          </p>
-        )}
+        <div className="mt-3 text-3xl font-bold tabular-nums tracking-tight">
+          {formatRupiah(danaEfektif)}
+        </div>
+        <div className="text-sm font-medium opacity-90 mt-1">
+          Dana Efektif · {health.label}
+        </div>
+        <div className="mt-3 h-1.5 rounded-full bg-white/20 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-white/70"
+            style={{ width: `${Math.round(healthRatio * 100)}%` }}
+          />
+        </div>
+        <div className="mt-2 text-xs opacity-75">
+          {formatRupiahCompact(saldo)} saldo − {formatRupiahCompact(totalKewajiban)} kewajiban
+        </div>
       </div>
 
-      {/* Combined alert strip — integrity + reconciliation */}
-      {(errorCount > 0 || warnCount > 0 || reconHasDiff) && (
-        <div className="space-y-2">
-          {(errorCount > 0 || warnCount > 0) && (
-            <InsightLinkCard
-              href="/audit"
-              tone={errorCount > 0 ? "danger" : "warning"}
-              icon={ShieldAlert}
-              title={errorCount > 0 ? `${errorCount} isu integritas` : `${warnCount} peringatan`}
-              hint={
-                errorCount > 0 && warnCount > 0
-                  ? `${errorCount} error · ${warnCount} warn`
-                  : "Review di Audit Data"
-              }
-            />
-          )}
-          {reconHasDiff && (
-            <InsightLinkCard
-              href="/laporan-op"
-              tone="warning"
-              icon={GitCompare}
-              title="Snapshot Laporan Op tidak sinkron"
-              hint={`Selisih ledger vs entries: ${formatRupiah(reconAmount)}`}
-            />
-          )}
-        </div>
-      )}
-
-      <KpiStrip items={kpis} cols={4} />
-
-      {/* Pengajuan summary — uses span when in 2-col but inline list */}
-      {data.pengajuanPending > 0 && (
-        <SectionCard
-          icon={Clock}
-          title="Pengajuan Belum Lunas"
-          tone="danger"
-          badge={
-            <Badge variant="secondary" className="ml-1 tabular-nums">
-              {data.pengajuanPending} item · {formatRupiah(data.pengajuanTotalAmount)}
-            </Badge>
-          }
-          action={<NavChevronLink href="/pengajuan" />}
-        >
-          {data.pengajuanByRequestor.length > 0 ? (
-            <div className="divide-y divide-border/60">
-              {data.pengajuanByRequestor.map((r) => (
-                <div key={r._id} className="flex items-center justify-between py-2">
-                  <span className="truncate text-sm font-medium text-muted-foreground">
-                    {formatRequestorName(r._id) || "—"}
-                  </span>
-                  <span className="ml-2 text-sm font-semibold tabular-nums">
-                    {formatRupiah(r.total)}
-                  </span>
-                </div>
-              ))}
+      {/* Mobile-only shortcut grid */}
+      <div className="md:hidden grid grid-cols-4 gap-2">
+        {[
+          {
+            href: "/pengajuan",
+            icon: Receipt,
+            label: "Pengajuan",
+            tone: "danger" as const,
+            count: data.pengajuanPending,
+          },
+          {
+            href: "/laporan-op",
+            icon: FileText,
+            label: "Laporan Op",
+            tone: "primary" as const,
+            count: 0,
+          },
+          {
+            href: "/sewa",
+            icon: Building2,
+            label: "Sewa",
+            tone: "success" as const,
+            count: 0,
+          },
+          {
+            href: "/dana-cash",
+            icon: Banknote,
+            label: "Cash",
+            tone: "warning" as const,
+            count: 0,
+          },
+        ].map((s) => (
+          <a
+            key={s.href}
+            href={s.href}
+            className="rounded-xl border border-border bg-card p-3 flex flex-col items-center gap-1.5 text-xs font-medium hover:bg-accent/50 transition-colors"
+          >
+            <div className="relative">
+              <IconBadge icon={s.icon} tone={s.tone} size="md" />
+              {s.count > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center">
+                  {s.count}
+                </span>
+              )}
             </div>
-          ) : null}
-        </SectionCard>
-      )}
+            <span className="text-muted-foreground">{s.label}</span>
+          </a>
+        ))}
+      </div>
 
-      {/* Pending transfers */}
+      <PageHeader icon={Landmark} title="Yayasan YRBB" />
+
+      {/* Balance sheet panel */}
+      <BalanceSheetPanel
+        saldo={saldo}
+        kewajiban={totalKewajiban}
+        danaEfektif={danaEfektif}
+        healthRatio={healthRatio}
+        healthLabel={health.label}
+        healthTone={health.tone}
+        displayDate={displayDate ? formatDate(displayDate) : null}
+      />
+
+      {/* 2-col: Pengajuan table | Task list */}
+      <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
+        {/* Pengajuan table */}
+        {data.pengajuanPending > 0 && (
+          <SectionCard
+            icon={Clock}
+            title="Pengajuan Belum Lunas"
+            tone="danger"
+            badge={
+              <Badge variant="secondary" className="ml-1 tabular-nums">
+                {data.pengajuanPending} item · {formatRupiahCompact(data.pengajuanTotalAmount)}
+              </Badge>
+            }
+            action={<NavChevronLink href="/pengajuan" />}
+            bodyClassName="p-0"
+          >
+            <table className="w-full text-sm">
+              <tbody>
+                {data.pengajuanByRequestor.map((r) => {
+                  const pct = Math.round((r.total / pengajuanMax) * 100);
+                  return (
+                    <tr key={r._id} className="border-t border-border/60 first:border-t-0">
+                      <td className="pl-4 py-3 pr-2 w-8">
+                        <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shrink-0">
+                          {(formatRequestorName(r._id) || "?").slice(0, 2).toUpperCase()}
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 min-w-0">
+                        <p className="truncate font-medium">
+                          {formatRequestorName(r._id) || "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{r.count} item</p>
+                      </td>
+                      <td className="py-3 px-2 hidden sm:table-cell">
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden w-24 md:w-32">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="py-3 pl-2 pr-4 text-right tabular-nums font-semibold whitespace-nowrap">
+                        {formatRupiahCompact(r.total)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </SectionCard>
+        )}
+
+        {/* Task list */}
+        <TaskListPanel
+          pengajuanPending={data.pengajuanPending}
+          pengajuanTotalAmount={data.pengajuanTotalAmount}
+          pendingTransfersCount={pendingTransfers.pending.length}
+          pendingTransfersTotal={pendingTransfers.totalExpected}
+          errorCount={errorCount}
+          warnCount={warnCount}
+          reconHasDiff={Boolean(reconHasDiff)}
+          reconAmount={reconAmount}
+          kewajiban={totalKewajiban}
+        />
+      </div>
+
+      {/* Pending transfers (standalone, if any) */}
       {pendingTransfers.pending.length > 0 && (
         <SectionCard
           icon={Truck}
@@ -225,7 +245,7 @@ export default async function DashboardPage() {
           tone="warning"
           badge={
             <Badge variant="warning" className="ml-1 tabular-nums">
-              {formatRupiah(pendingTransfers.totalExpected)}
+              {formatRupiahCompact(pendingTransfers.totalExpected)}
             </Badge>
           }
           action={<NavChevronLink href="/sewa" />}
@@ -255,60 +275,9 @@ export default async function DashboardPage() {
         </SectionCard>
       )}
 
-      {/* Kewajiban */}
-      {op?.kewajiban && op.kewajiban.total > 0 && (
-        <SectionCard
-          icon={Receipt}
-          title="Kewajiban"
-          tone="danger"
-          badge={
-            <Badge variant="destructive" className="ml-1 tabular-nums">
-              {formatRupiah(op.kewajiban.total)}
-            </Badge>
-          }
-          action={<NavChevronLink href="/laporan-op" />}
-        >
-          <div className="divide-y divide-border/60">
-            {kewajibanRows(op.kewajiban).map(([label, val]) => (
-              <StatRowRupiah key={label} label={label} amount={val} />
-            ))}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Wajib Bulanan Yayasan */}
-      {data.wajibBulanan && data.wajibBulanan.length > 0 && (
-        <SectionCard
-          icon={CalendarDays}
-          title="Wajib Bulanan Yayasan"
-          tone="warning"
-          badge={
-            <Badge variant="warning" className="ml-1 tabular-nums">
-              {formatRupiah(data.wajibBulanan.reduce((s, w) => s + (w.amount ?? 0), 0))}/bln
-            </Badge>
-          }
-          action={<NavChevronLink href="/wajib-bulanan" />}
-        >
-          <div className="divide-y divide-border/60">
-            {data.wajibBulanan.map((w) => (
-              <div key={idString(w._id)} className="flex items-center justify-between py-2.5">
-                <div className="min-w-0">
-                  <span className="truncate text-sm text-muted-foreground">{w.item}</span>
-                  {w.category && (
-                    <Badge variant="outline" className="ml-2 text-[10px]">
-                      {w.category.replace(/_/g, " ")}
-                    </Badge>
-                  )}
-                </div>
-                <span className="text-sm font-semibold tabular-nums">{formatRupiah(w.amount ?? 0)}</span>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* 2-col snapshot: Rekening + Sewa */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Bottom 3-col: Rekening | Sewa Dapur | Wajib Bulanan */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Rekening Yayasan */}
         {yayasanAccounts.length > 0 && (
           <SectionCard icon={Wallet} title="Rekening Yayasan" tone="info">
             <div className="divide-y divide-border/60">
@@ -333,6 +302,7 @@ export default async function DashboardPage() {
           </SectionCard>
         )}
 
+        {/* Sewa Dapur */}
         {data.sewa?.sewa && (
           <SectionCard
             icon={Building2}
@@ -340,18 +310,71 @@ export default async function DashboardPage() {
             tone="success"
             badge={
               <Badge variant="outline" className="ml-1 tabular-nums">
-                {activeCount}/{sewaLocations.length}
+                {activeCount}/{sewaLocations.length} aktif
               </Badge>
             }
             action={<NavChevronLink href="/sewa" />}
           >
-            <div className="divide-y divide-border/60">
-              {sewaLocations.slice(0, 8).map((loc) => (
-                <div key={loc.code} className="flex items-center justify-between py-2">
-                  <span className="truncate text-sm font-semibold">{loc.code}</span>
-                  <StatusBadge status={loc.status} size="sm" />
+            <div className="space-y-3">
+              <div>
+                <span className="text-xl font-bold tabular-nums">
+                  {formatRupiahCompact(sewaTotal)}
+                </span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  · {activeCount}/{sewaLocations.length} aktif
+                </span>
+              </div>
+              {sewaLocations.length > 0 && (
+                <div className="flex gap-1">
+                  {sewaLocations.map((loc) => (
+                    <div
+                      key={loc.code}
+                      className={`h-4 flex-1 rounded-sm ${loc.status === "active" ? "bg-success" : "bg-muted"}`}
+                      title={loc.code}
+                    />
+                  ))}
                 </div>
-              ))}
+              )}
+            </div>
+          </SectionCard>
+        )}
+
+        {/* Wajib Bulanan */}
+        {data.wajibBulanan && data.wajibBulanan.length > 0 && (
+          <SectionCard
+            icon={CalendarDays}
+            title="Wajib Bulanan"
+            tone="warning"
+            badge={
+              <Badge variant="warning" className="ml-1 tabular-nums">
+                {formatRupiahCompact(wajibTotal)}/bln
+              </Badge>
+            }
+            action={<NavChevronLink href="/wajib-bulanan" />}
+          >
+            <div className="space-y-3">
+              <div>
+                <span className="text-xl font-bold tabular-nums">
+                  {formatRupiahCompact(wajibTotal)}
+                </span>
+                <span className="text-xs text-muted-foreground ml-1">/bln</span>
+              </div>
+              {runway !== null && (
+                <p className="text-xs text-muted-foreground">
+                  Komitmen ≈ {wajibPct}% dari dana efektif · runway{" "}
+                  {runway.toFixed(1).replace(".", ",")} bln
+                </p>
+              )}
+              <div className="divide-y divide-border/60">
+                {data.wajibBulanan.map((w) => (
+                  <div key={idString(w._id)} className="flex items-center justify-between py-2">
+                    <span className="truncate text-xs text-muted-foreground">{w.item}</span>
+                    <span className="text-xs font-semibold tabular-nums">
+                      {formatRupiahCompact(w.amount ?? 0)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </SectionCard>
         )}
