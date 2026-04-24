@@ -312,7 +312,7 @@ export default async function DashboardPage() {
             tone="success"
             badge={
               <Badge variant="outline" className="ml-1 tabular-nums">
-                {activeCount}/{sewaLocations.length} aktif
+                {activeCount}/{sewaLocations.length}
               </Badge>
             }
             action={<NavChevronLink href="/sewa" />}
@@ -349,7 +349,7 @@ export default async function DashboardPage() {
             tone="warning"
             badge={
               <Badge variant="warning" className="ml-1 tabular-nums">
-                {formatRupiahCompact(wajibTotal)}/bln
+                {formatRupiahCompact(wajibTotal)}
               </Badge>
             }
             action={<NavChevronLink href="/wajib-bulanan" />}

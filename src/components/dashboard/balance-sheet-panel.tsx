@@ -64,7 +64,7 @@ export function BalanceSheetPanel({
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       {/* 3-column balance sheet */}
-      <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0">
+      <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-[1fr_1fr_1.4fr] md:divide-x md:divide-y-0">
         {/* Column 1: Saldo Total */}
         <div className="p-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -92,7 +92,7 @@ export function BalanceSheetPanel({
           <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/70">
             Dana Efektif
           </p>
-          <p className="mt-2 text-[40px] font-extrabold tabular-nums leading-tight tracking-tight text-primary">
+          <p className="mt-2 text-[28px] font-extrabold tabular-nums leading-tight tracking-tight text-primary md:text-[34px]">
             {formatRupiah(danaEfektif)}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
