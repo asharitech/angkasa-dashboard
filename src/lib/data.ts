@@ -603,3 +603,22 @@ export async function removeDuplicateObligations(keepFirst: boolean = true): Pro
 
   return { removed, savedAmount };
 }
+
+export async function getDashboardTrend(): Promise<{ month: string; net: number }[]> {
+  const c = dbCollections(await getDb());
+  const cutoff = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 11);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  })();
+  const rows = await c.entries.aggregate([
+    { $match: { domain: "laporan_op", month: { $gte: cutoff } } },
+    { $group: {
+      _id: "$month",
+      masuk: { $sum: { $cond: [{ $eq: ["$direction", "in"] }, "$amount", 0] } },
+      keluar: { $sum: { $cond: [{ $eq: ["$direction", "out"] }, "$amount", 0] } },
+    }},
+    { $sort: { _id: 1 } },
+  ]).toArray();
+  return rows.map((r) => ({ month: r._id as string, net: (r.masuk as number) - (r.keluar as number) }));
+}

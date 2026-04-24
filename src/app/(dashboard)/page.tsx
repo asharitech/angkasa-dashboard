@@ -3,6 +3,7 @@ import {
   getPendingTransfers,
   getDataIntegrityIssues,
   getLaporanOpReconciliation,
+  getDashboardTrend,
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRupiahCompact, formatDate, formatDateShort } from "@/lib/format";
@@ -32,12 +33,13 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [data, pendingTransfers, integrityIssues, recon, session] = await Promise.all([
+  const [data, pendingTransfers, integrityIssues, recon, session, trend] = await Promise.all([
     getDashboardSummary(),
     getPendingTransfers(),
     getDataIntegrityIssues(),
     getLaporanOpReconciliation(),
     getSession(),
+    getDashboardTrend(),
   ]);
   const isAdmin = session?.role === "admin";
   const errorCount = integrityIssues.filter((i) => i.severity === "error").length;
@@ -169,6 +171,7 @@ export default async function DashboardPage() {
         healthLabel={health.label}
         healthTone={health.tone}
         displayDate={displayDate ? formatDate(displayDate) : null}
+        trend={trend.length >= 2 ? trend.map((t) => t.net) : undefined}
       />
 
       {/* 2-col: Pengajuan table | Task list */}
@@ -233,7 +236,6 @@ export default async function DashboardPage() {
           warnCount={warnCount}
           reconHasDiff={Boolean(reconHasDiff)}
           reconAmount={reconAmount}
-          kewajiban={totalKewajiban}
         />
       </div>
 
@@ -276,7 +278,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Bottom 3-col: Rekening | Sewa Dapur | Wajib Bulanan */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-[1.3fr_1fr_1fr]">
         {/* Rekening Yayasan */}
         {yayasanAccounts.length > 0 && (
           <SectionCard icon={Wallet} title="Rekening Yayasan" tone="info">
@@ -353,17 +355,25 @@ export default async function DashboardPage() {
             action={<NavChevronLink href="/wajib-bulanan" />}
           >
             <div className="space-y-3">
-              <div>
-                <span className="text-xl font-bold tabular-nums">
-                  {formatRupiahCompact(wajibTotal)}
-                </span>
-                <span className="text-xs text-muted-foreground ml-1">/bln</span>
-              </div>
-              {runway !== null && (
-                <p className="text-xs text-muted-foreground">
-                  Komitmen ≈ {wajibPct}% dari dana efektif · runway{" "}
-                  {runway.toFixed(1).replace(".", ",")} bln
-                </p>
+              {runway !== null ? (
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold tabular-nums">
+                      {runway.toFixed(1).replace(".", ",")}
+                    </span>
+                    <span className="text-sm font-medium text-muted-foreground">bln runway</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Komitmen ≈ {wajibPct}% dari dana efektif
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <span className="text-xl font-bold tabular-nums">
+                    {formatRupiahCompact(wajibTotal)}
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-1">/bln</span>
+                </div>
               )}
               <div className="divide-y divide-border/60">
                 {data.wajibBulanan.map((w) => (

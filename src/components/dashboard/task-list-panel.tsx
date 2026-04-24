@@ -7,6 +7,7 @@ import {
   Receipt,
   CheckCircle2,
   ChevronRight,
+  ListChecks,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SectionCard } from "@/components/section-card";
@@ -32,7 +33,6 @@ export function TaskListPanel({
   warnCount,
   reconHasDiff,
   reconAmount,
-  kewajiban,
 }: {
   pengajuanPending: number;
   pengajuanTotalAmount: number;
@@ -42,7 +42,6 @@ export function TaskListPanel({
   warnCount: number;
   reconHasDiff: boolean;
   reconAmount: number;
-  kewajiban: number;
 }) {
   const tasks: TaskRow[] = [];
 
@@ -86,19 +85,9 @@ export function TaskListPanel({
     });
   }
 
-  if (kewajiban > 0) {
-    tasks.push({
-      icon: Receipt,
-      tone: "danger",
-      title: "Kewajiban",
-      detail: `${formatRupiahCompact(kewajiban)} tertunggak`,
-      href: "/laporan-op",
-    });
-  }
-
   return (
     <SectionCard
-      icon={Receipt}
+      icon={ListChecks}
       title="Perlu ditindak"
       tone="warning"
       badge={
