@@ -4,7 +4,6 @@ import type { DbDate, EntryDirection, EntryFields, ObligationDoc } from "./db/sc
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
-import { validateObligation, validateEntry } from "./validate";
 
 export async function getNumpang(): Promise<Numpang[]> {
   const c = dbCollections(await getDb());
@@ -63,59 +62,14 @@ export async function getObligationById(id: string): Promise<Obligation | null> 
   return c.obligations.findOne({ _id: new ObjectId(id) });
 }
 
-export async function updateObligation(id: string, data: Record<string, unknown>): Promise<void> {
-  const c = dbCollections(await getDb());
-  const existing = await c.obligations.findOne({ _id: new ObjectId(id) });
-  validateObligation({ ...(existing ?? {}), ...data });
-  await c.obligations.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { ...data, updated_at: new Date() } }
-  );
-}
-
-export async function deleteObligation(id: string): Promise<void> {
-  const c = dbCollections(await getDb());
-  await c.obligations.deleteOne({ _id: new ObjectId(id) });
-}
-
-export async function createObligation(data: Record<string, unknown>): Promise<string> {
-  validateObligation(data);
-  const c = dbCollections(await getDb());
-  const result = await c.obligations.insertOne({
-    ...data,
-    created_at: new Date(),
-    updated_at: new Date(),
-  } as Parameters<typeof c.obligations.insertOne>[0]);
-  return result.insertedId.toString();
-}
-
 export async function getEntries(filter: Filter<EntryFields> = {}, limit = 50): Promise<Entry[]> {
   const c = dbCollections(await getDb());
   return c.entries.find(filter).sort({ date: -1 }).limit(limit).toArray();
 }
 
-export async function createEntry(data: Record<string, unknown>): Promise<string> {
-  validateEntry(data);
-  const c = dbCollections(await getDb());
-  const result = await c.entries.insertOne({
-    ...data,
-    created_at: new Date(),
-    updated_at: new Date(),
-  } as Parameters<typeof c.entries.insertOne>[0]);
-  return result.insertedId.toString();
-}
-
 export async function deleteEntry(id: string): Promise<void> {
   const c = dbCollections(await getDb());
   await c.entries.deleteOne({ _id: new ObjectId(id) });
-}
-
-export async function updateAccount(id: string, data: Record<string, unknown>): Promise<void> {
-  const c = dbCollections(await getDb());
-  await c.accounts.updateOne(
-    { _id: id },
-    { $set: { ...data, updated_at: new Date() } }
-  );
 }
 
 function dbDateToDateOnlyString(d: DbDate | undefined | null): string | undefined {

@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import type { AgendaDoc } from "@/lib/db/schema";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -55,7 +56,7 @@ export async function createAgendaAction(input: AgendaInput): Promise<ActionResu
       updated_at: now,
     };
 
-    const result = await c.agenda.insertOne(doc as Parameters<typeof c.agenda.insertOne>[0]);
+    const result = await c.agenda.insertOne(doc);
     revalidatePath("/agenda");
     return { ok: true, id: result.insertedId.toString() };
   } catch (err) {
@@ -73,12 +74,12 @@ export async function updateAgendaAction(
     const existing = await c.agenda.findOne({ _id: new ObjectId(id) });
     if (!existing) return { error: "Agenda tidak ditemukan" };
 
-    const update: Record<string, unknown> = {
+    const update: Partial<AgendaDoc> & { updated_by: string; updated_at: Date } = {
       ...patch,
+      ...(patch.title ? { title: patch.title.trim() } : {}),
       updated_by: session.userId,
       updated_at: new Date(),
     };
-    if (patch.title) update.title = patch.title.trim();
 
     await c.agenda.updateOne(
       { _id: new ObjectId(id) },

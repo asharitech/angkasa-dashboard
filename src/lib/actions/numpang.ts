@@ -6,6 +6,7 @@ import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { validateNumpang } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import type { NumpangFields } from "@/lib/db/schema";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -26,7 +27,7 @@ export async function createNumpangAction(input: NumpangInput): Promise<ActionRe
     const session = await requireAdmin();
     const c = dbCollections(await getDb());
     const now = new Date();
-    const doc: Record<string, unknown> = {
+    const doc: NumpangFields = {
       description: input.description.trim(),
       amount: input.amount,
       parked_in: input.parked_in,
@@ -38,7 +39,7 @@ export async function createNumpangAction(input: NumpangInput): Promise<ActionRe
       updated_at: now,
     };
     validateNumpang(doc);
-    const result = await c.numpang.insertOne(doc as unknown as import("@/lib/db/schema").NumpangFields);
+    const result = await c.numpang.insertOne(doc);
     revalidatePath("/pribadi");
     revalidatePath("/");
     return { ok: true, id: result.insertedId.toString() };

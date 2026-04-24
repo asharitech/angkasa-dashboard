@@ -6,6 +6,7 @@ import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { validateObligation, validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import type { ObligationDoc, EntryFields } from "@/lib/db/schema";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -46,7 +47,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
     const session = await requireAdmin();
     const c = dbCollections(await getDb());
     const now = new Date();
-    const doc: Record<string, unknown> = {
+    const doc: Omit<ObligationDoc, "_id"> = {
       type: input.type,
       item: input.item.trim(),
       category: input.category,
@@ -69,7 +70,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
       updated_at: now,
     };
     validateObligation(doc);
-    const result = await c.obligations.insertOne(doc as unknown as Parameters<typeof c.obligations.insertOne>[0]);
+    const result = await c.obligations.insertOne(doc);
     revalidatePath("/pengajuan");
     revalidatePath("/wajib-bulanan");
     revalidatePath("/");
@@ -171,30 +172,30 @@ export async function markLunasAction(input: MarkLunasInput): Promise<ActionResu
     if (amount <= 0) return { error: "Jumlah harus lebih dari 0" };
 
     const month = monthFromDate(input.date);
-    const entryDoc: Record<string, unknown> = {
+    const now = new Date();
+    const entryDoc: EntryFields = {
       date: input.date,
       month,
       owner: oblig.owner ?? "yayasan",
       account: input.account,
       direction: "out",
       amount,
-      counterparty: (oblig.requestor as string | undefined) ?? "",
-      description: input.description?.trim() || (oblig.item as string),
+      counterparty: oblig.requestor ?? "",
+      description: input.description?.trim() || oblig.item,
       domain: oblig.owner === "personal" ? "personal" : "yayasan",
-      category: (oblig.category as string) ?? "pengajuan",
+      category: oblig.category ?? "pengajuan",
       source: "mark_lunas",
       dana_sumber: input.dana_sumber ?? null,
       tahap_sewa: input.tahap_sewa ?? null,
       obligation_id: input.obligationId,
       created_by: session.userId,
       updated_by: session.userId,
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: now,
+      updated_at: now,
     };
     validateEntry(entryDoc);
 
-    const now = new Date();
-    const entryResult = await c.entries.insertOne(entryDoc as Parameters<typeof c.entries.insertOne>[0]);
+    const entryResult = await c.entries.insertOne(entryDoc);
     await c.obligations.updateOne(
       { _id: toObjectId(input.obligationId) },
       {

@@ -3,6 +3,7 @@
 // Call validateObligation / validateEntry before insert or update operations.
 
 import { FUND_SOURCE_VALUES } from "./names";
+import type { ObligationFields, EntryFields, NumpangFields } from "./db/schema";
 
 export class ValidationError extends Error {
   constructor(msg: string) {
@@ -26,17 +27,17 @@ function require(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new ValidationError(msg);
 }
 
-export function validateObligation(doc: Record<string, unknown>): void {
-  const t = doc.type as string;
+export function validateObligation(doc: ObligationFields): void {
+  const t = doc.type;
   require(VALID_OBLIGATION_TYPES.has(t), `obligation.type invalid: ${t}`);
 
-  const status = doc.status as string | undefined;
+  const status = doc.status;
   if (status !== undefined) {
     require(VALID_OBLIGATION_STATUS.has(status), `obligation.status invalid: ${status}`);
   }
 
   if (doc.amount !== undefined && doc.amount !== null) {
-    const amt = doc.amount as number;
+    const amt = doc.amount;
     require(typeof amt === "number" && !Number.isNaN(amt), "obligation.amount must be numeric");
     require(amt >= 0, "obligation.amount must be non-negative");
   }
@@ -51,22 +52,21 @@ export function validateObligation(doc: Record<string, unknown>): void {
   }
 
   if (doc.sumber_dana != null) {
-    const sd = doc.sumber_dana as string;
+    const sd = doc.sumber_dana;
     require(VALID_SUMBER_DANA.has(sd),
       `obligation.sumber_dana invalid: ${sd}. Allowed: ${[...VALID_SUMBER_DANA].join(", ")}`);
   }
 }
 
-export function validateEntry(doc: Record<string, unknown>): void {
-  const direction = doc.direction as string;
+export function validateEntry(doc: EntryFields): void {
+  const direction = doc.direction;
   require(VALID_ENTRY_DIRECTIONS.has(direction),
     `entry.direction must be 'in' or 'out', got ${direction}`);
-  const amt = doc.amount as number;
-  require(typeof amt === "number" && amt > 0, "entry.amount must be positive number");
+  require(typeof doc.amount === "number" && doc.amount > 0, "entry.amount must be positive number");
   require(doc.account, "entry.account is required");
   require(doc.date, "entry.date is required");
 
-  const danaSumber = doc.dana_sumber as string | null | undefined;
+  const danaSumber = doc.dana_sumber;
   require(VALID_DANA_SUMBER.has(danaSumber),
     `entry.dana_sumber must be 'sewa', 'operasional', or null — got ${danaSumber}`);
 
@@ -75,14 +75,13 @@ export function validateEntry(doc: Record<string, unknown>): void {
   }
 }
 
-export function validateNumpang(doc: Record<string, unknown>): void {
+export function validateNumpang(doc: NumpangFields): void {
   require(doc.description, "numpang.description required");
   require(doc.parked_in, "numpang.parked_in required (e.g. bri_angkasa)");
-  const status = (doc.status ?? "active") as string;
+  const status = doc.status ?? "active";
   require(VALID_NUMPANG_STATUS.has(status), `numpang.status must be active|settled`);
-  const amt = doc.amount as number;
-  require(typeof amt === "number" && amt >= 0, "numpang.amount must be non-negative number");
+  require(typeof doc.amount === "number" && doc.amount >= 0, "numpang.amount must be non-negative number");
   if (status === "active") {
-    require(amt > 0, "active numpang must have positive amount");
+    require(doc.amount > 0, "active numpang must have positive amount");
   }
 }

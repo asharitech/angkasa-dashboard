@@ -91,7 +91,7 @@ export interface ObligationDoc {
   month?: string | null;
   sumber_dana?: string | null;
   status: string;
-  bukti_type?: string;
+  bukti_type?: string | null;
   bukti_ref?: string | null;
   bukti_url?: string | null;
   description?: string | null;
@@ -113,6 +113,7 @@ export interface ObligationDoc {
   audit_flagged_at?: DbDate;
   audit_note?: string;
   recovery_note?: string;
+  created_by?: string;
   updated_by?: string;
   created_at: DbDate;
   updated_at: DbDate;
@@ -304,6 +305,17 @@ export interface OmprengDoc {
   created_at: DbDate | string;
   updated_at: DbDate | string;
 }
+
+/**
+ * Insert-safe field types: same as *Doc but without `_id`.
+ * Use these as the Collection<T> generic so insertOne doesn't require _id.
+ * findOne/find return WithId<TFields> which is structurally identical to *Doc.
+ */
+export type ObligationFields = Omit<ObligationDoc, "_id">;
+export type AgendaFields = Omit<AgendaDoc, "_id">;
+export type LedgerFields = Omit<LedgerDoc, "_id">;
+export type DocumentFields = Omit<DocumentDoc, "_id">;
+export type OmprengFields = Omit<OmprengDoc, "_id">;
 
 /** API / integrity helpers (not a collection) */
 export interface DataIntegrityIssue {

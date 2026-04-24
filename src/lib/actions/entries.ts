@@ -7,6 +7,7 @@ import { dbCollections } from "@/lib/db/collections";
 import { validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { Entry } from "@/lib/types";
+import type { EntryFields } from "@/lib/db/schema";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -58,7 +59,7 @@ export async function createEntryAction(input: EntryInput): Promise<ActionResult
     const session = await requireAdmin();
     const c = dbCollections(await getDb());
     const now = new Date();
-    const doc: Record<string, unknown> = {
+    const doc: EntryFields = {
       date: input.date,
       month: monthFromDate(input.date),
       account: input.account,
@@ -79,7 +80,7 @@ export async function createEntryAction(input: EntryInput): Promise<ActionResult
       updated_at: now,
     };
     validateEntry(doc);
-    const result = await c.entries.insertOne(doc as Parameters<typeof c.entries.insertOne>[0]);
+    const result = await c.entries.insertOne(doc);
     revalidatePath("/aktivitas");
     revalidatePath("/");
     revalidatePath("/laporan-op");
@@ -98,15 +99,15 @@ export async function updateEntryAction(
     const c = dbCollections(await getDb());
     const existing = await c.entries.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Entry tidak ditemukan" };
-    const merged = { ...existing, ...patch };
-    if (patch.date) (merged as Record<string, unknown>).month = monthFromDate(patch.date);
+    const month = patch.date ? monthFromDate(patch.date) : undefined;
+    const merged: EntryFields = { ...existing, ...patch, ...(month ? { month } : {}) };
     validateEntry(merged);
-    const update: Record<string, unknown> = {
+    const update: Partial<EntryFields> & { updated_by: string; updated_at: Date } = {
       ...patch,
+      ...(month ? { month } : {}),
       updated_by: session.userId,
       updated_at: new Date(),
     };
-    if (patch.date) update.month = monthFromDate(patch.date);
     await c.entries.updateOne({ _id: toObjectId(id) }, { $set: update });
     revalidatePath("/aktivitas");
     revalidatePath("/");
