@@ -89,7 +89,7 @@ export default async function OmprengPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader icon={UtensilsCrossed} title="Data Ompreng Dapur">
         {isAdmin && <OmprengAddButton />}
       </PageHeader>

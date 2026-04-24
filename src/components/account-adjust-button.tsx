@@ -83,13 +83,7 @@ function AdjustForm({
           required
         />
         {Number.isFinite(newBalanceNum) && delta !== 0 && (
-          <p
-            className={
-              delta > 0
-                ? "text-xs text-emerald-600"
-                : "text-xs text-rose-600"
-            }
-          >
+          <p className={delta > 0 ? "text-xs text-success" : "text-xs text-destructive"}>
             {delta > 0 ? "+" : "−"}
             {formatRupiah(Math.abs(delta))} akan dicatat sebagai entry{" "}
             {delta > 0 ? "masuk" : "keluar"} dengan kategori balance_adjustment
@@ -118,7 +112,7 @@ function AdjustForm({
       </div>
 
       {error && (
-        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
       <div className="flex gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>

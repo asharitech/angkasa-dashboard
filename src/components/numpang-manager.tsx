@@ -17,18 +17,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  CheckCircle2,
-  Loader2,
-  AlertTriangle,
-} from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle2, Loader2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import {
   createNumpangAction,
   updateNumpangAction,
@@ -149,7 +142,7 @@ function NumpangForm({
         />
       </div>
       {error && (
-        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
       <div className="flex gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
@@ -222,7 +215,7 @@ export function NumpangRowActions({ numpang }: { numpang: Numpang }) {
         <Button
           variant="ghost"
           size="icon-sm"
-          className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+          className="text-success hover:bg-success/10 hover:text-success"
           onClick={() => setOpen("settle")}
           aria-label="Settle"
           title="Tandai selesai"
@@ -241,7 +234,7 @@ export function NumpangRowActions({ numpang }: { numpang: Numpang }) {
       <Button
         variant="ghost"
         size="icon-sm"
-        className="text-destructive hover:bg-rose-50 hover:text-destructive"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         onClick={() => setOpen("delete")}
         aria-label="Hapus"
       >
@@ -257,80 +250,37 @@ export function NumpangRowActions({ numpang }: { numpang: Numpang }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={open === "settle"}
-        onOpenChange={(o) => {
-          if (!o && !pending) close();
-        }}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" />
-              </div>
-              <DialogTitle>Tandai selesai?</DialogTitle>
-            </div>
-            <DialogDescription>
-              <span className="font-semibold">{numpang.description}</span>
-              {" "}({formatRupiah(numpang.amount)}) akan ditandai selesai dan tidak akan dihitung
-              di saldo BRI kas.
-            </DialogDescription>
-          </DialogHeader>
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={close} disabled={pending}>
-              Batal
-            </Button>
-            <Button
-              onClick={() => runAction(() => settleNumpangAction(idString(numpang._id)))}
-              disabled={pending}
-            >
-              {pending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Tandai Selesai
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(o) => !o && close()}
+        title="Tandai selesai?"
+        description={
+          <>
+            <span className="font-semibold">{numpang.description}</span>
+            {" "}({formatRupiah(numpang.amount)}) akan ditandai selesai dan tidak akan dihitung
+            di saldo BRI kas.
+          </>
+        }
+        confirmLabel="Tandai Selesai"
+        confirmVariant="default"
+        icon={CheckCircle2}
+        onConfirm={() => runAction(() => settleNumpangAction(idString(numpang._id)))}
+        pending={pending}
+        error={error}
+      />
 
-      <Dialog
+      <ConfirmDialog
         open={open === "delete"}
-        onOpenChange={(o) => {
-          if (!o && !pending) close();
-        }}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                <AlertTriangle className="h-4 w-4" />
-              </div>
-              <DialogTitle>Hapus numpang?</DialogTitle>
-            </div>
-            <DialogDescription>
-              <span className="font-semibold">{numpang.description}</span> akan dihapus permanen.
-            </DialogDescription>
-          </DialogHeader>
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={close} disabled={pending}>
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => runAction(() => deleteNumpangAction(idString(numpang._id)))}
-              disabled={pending}
-            >
-              {pending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Hapus
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(o) => !o && close()}
+        title="Hapus numpang?"
+        description={
+          <><span className="font-semibold">{numpang.description}</span> akan dihapus permanen.</>
+        }
+        confirmLabel="Hapus"
+        onConfirm={() => runAction(() => deleteNumpangAction(idString(numpang._id)))}
+        pending={pending}
+        error={error}
+      />
     </div>
   );
 }

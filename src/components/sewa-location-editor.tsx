@@ -198,7 +198,7 @@ function Form({
       </div>
 
       {error && (
-        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
       <div className="flex gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>

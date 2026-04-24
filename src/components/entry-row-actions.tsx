@@ -83,7 +83,7 @@ export function EntryRowActions({
       <Button
         variant="ghost"
         size="icon-sm"
-        className="text-destructive hover:bg-rose-50 hover:text-destructive"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         onClick={() => setOpen("delete")}
         aria-label="Hapus"
         title={hasObligationLink ? "Terkait pengajuan lunas" : "Hapus"}

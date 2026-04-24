@@ -7,7 +7,7 @@ import { formatRupiah, formatDateShort } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { BuktiButton } from "@/components/bukti-button";
 import { PengajuanRowActions } from "@/components/pengajuan-row-actions";
-import { obligationStatusTone, toneBadge } from "@/lib/colors";
+import { obligationStatusTone, toneVariant } from "@/lib/colors";
 import { formatFundSource, formatStatusLabel } from "@/lib/names";
 import type { Account, Obligation } from "@/lib/types";
 
@@ -67,10 +67,8 @@ export function PengajuanAccordionRow({
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <Badge
-                className={cn(
-                  "h-5 px-2 font-medium",
-                  toneBadge[obligationStatusTone(o.status)],
-                )}
+                variant={toneVariant(obligationStatusTone(o.status))}
+                className="h-5 px-2 font-medium"
               >
                 {formatStatusLabel(o.status)}
               </Badge>

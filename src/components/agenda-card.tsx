@@ -69,7 +69,7 @@ function CountdownPill({ dueDate, status }: { dueDate: string; status: string })
     );
   if (ds === "besok")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/5 px-2 py-0.5 text-[11px] font-semibold text-warning ring-1 ring-warning/10">
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning ring-1 ring-warning/20">
         <Clock className="h-3 w-3" />
         Besok
       </span>

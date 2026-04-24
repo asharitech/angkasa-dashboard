@@ -37,11 +37,11 @@ function getDaysUntilDue(dueDay: number | null | undefined): number | null {
 }
 
 function getUrgencyColor(daysUntil: number | null, isLunas: boolean): string {
-  if (isLunas) return "text-emerald-600 bg-emerald-50 border-emerald-200";
+  if (isLunas) return "text-success bg-success/10 border-success/20";
   if (daysUntil === null) return "text-muted-foreground bg-muted";
-  if (daysUntil <= 3) return "text-rose-600 bg-rose-50 border-rose-200";
-  if (daysUntil <= 7) return "text-amber-600 bg-amber-50 border-amber-200";
-  return "text-blue-600 bg-blue-50 border-blue-200";
+  if (daysUntil <= 3) return "text-destructive bg-destructive/10 border-destructive/20";
+  if (daysUntil <= 7) return "text-warning bg-warning/10 border-warning/20";
+  return "text-info bg-info/10 border-info/20";
 }
 
 export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: WajibBulananRowProps) {
@@ -88,7 +88,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
   }
 
   return (
-    <div className={cn("py-3", isLunas && "bg-emerald-50/30")}>
+    <div className={cn("py-3", isLunas && "bg-success/5")}>
       {/* Summary row */}
       <button
         type="button"
@@ -99,8 +99,8 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
           {/* Checkbox / Number */}
           <div className="mt-0.5 flex shrink-0 items-center gap-2">
             {isLunas ? (
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15">
+                <CheckCircle2 className="h-4 w-4 text-success" />
               </div>
             ) : (
               <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-muted-foreground/30">
@@ -125,9 +125,9 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
                   <Badge
                     className={cn(
                       "h-5 px-2 text-[10px] font-medium",
-                      isLunas 
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-200" 
-                        : "bg-amber-100 text-amber-700 border-amber-200"
+                      isLunas
+                        ? "bg-success/10 text-success border-success/20"
+                        : "bg-warning/10 text-warning border-warning/20"
                     )}
                   >
                     {isLunas ? "Sudah Dibayar" : "Belum Dibayar"}
@@ -162,7 +162,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
 
                   {/* Reminder badge */}
                   {item.reminder_days && !isLunas && (
-                    <Badge variant="outline" className="h-5 px-2 text-[10px] font-medium text-blue-600 bg-blue-50 border-blue-200">
+                    <Badge variant="outline" className="h-5 px-2 text-[10px] font-medium text-info bg-info/10 border-info/20">
                       <Bell className="h-3 w-3 mr-1" />
                       H-{item.reminder_days}
                     </Badge>
@@ -245,7 +245,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>Dibuat {formatDateShort(item.created_at)}</span>
                 {item.resolved_at && (
-                  <span className="text-emerald-600">• Dibayar {formatDateShort(item.resolved_at)}</span>
+                  <span className="text-success">• Dibayar {formatDateShort(item.resolved_at)}</span>
                 )}
               </div>
               
@@ -265,7 +265,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
                   ) : (
                     <Button
                       size="sm"
-                      className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                      className="h-7 text-xs bg-success hover:bg-success/90"
                       onClick={handleMarkLunas}
                       disabled={marking}
                     >

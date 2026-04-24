@@ -240,8 +240,8 @@ export function AgendaRowActions({ agenda }: { agenda: AgendaDoc }) {
         className={cn(
           "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-150",
           agenda.status === "selesai"
-            ? "border-emerald-500 bg-emerald-500 text-white"
-            : "border-muted-foreground/40 text-transparent hover:border-emerald-400 hover:text-emerald-400",
+            ? "border-success bg-success text-white"
+            : "border-muted-foreground/40 text-transparent hover:border-success hover:text-success",
           pending && "opacity-50 cursor-wait",
         )}
       >

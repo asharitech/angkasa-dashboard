@@ -44,7 +44,7 @@ export const KATEGORI_DOC_CONFIG: Record<
   sk:         { label: "SK",          emoji: "🏛️", cls: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20" },
   surat:      { label: "Surat",       emoji: "✉️", cls: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
   kontrak:    { label: "Kontrak",     emoji: "🤝", cls: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  laporan:    { label: "Laporan",     emoji: "📊", cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
+  laporan:    { label: "Laporan",     emoji: "📊", cls: "bg-success/10 text-success border-success/20" },
   perizinan:  { label: "Perizinan",   emoji: "✅", cls: "bg-teal-500/10 text-teal-600 border-teal-500/20" },
   keuangan:   { label: "Keuangan",    emoji: "💰", cls: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   lainnya:    { label: "Lainnya",     emoji: "📁", cls: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
@@ -134,7 +134,7 @@ export function DocumentUploadButton() {
                 dragOver
                   ? "border-primary bg-primary/5"
                   : selectedFile
-                  ? "border-emerald-500/60 bg-emerald-500/5"
+                  ? "border-success/60 bg-success/5"
                   : "border-border/60 bg-muted/20 hover:border-primary/40 hover:bg-muted/40",
               )}
             >
@@ -150,11 +150,11 @@ export function DocumentUploadButton() {
               />
               {selectedFile ? (
                 <>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                    <FileText className="h-5 w-5 text-emerald-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10">
+                    <FileText className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-emerald-600">{selectedFile.name}</p>
+                    <p className="text-sm font-medium text-success">{selectedFile.name}</p>
                     <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">Klik untuk ganti file</p>

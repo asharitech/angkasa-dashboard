@@ -77,7 +77,7 @@ export function BuktiButton({
           className={cn(
             "inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded p-0 text-sm transition-colors hover:bg-accent",
             hasBukti
-              ? "text-emerald-600 hover:text-emerald-700"
+              ? "text-success hover:text-success/80"
               : "text-muted-foreground hover:text-foreground",
           )}
           title={hasBukti ? "Lihat bukti" : "Upload bukti"}
