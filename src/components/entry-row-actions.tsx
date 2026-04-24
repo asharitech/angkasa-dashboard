@@ -14,12 +14,9 @@ import {
 import { Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { EntryForm } from "./entry-form";
 import { deleteEntryAction, getEntryByIdAction } from "@/lib/actions/entries";
-import { createEntryAction as _createEntry } from "@/lib/actions/entries";
 import type { Entry, Account } from "@/lib/types";
 
 type DialogKind = "edit" | "delete" | null;
-
-void _createEntry;
 
 export function EntryRowActions({
   entryId,

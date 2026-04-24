@@ -3,7 +3,7 @@ import { dbCollections } from "@/lib/db/collections";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { FilterTabs } from "@/components/filter-bar";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import {
   AgendaCreateButton,
   type AgendaDoc,
@@ -227,7 +227,7 @@ export default async function AgendaPage({
     ? groupAgenda(displayed.filter((a) => a.status === "belum"))
     : null;
 
-  const tabs: import("@/components/filter-bar").FilterTab[] = [
+  const tabs: FilterTab[] = [
     { label: "Belum Selesai", href: "/agenda?view=belum",  active: view === "belum",  count: belum.length },
     { label: "Selesai",       href: "/agenda?view=selesai",active: view === "selesai",count: selesai.length },
     { label: "Semua",         href: "/agenda?view=semua",  active: view === "semua",  count: all.length },
