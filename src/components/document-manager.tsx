@@ -25,7 +25,6 @@ import {
   type DocKategori,
 } from "@/lib/actions/documents";
 import {
-  Plus,
   Upload,
   Trash2,
   Pencil,

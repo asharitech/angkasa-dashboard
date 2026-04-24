@@ -7,7 +7,7 @@ import {
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDate, formatDateShort } from "@/lib/format";
 import { kewajibanRows } from "@/lib/kewajiban-display";
-import { cn, idString } from "@/lib/utils";
+import { idString } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
@@ -136,18 +136,18 @@ export default async function DashboardPage() {
             )}
           </div>
           <div className="shrink-0">
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold",
+            <Badge
+              variant={
                 health.tone === "success"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  ? "success"
                   : health.tone === "warning"
-                    ? "border-amber-200 bg-amber-50 text-amber-700"
-                    : "border-rose-200 bg-rose-50 text-rose-700",
-              )}
+                    ? "warning"
+                    : "destructive"
+              }
+              className="px-2.5 py-1 text-xs font-semibold"
             >
               {health.label}
-            </span>
+            </Badge>
           </div>
         </div>
         {totalKewajiban > 0 && (
@@ -224,9 +224,9 @@ export default async function DashboardPage() {
           title="Menunggu Transfer Masuk"
           tone="warning"
           badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-amber-700">
+            <Badge variant="warning" className="ml-1 tabular-nums">
               {formatRupiah(pendingTransfers.totalExpected)}
-            </span>
+            </Badge>
           }
           action={<NavChevronLink href="/sewa" />}
         >
@@ -262,9 +262,9 @@ export default async function DashboardPage() {
           title="Kewajiban"
           tone="danger"
           badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
+            <Badge variant="destructive" className="ml-1 tabular-nums">
               {formatRupiah(op.kewajiban.total)}
-            </span>
+            </Badge>
           }
           action={<NavChevronLink href="/laporan-op" />}
         >
@@ -283,10 +283,11 @@ export default async function DashboardPage() {
           title="Wajib Bulanan Yayasan"
           tone="warning"
           badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-amber-700">
+            <Badge variant="warning" className="ml-1 tabular-nums">
               {formatRupiah(data.wajibBulanan.reduce((s, w) => s + (w.amount ?? 0), 0))}/bln
-            </span>
+            </Badge>
           }
+          action={<NavChevronLink href="/wajib-bulanan" />}
         >
           <div className="divide-y divide-border/60">
             {data.wajibBulanan.map((w) => (

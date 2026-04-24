@@ -12,8 +12,7 @@ import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { PengajuanCreateButton } from "@/components/pengajuan-row-actions";
 import { PengajuanAccordionRow } from "@/components/pengajuan-accordion";
 import { Badge } from "@/components/ui/badge";
-import { toneBadge } from "@/lib/colors";
-import { cn, idString } from "@/lib/utils";
+import { idString } from "@/lib/utils";
 import { ListSectionTitle } from "@/components/list-section-title";
 import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
 import type { Obligation, Account } from "@/lib/types";
@@ -52,12 +51,6 @@ function groupByRequestor(items: Obligation[]) {
   return Object.entries(grouped).sort(
     (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
   );
-}
-
-function itemDate(o: Obligation) {
-  if (o.status === "lunas" && o.resolved_at) return o.resolved_at;
-  if (o.date_spent) return o.date_spent;
-  return o.created_at;
 }
 
 // PengajuanRow replaced by PengajuanAccordionRow (client component with animation)
@@ -211,7 +204,7 @@ export default async function PengajuanPage({
     <div className="space-y-5">
       <PageHeader icon={Receipt} title="Pengajuan">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={cn("font-semibold", toneBadge.warning)}>
+          <Badge variant="warning" className="font-semibold">
             {pendingItems.length} pending · {formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0))}
           </Badge>
           {isAdmin && <PengajuanCreateButton />}

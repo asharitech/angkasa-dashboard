@@ -7,6 +7,7 @@ import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { DataTable } from "@/components/data-table";
 import { StatRowRupiah } from "@/components/stat-row";
+import { Badge } from "@/components/ui/badge";
 import {
   FileText,
   TrendingUp,
@@ -87,12 +88,12 @@ export default async function LaporanOpPage() {
           icon={GitCompare}
           title="Rekonsiliasi: Ledger vs Entries"
           tone="warning"
-          className="border-amber-200 bg-amber-50/30"
+          className="border-warning/20 bg-warning/10"
         >
           <p className="mb-2 text-xs text-muted-foreground">
             Snapshot Laporan Op vs hitungan live (account: btn_yayasan).
           </p>
-          <div className="divide-y divide-amber-200/60">
+          <div className="divide-y divide-warning/20">
             <ReconRow
               label="Masuk"
               ledger={recon.ledgerMasuk}
@@ -121,9 +122,9 @@ export default async function LaporanOpPage() {
         title="Kewajiban"
         tone="danger"
         badge={
-          <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
+          <Badge variant="destructive" className="ml-1 tabular-nums">
             {formatRupiah(kewajiban.total)}
-          </span>
+          </Badge>
         }
       >
         <div className="divide-y divide-border/60">
@@ -181,7 +182,7 @@ export default async function LaporanOpPage() {
               align: "right",
               cell: (r) =>
                 r.masuk > 0 ? (
-                  <span className="font-semibold text-emerald-600">{formatRupiah(r.masuk)}</span>
+                  <span className="font-semibold text-success">{formatRupiah(r.masuk)}</span>
                 ) : (
                   ""
                 ),
@@ -192,7 +193,7 @@ export default async function LaporanOpPage() {
               align: "right",
               cell: (r) =>
                 r.keluar > 0 ? (
-                  <span className="font-semibold text-rose-600">{formatRupiah(r.keluar)}</span>
+                  <span className="font-semibold text-destructive">{formatRupiah(r.keluar)}</span>
                 ) : (
                   ""
                 ),
@@ -235,7 +236,7 @@ function ReconRow({
       <div className="text-right">
         <p className="text-[10px] uppercase text-muted-foreground">Selisih</p>
         <p
-          className={`font-bold tabular-nums ${diff !== 0 ? "text-amber-700" : "text-emerald-700"}`}
+          className={`font-bold tabular-nums ${diff !== 0 ? "text-warning" : "text-success"}`}
         >
           {diff > 0 ? "+" : ""}
           {formatRupiah(diff)}

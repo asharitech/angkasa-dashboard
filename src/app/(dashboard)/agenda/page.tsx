@@ -87,12 +87,12 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
             className={cn(
               "font-bold",
               pct === 100
-                ? "text-emerald-600"
+                ? "text-success"
                 : pct >= 60
-                ? "text-blue-500"
+                ? "text-info"
                 : pct >= 30
-                ? "text-amber-500"
-                : "text-rose-500",
+                ? "text-warning"
+                : "text-destructive",
             )}
           >
             ({pct}%)
@@ -248,16 +248,16 @@ export default async function AgendaPage({
             className={cn(
               "flex flex-col items-center justify-center rounded-2xl border p-3 text-center shadow-sm",
               mendesak > 0
-                ? "border-rose-400/40 bg-gradient-to-b from-rose-500/8 to-rose-500/4"
+                ? "border-destructive/40 bg-gradient-to-b from-destructive/8 to-destructive/4"
                 : "border-border/60 bg-card",
             )}
           >
             {mendesak > 0 ? (
-              <AlertCircle className="mb-1 h-4 w-4 text-rose-500" />
+              <AlertCircle className="mb-1 h-4 w-4 text-destructive" />
             ) : (
               <Flame className="mb-1 h-4 w-4 text-muted-foreground/30" />
             )}
-            <p className={cn("text-2xl font-bold tabular-nums leading-none", mendesak > 0 ? "text-rose-600" : "text-foreground")}>
+            <p className={cn("text-2xl font-bold tabular-nums leading-none", mendesak > 0 ? "text-destructive" : "text-foreground")}>
               {mendesak}
             </p>
             <p className="mt-1 text-[10px] text-muted-foreground">Mendesak</p>
@@ -269,9 +269,9 @@ export default async function AgendaPage({
             <p className="mt-1 text-[10px] text-muted-foreground">Belum selesai</p>
           </div>
           {/* Selesai */}
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center shadow-sm">
-            <CalendarCheck2 className="mb-1 h-4 w-4 text-emerald-500" />
-            <p className="text-2xl font-bold tabular-nums leading-none text-emerald-600">{selesai.length}</p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-success/20 bg-success/5 p-3 text-center shadow-sm">
+            <CalendarCheck2 className="mb-1 h-4 w-4 text-success" />
+            <p className="text-2xl font-bold tabular-nums leading-none text-success">{selesai.length}</p>
             <p className="mt-1 text-[10px] text-muted-foreground">Selesai</p>
           </div>
         </div>

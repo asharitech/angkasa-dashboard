@@ -5,8 +5,6 @@ import { PeriodPicker } from "@/components/period-picker";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { toneBadge } from "@/lib/colors";
-import { cn } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +21,8 @@ export default async function DuplikatPage({
     <div className="space-y-5">
       <PageHeader icon={AlertTriangle} title="Cek Duplikat">
         <Badge
-          className={cn(
-            "font-semibold",
-            dupes.length === 0 ? toneBadge.success : toneBadge.warning,
-          )}
+          variant={dupes.length === 0 ? "success" : "warning"}
+          className="font-semibold"
         >
           {dupes.length} grup
         </Badge>
@@ -55,7 +51,7 @@ export default async function DuplikatPage({
             <SectionCard
               key={group.key}
               tone="warning"
-              className="border-amber-200"
+              className="border-warning/20 bg-warning/5"
               title={`${formatDate(group.date)} · ${formatRupiah(group.amount)}`}
               badge={
                 <Badge variant="outline" className="ml-1 text-xs">

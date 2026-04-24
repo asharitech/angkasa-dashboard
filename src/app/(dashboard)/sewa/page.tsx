@@ -12,7 +12,7 @@ import { SewaTabs } from "@/components/sewa-tabs";
 import { StatusBadge } from "@/components/status-badge";
 import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { Badge } from "@/components/ui/badge";
-import { toneBadge, type Tone } from "@/lib/colors";
+import { toneVariant, type Tone } from "@/lib/colors";
 import { cn, idString } from "@/lib/utils";
 import {
   Building2,
@@ -190,7 +190,7 @@ return (
                               )}
                             </div>
                             {regionMismatch && ref && (
-                              <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700">
+                              <p className="mt-0.5 flex items-center gap-1 text-xs text-warning">
                                 <AlertTriangle className="h-3 w-3" />
                                 ref: {ref.name} / {ref.region}
                               </p>
@@ -198,7 +198,7 @@ return (
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
                             {stage ? (
-                              <Badge className={cn("text-xs", toneBadge[stage.tone])}>{stage.label}</Badge>
+                              <Badge variant={toneVariant(stage.tone)} className="text-xs">{stage.label}</Badge>
                             ) : (
                               <StatusBadge status={loc.status} size="sm" />
                             )}
@@ -228,7 +228,7 @@ return (
               {danaSewa.totalMasuk > 0 && (
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-2 rounded-full bg-rose-500/80 transition-all"
+                    className="h-2 rounded-full bg-destructive transition-all opacity-80"
                     style={{
                       width: `${Math.min(100, Math.round((danaSewa.totalTerpakai / danaSewa.totalMasuk) * 100))}%`,
                     }}
@@ -242,9 +242,9 @@ return (
               title="Pengeluaran dari Dana Sewa"
               tone="danger"
               badge={
-                <span className="ml-1 text-xs text-muted-foreground tabular-nums">
+                <Badge variant="destructive" className="ml-1 tabular-nums">
                   {danaSewa.pengeluaranSewa.length} item
-                </span>
+                </Badge>
               }
             >
               {danaSewa.pengeluaranSewa.length === 0 ? (
@@ -266,7 +266,7 @@ return (
                         <p className="truncate text-xs text-muted-foreground">{e.description}</p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-semibold text-rose-600 tabular-nums">
+                        <p className="text-sm font-semibold text-destructive tabular-nums">
                           −{formatRupiah(e.amount)}
                         </p>
                         <p className="text-xs text-muted-foreground">{formatDateShort(e.date)}</p>
@@ -374,12 +374,12 @@ return (
 
 function MoneyTile({ label, value, tone }: { label: string; value: number; tone: Tone }) {
   const colorMap: Record<Tone, string> = {
-    success: "text-emerald-700",
-    danger: "text-rose-600",
-    warning: "text-amber-700",
-    info: "text-blue-700",
+    success: "text-success",
+    danger: "text-destructive",
+    warning: "text-warning",
+    info: "text-info",
     primary: "text-primary",
-    neutral: "text-slate-700",
+    neutral: "text-muted-foreground",
     muted: "text-muted-foreground",
   };
   return (

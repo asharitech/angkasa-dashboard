@@ -34,8 +34,6 @@ import {
 } from "lucide-react";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
-import { toneBadge } from "@/lib/colors";
-import { cn } from "@/lib/utils";
 
 export interface UserRow {
   _id: string;
@@ -123,10 +121,8 @@ export function UsersManager({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="truncate text-sm font-semibold">{user.name}</p>
                       <Badge
-                        className={cn(
-                          "text-xs",
-                          user.role === "admin" ? toneBadge.primary : toneBadge.neutral,
-                        )}
+                        variant={user.role === "admin" ? "default" : "secondary"}
+                        className="text-xs"
                       >
                         {user.role === "admin" ? (
                           <>
@@ -195,7 +191,7 @@ export function UsersManager({
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <AlertTriangle className="h-4 w-4" />
               </div>
               <DialogTitle>Hapus user?</DialogTitle>
@@ -213,7 +209,7 @@ export function UsersManager({
             </DialogDescription>
           </DialogHeader>
           {deleteError && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
               {deleteError}
             </p>
           )}

@@ -4,7 +4,7 @@ import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { severityTone, toneBadge, toneIcon, type Tone } from "@/lib/colors";
+import { severityTone, toneIcon, type Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 import {
   ShieldCheck,
@@ -54,10 +54,8 @@ export default async function AuditPage() {
     <div className="space-y-5">
       <PageHeader icon={ShieldCheck} title="Audit Data">
         <Badge
-          className={cn(
-            "font-semibold",
-            issues.length === 0 ? toneBadge.success : toneBadge.warning,
-          )}
+          variant={issues.length === 0 ? "success" : "warning"}
+          className="font-semibold"
         >
           {issues.length} isu
         </Badge>

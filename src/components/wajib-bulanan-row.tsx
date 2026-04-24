@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, CheckCircle2, Clock, CalendarDays, Bell, AlertCircle, Calendar } from "lucide-react";
+import { ChevronDown, CheckCircle2, CalendarDays, Bell, Calendar } from "lucide-react";
 import { monthLabel } from "@/lib/periods";
 import { cn, idString } from "@/lib/utils";
 import { formatRupiah, formatDateShort } from "@/lib/format";

@@ -10,7 +10,6 @@ import { EmptyState } from "@/components/empty-state";
 import { WajibBulananRow } from "@/components/wajib-bulanan-row";
 import { WajibBulananCreateButton } from "@/components/wajib-bulanan-actions";
 import { Badge } from "@/components/ui/badge";
-import { toneBadge } from "@/lib/colors";
 import { MeterBarLabeled } from "@/components/meter-bar";
 import { cn, idString } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, Clock, Wallet, ListChecks, AlertCircle, RotateCcw } from "lucide-react";
@@ -67,18 +66,18 @@ function CategoryGroup({
       title={category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
       tone={semuaLunas ? "success" : "warning"}
       badge={
-        <span className="ml-1 text-xs tabular-nums">
+        <Badge variant={semuaLunas ? "success" : "warning"} className="ml-1 tabular-nums">
           {sudahCount}/{items.length} · {formatRupiah(total)}
-        </span>
+        </Badge>
       }
     >
       <div className="mb-4">
         <MeterBarLabeled
           percent={Math.min(Math.round(progress), 100)}
-          fillClassName={semuaLunas ? "bg-emerald-500" : "bg-amber-500"}
+          fillClassName={semuaLunas ? "bg-success" : "bg-warning"}
           labelLeft={<span className="text-muted-foreground">Progress</span>}
           labelRight={
-            <span className={cn("font-medium", semuaLunas ? "text-emerald-600" : "text-amber-600")}>
+            <span className={cn("font-medium", semuaLunas ? "text-success" : "text-warning")}>
               {Math.round(progress)}%
             </span>
           }
@@ -213,7 +212,7 @@ export default async function WajibBulananPage({
     <div className="space-y-5">
       <PageHeader icon={CalendarDays} title="Wajib Bulanan Yayasan">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={cn("font-semibold", sisaAmount > 0 ? toneBadge.warning : toneBadge.success)}>
+          <Badge variant={sisaAmount > 0 ? "warning" : "success"} className="font-semibold">
             {activeItems.length} aktif · {formatRupiah(sisaAmount)}
           </Badge>
           {isAdmin && <WajibBulananCreateButton />}

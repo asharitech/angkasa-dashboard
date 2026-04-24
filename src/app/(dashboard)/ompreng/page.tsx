@@ -110,7 +110,7 @@ export default async function OmprengPage() {
                 <span>Ompreng: <strong className="text-foreground">{mt.total_ompreng.toLocaleString("id-ID")}</strong></span>
                 <span>Sasaran: <strong className="text-foreground">{mt.total_sasaran.toLocaleString("id-ID")}</strong></span>
                 {mt.total_kekurangan > 0 && (
-                  <span>Kurang: <strong className="text-amber-500">{mt.total_kekurangan.toLocaleString("id-ID")}</strong></span>
+                  <span>Kurang: <strong className="text-warning">{mt.total_kekurangan.toLocaleString("id-ID")}</strong></span>
                 )}
               </div>
             }
@@ -141,7 +141,7 @@ export default async function OmprengPage() {
                         </td>
                         <td className="py-2 px-4 text-right tabular-nums">
                           {doc?.kekurangan_ompreng ? (
-                            <span className="text-amber-500 font-semibold">{doc.kekurangan_ompreng.toLocaleString("id-ID")}</span>
+                            <span className="text-warning font-semibold">{doc.kekurangan_ompreng.toLocaleString("id-ID")}</span>
                           ) : "—"}
                         </td>
                         <td className="py-2 pl-4 text-muted-foreground text-xs max-w-[200px] truncate">
@@ -161,7 +161,7 @@ export default async function OmprengPage() {
                     <td className="py-2 pr-4">Total</td>
                     <td className="py-2 px-4 text-right tabular-nums">{mt.total_ompreng.toLocaleString("id-ID")}</td>
                     <td className="py-2 px-4 text-right tabular-nums">{mt.total_sasaran.toLocaleString("id-ID")}</td>
-                    <td className="py-2 px-4 text-right tabular-nums text-amber-500">
+                    <td className="py-2 px-4 text-right tabular-nums text-warning">
                       {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
                     </td>
                     <td colSpan={isAdmin ? 2 : 1} />

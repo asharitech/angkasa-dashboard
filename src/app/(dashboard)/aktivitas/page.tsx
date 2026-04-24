@@ -11,7 +11,7 @@ import {
   EntryRowActions,
 } from "@/components/entry-row-actions";
 import { Badge } from "@/components/ui/badge";
-import { obligationStatusTone, toneBadge } from "@/lib/colors";
+import { obligationStatusTone, toneVariant } from "@/lib/colors";
 import { formatStatusLabel } from "@/lib/names";
 import { cn } from "@/lib/utils";
 import { FeedEventIcon } from "@/components/feed-event-icon";
@@ -136,9 +136,9 @@ export default async function AktivitasPage({
                             className={cn(
                               "text-sm font-semibold tabular-nums",
                               event.direction === "in"
-                                ? "text-emerald-600"
+                                ? "text-success"
                                 : event.direction === "out"
-                                  ? "text-rose-600"
+                                  ? "text-destructive"
                                   : "",
                             )}
                           >
@@ -147,7 +147,7 @@ export default async function AktivitasPage({
                           </p>
                         )}
                         {event.status && (
-                          <Badge className={cn("mt-0.5 text-xs", toneBadge[tone])}>
+                          <Badge variant={toneVariant(tone)} className="mt-0.5 text-xs">
                             {formatStatusLabel(event.status)}
                           </Badge>
                         )}

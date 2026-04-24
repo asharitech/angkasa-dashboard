@@ -181,9 +181,9 @@ function RingkasanView({
         title="Proyeksi Bulanan"
         tone="danger"
         badge={
-          <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
+          <Badge variant="destructive" className="ml-1 tabular-nums">
             {formatRupiah(totalBulanan)}/bln
-          </span>
+          </Badge>
         }
       >
         <div className="divide-y divide-border/60">
@@ -199,9 +199,9 @@ function RingkasanView({
           title="Tabungan"
           tone="info"
           badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-violet-700">
+            <Badge variant="info" className="ml-1 tabular-nums">
               {formatRupiah(totalSavings)}
-            </span>
+            </Badge>
           }
         >
           <div className="divide-y divide-border/60">
@@ -233,7 +233,7 @@ function RingkasanView({
                         {formatDateShort(entry.date)} · {entry.owner}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold tabular-nums text-violet-600">
+                    <span className="text-sm font-semibold tabular-nums text-info">
                       {formatRupiah(entry.amount)}
                     </span>
                   </div>
@@ -294,9 +294,9 @@ function CicilanView({
           title="Cicilan"
           tone="danger"
           badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-rose-600">
+            <Badge variant="destructive" className="ml-1 tabular-nums">
               sisa {formatRupiah(totalRemainingDebt)}
-            </span>
+            </Badge>
           }
         >
           <div className="space-y-5">
@@ -331,7 +331,7 @@ function CicilanView({
                     {paid.length > 0 && (
                       <div className="flex items-center justify-between py-2">
                         <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          <CheckCircle2 className="h-4 w-4 text-success" />
                           <span className="text-sm text-muted-foreground">
                             {paid.length} bulan lunas
                           </span>
@@ -368,9 +368,9 @@ function CicilanView({
           title="Hutang Yayasan ke Saya"
           tone="warning"
           badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-amber-700">
+            <Badge variant="warning" className="ml-1 tabular-nums">
               {formatRupiah(piutangTotal)}
-            </span>
+            </Badge>
           }
         >
           <div className="divide-y divide-border/60">

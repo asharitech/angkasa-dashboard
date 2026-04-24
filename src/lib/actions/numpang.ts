@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
-import type { NumpangFields } from "@/lib/db/schema";
 import { validateNumpang } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 

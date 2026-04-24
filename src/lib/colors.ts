@@ -65,3 +65,17 @@ export function entryDirectionTone(direction: "in" | "out"): Tone {
 export function severityTone(severity: "error" | "warn" | "info"): Tone {
   return severity === "error" ? "danger" : severity === "warn" ? "warning" : "info";
 }
+
+// Maps a Tone to the matching Badge variant name.
+export type BadgeVariantFromTone = "default" | "secondary" | "destructive" | "success" | "warning" | "info";
+
+export function toneVariant(tone: Tone): BadgeVariantFromTone {
+  switch (tone) {
+    case "success": return "success";
+    case "warning": return "warning";
+    case "info": return "info";
+    case "danger": return "destructive";
+    case "primary": return "default";
+    default: return "secondary";
+  }
+}

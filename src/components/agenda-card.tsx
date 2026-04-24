@@ -22,21 +22,21 @@ import {
 const PRIORITY_CONFIG = {
   tinggi: {
     label: "Tinggi",
-    dot: "bg-rose-500",
-    text: "text-rose-600",
-    bar: "bg-rose-500",
+    dot: "bg-destructive",
+    text: "text-destructive",
+    bar: "bg-destructive",
   },
   sedang: {
     label: "Sedang",
-    dot: "bg-amber-400",
-    text: "text-amber-600",
-    bar: "bg-amber-400",
+    dot: "bg-warning",
+    text: "text-warning",
+    bar: "bg-warning",
   },
   rendah: {
     label: "Rendah",
-    dot: "bg-emerald-500",
-    text: "text-emerald-600",
-    bar: "bg-emerald-500",
+    dot: "bg-success",
+    text: "text-success",
+    bar: "bg-success",
   },
 };
 
@@ -71,28 +71,28 @@ function CountdownPill({ dueDate, status }: { dueDate: string; status: string })
 
   if (ds === "terlambat")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/12 px-2 py-0.5 text-[11px] font-semibold text-rose-600 ring-1 ring-rose-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive ring-1 ring-destructive/20">
         <AlertCircle className="h-3 w-3" />
         {days === 1 ? "Terlambat 1 hari" : `Terlambat ${days} hari`}
       </span>
     );
   if (ds === "hari_ini")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/12 px-2 py-0.5 text-[11px] font-semibold text-amber-600 ring-1 ring-amber-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning ring-1 ring-warning/20">
         <Flame className="h-3 w-3" />
         Hari ini
       </span>
     );
   if (ds === "besok")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/12 px-2 py-0.5 text-[11px] font-semibold text-orange-500 ring-1 ring-orange-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/5 px-2 py-0.5 text-[11px] font-semibold text-warning ring-1 ring-warning/10">
         <Clock className="h-3 w-3" />
         Besok
       </span>
     );
   if (ds === "segera")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/12 px-2 py-0.5 text-[11px] font-semibold text-blue-500 ring-1 ring-blue-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-[11px] font-semibold text-info ring-1 ring-info/20">
         <Clock className="h-3 w-3" />
         {diff} hari lagi
       </span>
@@ -141,11 +141,11 @@ export function AgendaCard({
   const cardCls = done
     ? "border-border/30 bg-muted/20 opacity-60"
     : ds === "terlambat"
-    ? "border-rose-400/50 bg-gradient-to-br from-rose-500/5 to-transparent shadow-sm shadow-rose-500/10"
+    ? "border-destructive/40 bg-gradient-to-br from-destructive/5 to-transparent shadow-sm shadow-destructive/10"
     : ds === "hari_ini"
-    ? "border-amber-400/50 bg-gradient-to-br from-amber-500/5 to-transparent shadow-sm shadow-amber-500/10"
+    ? "border-warning/40 bg-gradient-to-br from-warning/5 to-transparent shadow-sm shadow-warning/10"
     : ds === "besok"
-    ? "border-orange-400/30 bg-gradient-to-br from-orange-500/4 to-transparent"
+    ? "border-warning/20 bg-gradient-to-br from-warning/4 to-transparent"
     : "border-border/60 bg-card shadow-sm hover:shadow-md hover:border-border/80";
 
   return (
@@ -277,7 +277,7 @@ export function AgendaCard({
 
             {/* Selesai */}
             {done && agenda.completed_at && (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+              <span className="inline-flex items-center gap-1 text-xs text-success">
                 <CheckCircle2 className="h-3 w-3" />
                 Selesai {formatDate(agenda.completed_at)}
               </span>

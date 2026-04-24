@@ -3,7 +3,6 @@ import { dbCollections } from "@/lib/db/collections";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { FilterTabs } from "@/components/filter-bar";
 import {
   DocumentUploadButton,
   DocumentRowActions,
@@ -15,12 +14,7 @@ import {
 import type { DocKategori } from "@/lib/actions/documents";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
-import {
-  FolderOpen,
-  Download,
-  FileText,
-  ExternalLink,
-} from "lucide-react";
+import { FolderOpen, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -65,11 +59,11 @@ function KategoriChips({
 
 function DocTypeTag({ mimeType }: { mimeType: string }) {
   if (mimeType === "application/pdf")
-    return <span className="rounded bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-rose-600">PDF</span>;
+    return <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-destructive">PDF</span>;
   if (mimeType.includes("wordprocessingml") || mimeType.includes("msword"))
-    return <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-600">DOCX</span>;
+    return <span className="rounded bg-info/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-info">DOCX</span>;
   if (mimeType.includes("spreadsheet") || mimeType.includes("excel"))
-    return <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-600">XLSX</span>;
+    return <span className="rounded bg-success/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-success">XLSX</span>;
   if (mimeType.startsWith("image/"))
     return <span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-purple-600">IMG</span>;
   return <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">FILE</span>;

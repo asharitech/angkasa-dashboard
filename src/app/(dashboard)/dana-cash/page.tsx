@@ -66,7 +66,7 @@ export default async function DanaCashPage({
         <CardContent className="py-3">
           <MeterBarLabeled
             percent={Math.min(pctTerpakai, 100)}
-            fillClassName="bg-rose-500/80"
+            fillClassName="bg-destructive opacity-80"
             labelLeft={
               <span>
                 Terpakai <span className="font-semibold">{formatRupiah(totalTerpakai)}</span>
@@ -120,7 +120,7 @@ export default async function DanaCashPage({
               header: "Jumlah",
               align: "right",
               cell: (r) => (
-                <span className="text-sm font-semibold text-rose-600">
+                <span className="text-sm font-semibold text-destructive">
                   {formatRupiah(r.amount)}
                 </span>
               ),
