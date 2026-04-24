@@ -2,9 +2,6 @@ import Link from "next/link";
 import {
   Clock,
   Truck,
-  GitCompare,
-  ShieldAlert,
-  Receipt,
   CheckCircle2,
   ChevronRight,
   ListChecks,
@@ -29,19 +26,11 @@ export function TaskListPanel({
   pengajuanTotalAmount,
   pendingTransfersCount,
   pendingTransfersTotal,
-  errorCount,
-  warnCount,
-  reconHasDiff,
-  reconAmount,
 }: {
   pengajuanPending: number;
   pengajuanTotalAmount: number;
   pendingTransfersCount: number;
   pendingTransfersTotal: number;
-  errorCount: number;
-  warnCount: number;
-  reconHasDiff: boolean;
-  reconAmount: number;
 }) {
   const tasks: TaskRow[] = [];
 
@@ -62,26 +51,6 @@ export function TaskListPanel({
       title: `${pendingTransfersCount} transfer sewa menunggu`,
       detail: formatRupiahCompact(pendingTransfersTotal),
       href: "/sewa",
-    });
-  }
-
-  if (reconHasDiff) {
-    tasks.push({
-      icon: GitCompare,
-      tone: "warning",
-      title: "Snapshot Laporan Op tidak sinkron",
-      detail: `Selisih ledger vs entries: ${formatRupiahCompact(reconAmount)}`,
-      href: "/laporan-op",
-    });
-  }
-
-  if (errorCount > 0 || warnCount > 0) {
-    tasks.push({
-      icon: ShieldAlert,
-      tone: errorCount > 0 ? "danger" : "warning",
-      title: errorCount > 0 ? `${errorCount} isu integritas` : `${warnCount} peringatan audit`,
-      detail: "Review di Audit Data",
-      href: "/audit",
     });
   }
 

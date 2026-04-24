@@ -9,7 +9,6 @@ import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRupiahCompact, formatDate, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { formatRequestorName } from "@/lib/names";
-import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { NavChevronLink } from "@/components/link-insight";
@@ -28,7 +27,11 @@ import {
   Wallet,
   FileText,
   CalendarDays,
+  ShieldAlert,
+  GitCompare,
+  ChevronRight,
 } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -160,7 +163,16 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <PageHeader icon={Landmark} title="Yayasan YRBB" />
+      <div className="hidden md:flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Landmark className="h-3.5 w-3.5 text-primary"/>
+            Yayasan YRBB
+            {displayDate && <> · per {formatDate(displayDate)}</>}
+          </div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Ringkasan Keuangan</h1>
+        </div>
+      </div>
 
       {/* Balance sheet panel */}
       <BalanceSheetPanel
@@ -173,6 +185,28 @@ export default async function DashboardPage() {
         displayDate={displayDate ? formatDate(displayDate) : null}
         trend={trend.length >= 2 ? trend.map((t) => t.net) : undefined}
       />
+
+      {/* Alert strip */}
+      {(errorCount > 0 || warnCount > 0 || reconHasDiff) && (
+        <div className="flex flex-wrap gap-2">
+          {(errorCount > 0 || warnCount > 0) && (
+            <Link href="/audit" className="inline-flex items-center gap-2 rounded-full border border-warning/30 bg-warning/8 px-3 py-1.5 text-xs font-semibold text-warning hover:bg-warning/15 transition-colors">
+              <ShieldAlert className="h-3.5 w-3.5 shrink-0"/>
+              {errorCount > 0 ? `${errorCount} isu integritas` : `${warnCount} peringatan audit`}
+              {errorCount > 0 && warnCount > 0 && <span className="font-normal text-muted-foreground">· {errorCount} error · {warnCount} warn</span>}
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-60"/>
+            </Link>
+          )}
+          {reconHasDiff && (
+            <Link href="/laporan-op" className="inline-flex items-center gap-2 rounded-full border border-warning/30 bg-warning/8 px-3 py-1.5 text-xs font-semibold text-warning hover:bg-warning/15 transition-colors">
+              <GitCompare className="h-3.5 w-3.5 shrink-0"/>
+              Snapshot Laporan Op tidak sinkron
+              <span className="font-normal text-muted-foreground">· {formatRupiahCompact(reconAmount)}</span>
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-60"/>
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* 2-col: Pengajuan table | Task list */}
       <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
@@ -232,10 +266,6 @@ export default async function DashboardPage() {
           pengajuanTotalAmount={data.pengajuanTotalAmount}
           pendingTransfersCount={pendingTransfers.pending.length}
           pendingTransfersTotal={pendingTransfers.totalExpected}
-          errorCount={errorCount}
-          warnCount={warnCount}
-          reconHasDiff={Boolean(reconHasDiff)}
-          reconAmount={reconAmount}
         />
       </div>
 
@@ -287,7 +317,7 @@ export default async function DashboardPage() {
                 <div key={acc._id} className="flex items-center justify-between py-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{acc.bank}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="truncate max-w-[160px] text-xs text-muted-foreground" title={formatRequestorName(acc.holder)}>
                       {formatRequestorName(acc.holder)}
                       {acc.balance_as_of && (
                         <> · per {formatDateShort(acc.balance_as_of)}</>
