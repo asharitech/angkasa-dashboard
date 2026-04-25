@@ -613,7 +613,7 @@ export async function getDashboardTrend(): Promise<{ month: string; net: number 
     .toArray();
   const result = docs
     .filter((doc) => doc.period != null && doc.laporan_op?.dana_efektif != null)
-    .map((doc) => ({ month: doc.period as string, net: doc.laporan_op!.dana_efektif as number }));
+    .map((doc) => ({ month: ((doc as any).period_code ?? doc.period) as string, net: doc.laporan_op!.dana_efektif as number }));
   result.sort((a, b) => a.month.localeCompare(b.month));
   return result;
 }
@@ -624,9 +624,9 @@ export async function getLaporanOpPeriods(): Promise<{ period: string; is_curren
     .find({ type: "laporan_op" })
     .sort({ period: -1 })
     .limit(13)
-    .project({ period: 1, is_current: 1 })
+    .project({ period: 1, period_code: 1, is_current: 1 })
     .toArray();
-  return docs.map((d) => ({ period: d.period as string, is_current: d.is_current ?? false }));
+  return docs.map((d) => ({ period: ((d as any).period_code ?? d.period) as string, is_current: d.is_current ?? false }));
 }
 
 export async function getLaporanOpMonthlyFlow(): Promise<{ month: string; masuk: number; keluar: number }[]> {
@@ -639,7 +639,7 @@ export async function getLaporanOpMonthlyFlow(): Promise<{ month: string; masuk:
   return serializeDates(
     docs
       .filter((d) => d.period != null && d.laporan_op?.totals != null)
-      .map((d) => ({ month: d.period as string, masuk: d.laporan_op!.totals.masuk, keluar: d.laporan_op!.totals.keluar }))
+      .map((d) => ({ month: ((d as any).period_code ?? d.period) as string, masuk: d.laporan_op!.totals.masuk, keluar: d.laporan_op!.totals.keluar }))
       .sort((a, b) => a.month.localeCompare(b.month))
   );
 }

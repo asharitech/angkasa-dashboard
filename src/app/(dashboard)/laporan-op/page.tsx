@@ -60,21 +60,22 @@ function GroupedBarChart({
 
   const maxVal = Math.max(...data.flatMap((d) => [d.masuk, d.keluar]), 1)
   const chartH = 64
-  const barW = 10
-  const gap = 2
-  const groupGap = 8
-  const groupW = barW * 2 + gap + groupGap
-  const totalW = data.length * groupW - groupGap + 8
+  const n = data.length
+  const viewW = 200
+  const groupW = viewW / n
+  const barW = Math.min(12, groupW * 0.35)
+  const gap = barW * 0.25
 
   return (
     <svg
-      width={totalW}
+      width="100%"
       height={chartH + 16}
-      viewBox={`0 0 ${totalW} ${chartH + 16}`}
+      viewBox={`0 0 ${viewW} ${chartH + 16}`}
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
       {data.map((d, i) => {
-        const x = 4 + i * groupW
+        const x = i * groupW + (groupW - barW * 2 - gap) / 2
         const masukH = Math.round((d.masuk / maxVal) * chartH)
         const keluarH = Math.round((d.keluar / maxVal) * chartH)
         const label = formatPeriodLabel(d.month).split(" ")[0]
@@ -102,7 +103,7 @@ function GroupedBarChart({
             />
             {/* Month label */}
             <text
-              x={x + barW + gap / 2}
+              x={x + barW + gap / 2 + barW / 2}
               y={chartH + 12}
               textAnchor="middle"
               fontSize={9}
@@ -356,8 +357,8 @@ export default async function LaporanOpPage({
                       recon.diffMasuk !== 0 ? "text-warning" : "text-success",
                     )}
                   >
-                    {recon.diffMasuk > 0 ? "+" : ""}
-                    {formatRupiahCompact(recon.diffMasuk)}
+                    {recon.diffMasuk > 0 ? "+" : recon.diffMasuk < 0 ? "−" : ""}
+                    {formatRupiahCompact(Math.abs(recon.diffMasuk))}
                   </p>
                 </div>
                 <div>
@@ -368,8 +369,8 @@ export default async function LaporanOpPage({
                       recon.diffKeluar !== 0 ? "text-warning" : "text-success",
                     )}
                   >
-                    {recon.diffKeluar > 0 ? "+" : ""}
-                    {formatRupiahCompact(recon.diffKeluar)}
+                    {recon.diffKeluar > 0 ? "+" : recon.diffKeluar < 0 ? "−" : ""}
+                    {formatRupiahCompact(Math.abs(recon.diffKeluar))}
                   </p>
                 </div>
               </div>
