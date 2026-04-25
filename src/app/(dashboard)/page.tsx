@@ -262,7 +262,9 @@ export default async function DashboardPage() {
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-destructive/10">
               <Clock className="h-3.5 w-3.5 text-destructive" />
             </div>
-            <span className="text-sm font-semibold">Pengajuan</span>
+            <span className="text-sm font-semibold">
+              Pengajuan<span className="hidden sm:inline"> per Requestor</span>
+            </span>
             <Badge variant="secondary" className="text-xs tabular-nums">
               {data.pengajuanPending}
             </Badge>
@@ -284,18 +286,23 @@ export default async function DashboardPage() {
               return (
                 <div
                   key={r._id}
-                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 p-3"
+                  className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5"
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
                     {initials}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold leading-tight">{name}</p>
                     <p className="text-xs text-muted-foreground">{r.count} tagihan</p>
-                    <p className="text-sm font-bold tabular-nums text-foreground">
+                    {/* Amount below name on mobile */}
+                    <p className="text-sm font-bold tabular-nums sm:hidden">
                       {formatRupiahCompact(r.total)}
                     </p>
                   </div>
+                  {/* Amount right-aligned on desktop */}
+                  <span className="hidden sm:block shrink-0 text-sm font-bold tabular-nums">
+                    {formatRupiahCompact(r.total)}
+                  </span>
                 </div>
               );
             })}
