@@ -117,7 +117,7 @@ export function EntriesTable({
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 px-4 md:px-0">
+      <div className="flex flex-wrap items-center gap-2 px-4">
         <div className="flex items-center gap-1.5 text-sm font-semibold">
           <span>{filtered.length} transaksi</span>
           <span className="text-muted-foreground">·</span>
@@ -226,7 +226,7 @@ export function EntriesTable({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground md:px-0">
+        <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
           <span>
             {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} dari{" "}
             {filtered.length}
