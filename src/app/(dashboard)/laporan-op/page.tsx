@@ -205,7 +205,7 @@ export default async function LaporanOpPage({
           </div>
         </div>
         {isAdmin && (
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             <button
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),

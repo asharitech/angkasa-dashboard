@@ -117,30 +117,30 @@ export function EntriesTable({
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 px-4">
+      <div className="flex flex-col gap-2 px-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-1.5 text-sm font-semibold">
           <span>{filtered.length} transaksi</span>
           <span className="text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs font-normal text-muted-foreground">
             Saldo akhir: {formatRupiahCompact(saldoAkhir)}
           </span>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:ml-auto">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Cari keterangan…"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
-              className="h-8 rounded-md border border-border bg-background pl-7 pr-3 text-xs outline-none focus:border-ring focus:ring-1 focus:ring-ring/50"
+              className="h-8 w-full rounded-md border border-border bg-background pl-7 pr-3 text-xs outline-none focus:border-ring focus:ring-1 focus:ring-ring/50 sm:w-44"
             />
           </div>
 
           {/* Direction tabs */}
-          <div className="flex rounded-md border border-border text-xs">
+          <div className="flex shrink-0 rounded-md border border-border text-xs">
             {(["all", "in", "out"] as Direction[]).map((d) => (
               <button
                 key={d}
