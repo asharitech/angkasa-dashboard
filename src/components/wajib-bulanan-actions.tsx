@@ -24,12 +24,13 @@ export function WajibBulananCreateButton() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [details, setDetails] = useState<DetailItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitting(true);
-    
+    setError(null);
+
     const formData = new FormData(e.currentTarget);
     const item = formData.get("item") as string;
     const amount = parseInt(formData.get("amount") as string) || 0;
@@ -38,8 +39,13 @@ export function WajibBulananCreateButton() {
     const reminderDays = parseInt(formData.get("reminder_days") as string) || undefined;
     const month = formData.get("month") as string;
 
+    if (!item.trim()) return setError("Nama item wajib diisi");
+    if (amount <= 0) return setError("Nominal harus lebih dari 0");
+
+    const validDetails = details.filter((d) => d.item.trim());
+    setSubmitting(true);
     try {
-      await createObligationAction({
+      const result = await createObligationAction({
         type: "recurring",
         item,
         amount,
@@ -50,8 +56,9 @@ export function WajibBulananCreateButton() {
         due_day: dueDay,
         reminder_days: reminderDays,
         month: month || undefined,
-        detail: details.length > 0 ? details : undefined,
+        detail: validDetails.length > 0 ? validDetails : undefined,
       });
+      if ("error" in result) { setError(result.error); return; }
       setOpen(false);
       setDetails([]);
       router.refresh();
@@ -149,7 +156,10 @@ export function WajibBulananCreateButton() {
               </div>
             ))}
           </div>
-          
+
+          {error && (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+          )}
           <DialogFooter>
             <DialogClose>
               <Button type="button" variant="outline">Batal</Button>
@@ -169,12 +179,13 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [details, setDetails] = useState<DetailItem[]>(item.detail || []);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitting(true);
-    
+    setError(null);
+
     const formData = new FormData(e.currentTarget);
     const itemName = formData.get("item") as string;
     const amount = parseInt(formData.get("amount") as string) || 0;
@@ -183,16 +194,22 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
     const reminderDays = parseInt(formData.get("reminder_days") as string) || undefined;
     const month = formData.get("month") as string;
 
+    if (!itemName.trim()) return setError("Nama item wajib diisi");
+    if (amount <= 0) return setError("Nominal harus lebih dari 0");
+
+    const validDetails = details.filter((d) => d.item.trim());
+    setSubmitting(true);
     try {
-      await updateObligationAction(itemId, {
+      const result = await updateObligationAction(itemId, {
         item: itemName,
         amount,
         category: category || "umum",
         due_day: dueDay,
         reminder_days: reminderDays,
         month: month || undefined,
-        detail: details.length > 0 ? details : undefined,
+        detail: validDetails.length > 0 ? validDetails : undefined,
       });
+      if ("error" in result) { setError(result.error); return; }
       setOpen(false);
       router.refresh();
     } finally {
@@ -324,7 +341,10 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
               </div>
             ))}
           </div>
-          
+
+          {error && (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+          )}
           <DialogFooter>
             <DialogClose>
               <Button type="button" variant="outline">Batal</Button>
@@ -342,12 +362,15 @@ export function WajibBulananEditButton({ item }: { item: Obligation }) {
 export function WajibBulananDeleteButton({ item }: { item: Obligation }) {
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleDelete() {
     setDeleting(true);
+    setError(null);
     try {
-      await deleteObligationAction(idString(item._id));
+      const result = await deleteObligationAction(idString(item._id));
+      if ("error" in result) { setError(result.error); return; }
       setOpen(false);
       router.refresh();
     } finally {
@@ -356,7 +379,7 @@ export function WajibBulananDeleteButton({ item }: { item: Obligation }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setError(null); }}>
       <DialogTrigger>
         <Button size="sm" variant="outline" className="h-8 px-2 text-destructive hover:text-destructive">
           <Trash2 className="h-4 w-4" />
@@ -371,13 +394,16 @@ export function WajibBulananDeleteButton({ item }: { item: Obligation }) {
           <br />
           Tindakan ini tidak dapat dibatalkan.
         </p>
+        {error && (
+          <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+        )}
         <DialogFooter>
           <DialogClose>
             <Button type="button" variant="outline">Batal</Button>
           </DialogClose>
-          <Button 
-            type="button" 
-            variant="destructive" 
+          <Button
+            type="button"
+            variant="destructive"
             onClick={handleDelete}
             disabled={deleting}
           >

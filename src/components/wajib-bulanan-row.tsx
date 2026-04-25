@@ -5,6 +5,7 @@ import { ChevronDown, CheckCircle2, CalendarDays, Bell, Calendar } from "lucide-
 import { monthLabel } from "@/lib/periods";
 import { cn, idString } from "@/lib/utils";
 import { formatRupiah, formatDateShort } from "@/lib/format";
+import { formatFundSource } from "@/lib/names";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Obligation } from "@/lib/types";
@@ -23,16 +24,30 @@ interface WajibBulananRowProps {
   yayasanAccounts: { _id: string; bank: string }[];
 }
 
+function witaDateParts() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Makassar",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date());
+  const y = parseInt(parts.find((p) => p.type === "year")!.value);
+  const m = parseInt(parts.find((p) => p.type === "month")!.value);
+  const d = parseInt(parts.find((p) => p.type === "day")!.value);
+  return { year: y, month: m, day: d };
+}
+
+function todayIsoWita(): string {
+  const { year: y, month: m, day: d } = witaDateParts();
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 function getDaysUntilDue(dueDay: number | null | undefined): number | null {
   if (!dueDay) return null;
-  const today = new Date();
-  const currentDay = today.getDate();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  
+  const { year, month, day: currentDay } = witaDateParts();
+  const daysInMonth = new Date(year, month, 0).getDate();
+
   if (dueDay >= currentDay) {
     return dueDay - currentDay;
   } else {
-    // Sudah lewat, hitung untuk bulan depan
     return daysInMonth - currentDay + dueDay;
   }
 }
@@ -48,6 +63,7 @@ function getUrgencyColor(daysUntil: number | null, isLunas: boolean): string {
 export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: WajibBulananRowProps) {
   const [open, setOpen] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const router = useRouter();
 
   const isLunas = item.status === "lunas";
@@ -61,16 +77,17 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
   async function handleMarkLunas() {
     if (!isAdmin || isLunas) return;
     setMarking(true);
+    setActionError(null);
     try {
       const defaultAccount = yayasanAccounts[0]?._id || ACCOUNTS.operasional;
-      const today = new Date().toISOString().slice(0, 10);
-      await markLunasAction({
+      const result = await markLunasAction({
         obligationId: idString(item._id),
         account: defaultAccount,
-        date: today,
+        date: todayIsoWita(),
         amount: item.amount ?? 0,
         description: `Pembayaran ${item.item}`,
       });
+      if ("error" in result) { setActionError(result.error); return; }
       router.refresh();
     } finally {
       setMarking(false);
@@ -80,8 +97,10 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
   async function handleUnmarkLunas() {
     if (!isAdmin || !isLunas) return;
     setMarking(true);
+    setActionError(null);
     try {
-      await unmarkLunasAction(idString(item._id));
+      const result = await unmarkLunasAction(idString(item._id));
+      if ("error" in result) { setActionError(result.error); return; }
       router.refresh();
     } finally {
       setMarking(false);
@@ -242,11 +261,17 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
             )}
 
             {/* Info and actions */}
+            {actionError && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{actionError}</p>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>Dibuat {formatDateShort(item.created_at)}</span>
                 {item.resolved_at && (
-                  <span className="text-success">• Dibayar {formatDateShort(item.resolved_at)}</span>
+                  <span className="text-success">• Lunas {formatDateShort(item.resolved_at)}</span>
+                )}
+                {item.resolved_via && (
+                  <span>via {formatFundSource(item.resolved_via)}</span>
                 )}
               </div>
               

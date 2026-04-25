@@ -72,8 +72,8 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
     };
     validateObligation(doc);
     const result = await c.obligations.insertOne(doc);
-    revalidatePath("/pengajuan");
-    revalidatePath("/wajib-bulanan");
+    if (doc.type === "recurring") revalidatePath("/wajib-bulanan");
+    else revalidatePath("/pengajuan");
     revalidatePath("/");
     return { ok: true, id: result.insertedId.toString() };
   } catch (err) {
@@ -105,8 +105,8 @@ export async function updateObligationAction(
         },
       },
     );
-    revalidatePath("/pengajuan");
-    revalidatePath("/wajib-bulanan");
+    if (existing.type === "recurring") revalidatePath("/wajib-bulanan");
+    else revalidatePath("/pengajuan");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {
@@ -128,10 +128,12 @@ export async function deleteObligationAction(id: string): Promise<ActionResult> 
         error: `Pengajuan ini punya ${linkedEntries} entry terkait. Hapus atau lepaskan entry-nya dulu.`,
       };
     }
+    const toDelete = await c.obligations.findOne({ _id: toObjectId(id) });
+    if (!toDelete) return { error: "Pengajuan tidak ditemukan" };
     const result = await c.obligations.deleteOne({ _id: toObjectId(id) });
     if (result.deletedCount === 0) return { error: "Pengajuan tidak ditemukan" };
-    revalidatePath("/pengajuan");
-    revalidatePath("/wajib-bulanan");
+    if (toDelete.type === "recurring") revalidatePath("/wajib-bulanan");
+    else revalidatePath("/pengajuan");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {
@@ -232,6 +234,10 @@ export async function unmarkLunasAction(id: string): Promise<ActionResult> {
     if (!existing) return { error: "Pengajuan tidak ditemukan" };
     if (existing.status !== "lunas") return { error: "Pengajuan belum lunas" };
 
+    // Delete the entry that was created by markLunasAction so the ledger stays clean.
+    // obligation_id is stored as a string on EntryDoc — match both forms defensively.
+    await c.entries.deleteOne({ obligation_id: id });
+
     await c.obligations.updateOne(
       { _id: toObjectId(id) },
       {
@@ -250,6 +256,7 @@ export async function unmarkLunasAction(id: string): Promise<ActionResult> {
 
     revalidatePath("/pengajuan");
     revalidatePath("/wajib-bulanan");
+    revalidatePath("/aktivitas");
     revalidatePath("/");
     return { ok: true };
   } catch (err) {

@@ -14,6 +14,7 @@ import { MeterBarLabeled } from "@/components/meter-bar";
 import { cn, idString } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, Clock, Wallet, ListChecks, AlertCircle, RotateCcw } from "lucide-react";
 import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { formatIdentifier } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ function CategoryGroup({
   return (
     <SectionCard
       icon={ListChecks}
-      title={category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+      title={formatIdentifier(category)}
       tone={semuaLunas ? "success" : "warning"}
       badge={
         <Badge variant={semuaLunas ? "success" : "warning"} className="ml-1 tabular-nums">
@@ -129,13 +130,13 @@ export default async function WajibBulananPage({
     ? monthFilteredItems.filter((o) => o.status === "active" || o.status === "pending")
     : monthFilteredItems;
 
-  const activeItems = allItems.filter((o) => o.status === "active" || o.status === "pending");
-  const lunasItems = allItems.filter((o) => o.status === "lunas");
-  
-  const totalAmount = allItems.reduce((s, o) => s + (o.amount ?? 0), 0);
+  const activeItems = monthFilteredItems.filter((o) => o.status === "active" || o.status === "pending");
+  const lunasItems = monthFilteredItems.filter((o) => o.status === "lunas");
+
+  const totalAmount = monthFilteredItems.reduce((s, o) => s + (o.amount ?? 0), 0);
   const sudahAmount = lunasItems.reduce((s, o) => s + (o.amount ?? 0), 0);
   const sisaAmount = totalAmount - sudahAmount;
-  const totalProgress = allItems.length > 0 ? (lunasItems.length / allItems.length) * 100 : 0;
+  const totalProgress = monthFilteredItems.length > 0 ? (lunasItems.length / monthFilteredItems.length) * 100 : 0;
 
   const groupedItems = groupByCategory(items);
   
@@ -183,7 +184,7 @@ export default async function WajibBulananPage({
       value: `${Math.round(totalProgress)}%`,
       icon: RotateCcw,
       tone: totalProgress >= 100 ? "success" : "info",
-      hint: `${lunasItems.length}/${allItems.length} selesai`,
+      hint: `${lunasItems.length}/${monthFilteredItems.length} selesai`,
     },
   ];
 
@@ -192,7 +193,7 @@ export default async function WajibBulananPage({
       label: "Semua",
       href: buildDashboardHref("/wajib-bulanan", { month: monthView, statusView: "all" }),
       active: statusView === "all",
-      count: allItems.length,
+      count: monthFilteredItems.length,
     },
     {
       label: "Aktif",
