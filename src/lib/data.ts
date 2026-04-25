@@ -41,9 +41,13 @@ export async function getLedger(type: string, current = true): Promise<Ledger | 
 
 export async function getLedgerByCode(type: string, period_code: string): Promise<Ledger | null> {
   const c = dbCollections(await getDb());
+  // Try exact period_code match first; fall back to as_of prefix match (for docs without period_code)
+  const byCode = await c.ledgers.findOne({ type, period_code });
+  if (byCode) return byCode;
+  // as_of is stored as ISO string or Date; match YYYY-MM prefix
   return c.ledgers.findOne({
     type,
-    period_code,
+    $expr: { $eq: [{ $dateToString: { format: "%Y-%m", date: "$as_of" } }, period_code] },
   });
 }
 
@@ -613,7 +617,10 @@ export async function getDashboardTrend(): Promise<{ month: string; net: number 
     .toArray();
   const result = docs
     .filter((doc) => doc.period != null && doc.laporan_op?.dana_efektif != null)
-    .map((doc) => ({ month: ((doc as any).period_code ?? doc.period) as string, net: doc.laporan_op!.dana_efektif as number }));
+    .map((doc) => {
+      const month = doc.period_code ?? (doc.as_of ? String(doc.as_of).substring(0, 7) : null) ?? doc.period;
+      return { month: month as string, net: doc.laporan_op!.dana_efektif as number };
+    });
   result.sort((a, b) => a.month.localeCompare(b.month));
   return result;
 }
@@ -624,9 +631,12 @@ export async function getLaporanOpPeriods(): Promise<{ period: string; is_curren
     .find({ type: "laporan_op" })
     .sort({ period: -1 })
     .limit(13)
-    .project({ period: 1, period_code: 1, is_current: 1 })
+    .project({ period: 1, period_code: 1, as_of: 1, is_current: 1 })
     .toArray();
-  return docs.map((d) => ({ period: ((d as any).period_code ?? d.period) as string, is_current: d.is_current ?? false }));
+  return docs.map((d) => {
+    const code = d.period_code ?? (d.as_of ? new Date(d.as_of as string).toISOString().substring(0, 7) : null) ?? d.period;
+    return { period: code as string, is_current: d.is_current ?? false };
+  });
 }
 
 export async function getLaporanOpMonthlyFlow(): Promise<{ month: string; masuk: number; keluar: number }[]> {
@@ -639,7 +649,10 @@ export async function getLaporanOpMonthlyFlow(): Promise<{ month: string; masuk:
   return serializeDates(
     docs
       .filter((d) => d.period != null && d.laporan_op?.totals != null)
-      .map((d) => ({ month: ((d as any).period_code ?? d.period) as string, masuk: d.laporan_op!.totals.masuk, keluar: d.laporan_op!.totals.keluar }))
+      .map((d) => {
+        const month = d.period_code ?? (d.as_of ? new Date(d.as_of as string).toISOString().substring(0, 7) : null) ?? d.period;
+        return { month: month as string, masuk: d.laporan_op!.totals.masuk, keluar: d.laporan_op!.totals.keluar };
+      })
       .sort((a, b) => a.month.localeCompare(b.month))
   );
 }
