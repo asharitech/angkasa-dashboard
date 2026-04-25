@@ -19,15 +19,13 @@ import {
   type PengajuanInput,
 } from "@/lib/actions/obligations";
 import type { Obligation } from "@/lib/types";
+import type { DetailItem } from "@/lib/types";
 import { idString } from "@/lib/utils";
+import { FUND_SOURCES } from "@/lib/config";
+import { formatFundSource } from "@/lib/names";
+import { Plus, X } from "lucide-react";
 
-const SUMBER_DANA_OPTIONS = [
-  { value: "BRI_ANGKASA", label: "BRI Angkasa" },
-  { value: "BCA_ANGKASA", label: "BCA Angkasa" },
-  { value: "BTN_YAYASAN", label: "BTN Yayasan" },
-  { value: "CASH_YAYASAN", label: "Cash Yayasan" },
-  { value: "DANA_SEWA", label: "Dana Sewa" },
-];
+const SUMBER_DANA_OPTIONS = FUND_SOURCES.map((v) => ({ value: v, label: formatFundSource(v) }));
 
 const COMMON_CATEGORIES = [
   "konsumsi",
@@ -57,13 +55,24 @@ export function PengajuanForm({
     amount: obligation?.amount?.toString() ?? "",
     category: obligation?.category ?? "",
     requestor: obligation?.requestor ?? "",
-    sumber_dana: obligation?.sumber_dana ?? "BRI_ANGKASA",
+    sumber_dana: obligation?.sumber_dana ?? "BTN_YAYASAN",
     month: obligation?.month ?? "",
     date_spent: obligation?.date_spent?.slice(0, 10) ?? "",
     bukti_ref: obligation?.bukti_ref ?? "",
   });
+  const [details, setDetails] = useState<DetailItem[]>(obligation?.detail ?? []);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  function addDetail() {
+    setDetails((d) => [...d, { item: "", amount: 0 }]);
+  }
+  function removeDetail(i: number) {
+    setDetails((d) => d.filter((_, idx) => idx !== i));
+  }
+  function updateDetail(i: number, field: keyof DetailItem, value: string | number) {
+    setDetails((d) => d.map((row, idx) => idx === i ? { ...row, [field]: value } : row));
+  }
 
   function setField<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -88,6 +97,7 @@ export function PengajuanForm({
       month: form.month || null,
       date_spent: form.date_spent || null,
       bukti_ref: form.bukti_ref.trim() || null,
+      detail: details.length > 0 ? details.filter((d) => d.item.trim()) : undefined,
     };
 
     start(async () => {
@@ -201,6 +211,37 @@ export function PengajuanForm({
           placeholder="Nota, nomor transfer, atau catatan"
           rows={2}
         />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Rincian (opsional)</Label>
+          <Button type="button" size="sm" variant="outline" onClick={addDetail}>
+            <Plus className="mr-1 h-3 w-3" />
+            Tambah Baris
+          </Button>
+        </div>
+        {details.map((d, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              placeholder="Nama item"
+              value={d.item}
+              onChange={(e) => updateDetail(i, "item", e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="Nominal"
+              value={d.amount || ""}
+              onChange={(e) => updateDetail(i, "amount", parseInt(e.target.value) || 0)}
+              className="w-28"
+            />
+            <Button type="button" size="icon-sm" variant="ghost" onClick={() => removeDetail(i)}>
+              <X className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        ))}
       </div>
 
       {error && (

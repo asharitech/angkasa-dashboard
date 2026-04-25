@@ -27,7 +27,7 @@ type SP = {
 
 function groupByRequestor(items: Obligation[]) {
   const grouped = items.reduce<Record<string, Obligation[]>>((acc, item) => {
-    const key = formatRequestorName(item.requestor);
+    const key = formatRequestorName(item.requestor) || "Tanpa Requestor";
     if (!acc[key]) acc[key] = [];
     acc[key].push(item);
     return acc;

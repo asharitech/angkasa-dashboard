@@ -140,7 +140,10 @@ export function PengajuanAccordionRow({
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>Dibuat {formatDateShort(o.created_at)}</span>
                 {o.resolved_at ? (
-                  <span>• Selesai {formatDateShort(o.resolved_at)}</span>
+                  <span>• Lunas {formatDateShort(o.resolved_at)}</span>
+                ) : null}
+                {o.resolved_via ? (
+                  <span>via {formatFundSource(o.resolved_via)}</span>
                 ) : null}
               </div>
               {isAdmin && (
