@@ -18,6 +18,7 @@ import { createObligationAction, updateObligationAction, deleteObligationAction 
 import { useRouter } from "next/navigation";
 import type { Obligation, DetailItem } from "@/lib/types";
 import { idString } from "@/lib/utils";
+import { ORG_ID } from "@/lib/config";
 
 export function WajibBulananCreateButton() {
   const [open, setOpen] = useState(false);
@@ -43,7 +44,7 @@ export function WajibBulananCreateButton() {
         item,
         amount,
         category: category || "umum",
-        org: "yrbb",
+        org: ORG_ID,
         owner: "yayasan",
         status: "active",
         due_day: dueDay,

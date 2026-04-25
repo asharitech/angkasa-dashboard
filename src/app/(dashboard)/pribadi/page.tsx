@@ -16,6 +16,7 @@ import {
 } from "@/components/numpang-manager";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { PribadiTabs } from "@/components/pribadi-tabs";
+import { ACCOUNTS } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import {
   User,
@@ -41,8 +42,8 @@ export default async function PribadiPage() {
   const [data, session] = await Promise.all([getPribadiSummary(), getSession()]);
   const isAdmin = session?.role === "admin";
 
-  const bcaAccount = data.personalAccounts.find((a) => a._id === "bca_angkasa");
-  const briAccount = data.personalAccounts.find((a) => a._id === "bri_angkasa");
+  const bcaAccount = data.personalAccounts.find((a) => a._id === ACCOUNTS.personalBca);
+  const briAccount = data.personalAccounts.find((a) => a._id === ACCOUNTS.personalBri);
   const bcaBalance = bcaAccount?.balance ?? 0;
   const briEstatement = briAccount?.balance ?? 0;
   const numpangTotal = data.numpang.reduce((s, n) => s + n.amount, 0);

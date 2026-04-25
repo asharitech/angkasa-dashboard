@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import { ORG_ID } from "@/lib/config";
 
 type ActionResult = { ok: true; id?: string; url?: string } | { error: string };
 
@@ -105,7 +106,7 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
       file_size: file.size,
       file_url: fileUrl,
       r2_key: key,
-      org: "yrbb",
+      org: ORG_ID,
       owner: "angkasa",
       created_by: session.userId,
       updated_by: session.userId,

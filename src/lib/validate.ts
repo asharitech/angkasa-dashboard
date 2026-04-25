@@ -3,6 +3,7 @@
 // Call validateObligation / validateEntry before insert or update operations.
 
 import { FUND_SOURCE_VALUES } from "./names";
+import { OBLIGATION_STATUSES } from "./config";
 import type { ObligationFields, EntryFields, NumpangFields } from "./db/schema";
 
 export class ValidationError extends Error {
@@ -13,9 +14,7 @@ export class ValidationError extends Error {
 }
 
 const VALID_OBLIGATION_TYPES = new Set(["pengajuan", "loan", "recurring"]);
-const VALID_OBLIGATION_STATUS = new Set([
-  "pending", "lunas", "reimbursed", "active", "settled", "cancelled",
-]);
+const VALID_OBLIGATION_STATUS = new Set<string>(OBLIGATION_STATUSES);
 const VALID_ENTRY_DIRECTIONS = new Set(["in", "out"]);
 const VALID_DANA_SUMBER = new Set<string | null | undefined>([
   "sewa", "operasional", null, undefined,

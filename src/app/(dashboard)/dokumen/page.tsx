@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { getSession } from "@/lib/auth";
+import { ORG_ID } from "@/lib/config";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -44,7 +45,7 @@ export default async function DokumenPage({
 
   const c = dbCollections(await getDb());
   const all = (await c.documents
-    .find({ org: "yrbb" })
+    .find({ org: ORG_ID })
     .sort({ created_at: -1 })
     .toArray()) as unknown as DocumentDoc[];
 

@@ -32,10 +32,11 @@ import {
 import { formatRupiah } from "@/lib/format";
 import type { Numpang } from "@/lib/types";
 import { idString } from "@/lib/utils";
+import { ACCOUNTS } from "@/lib/config";
 
 const PARKED_IN_OPTIONS = [
-  { value: "bri_angkasa", label: "BRI Angkasa" },
-  { value: "bca_angkasa", label: "BCA Angkasa" },
+  { value: ACCOUNTS.personalBri, label: "BRI Angkasa" },
+  { value: ACCOUNTS.personalBca, label: "BCA Angkasa" },
 ];
 
 function NumpangForm({
@@ -51,7 +52,7 @@ function NumpangForm({
   const [form, setForm] = useState({
     description: numpang?.description ?? "",
     amount: numpang?.amount?.toString() ?? "",
-    parked_in: numpang?.parked_in ?? "bri_angkasa",
+    parked_in: numpang?.parked_in ?? ACCOUNTS.personalBri,
     notes: numpang?.notes ?? "",
   });
   const [error, setError] = useState<string | null>(null);

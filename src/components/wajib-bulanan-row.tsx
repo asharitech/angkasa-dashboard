@@ -12,6 +12,7 @@ import { markLunasAction, unmarkLunasAction } from "@/lib/actions/obligations";
 import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { WajibBulananEditButton, WajibBulananDeleteButton } from "./wajib-bulanan-actions";
+import { ACCOUNTS } from "@/lib/config";
 
 const PREVIEW_LIMIT = 3;
 
@@ -61,7 +62,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
     if (!isAdmin || isLunas) return;
     setMarking(true);
     try {
-      const defaultAccount = yayasanAccounts[0]?._id || "btn_yayasan";
+      const defaultAccount = yayasanAccounts[0]?._id || ACCOUNTS.operasional;
       const today = new Date().toISOString().slice(0, 10);
       await markLunasAction({
         obligationId: idString(item._id),

@@ -6,6 +6,7 @@ import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { validateObligation, validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import { ORG_ID } from "@/lib/config";
 import type { ObligationDoc, EntryFields } from "@/lib/db/schema";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
@@ -61,7 +62,7 @@ export async function createObligationAction(input: PengajuanInput): Promise<Act
       bukti_ref: input.bukti_ref ?? null,
       detail: input.detail ?? null,
       owner: input.owner ?? "yayasan",
-      org: input.org ?? "yrbb",
+      org: input.org ?? ORG_ID,
       due_day: input.due_day ?? null,
       reminder_days: input.reminder_days ?? null,
       created_by: session.userId,

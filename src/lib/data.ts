@@ -1,5 +1,6 @@
 import { getDb } from "./mongodb";
 import { dbCollections } from "./db/collections";
+import { ACCOUNTS, ORG_ID } from "./config";
 import type { DbDate, EntryDirection, EntryFields, ObligationDoc } from "./db/schema";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
 import type { Filter } from "mongodb";
@@ -18,7 +19,7 @@ export async function getNumpangActive(): Promise<Numpang[]> {
 export async function computeBriKas(): Promise<{ briBalance: number; numpangTotal: number; briKas: number }> {
   const c = dbCollections(await getDb());
   const [bri, numpang] = await Promise.all([
-    c.accounts.findOne({ _id: "bri_angkasa" }),
+    c.accounts.findOne({ _id: ACCOUNTS.personalBri }),
     getNumpangActive(),
   ]);
   const briBalance = bri?.balance ?? 0;
@@ -148,7 +149,7 @@ export async function getPribadiSummary() {
 export async function getWajibBulanan(): Promise<Obligation[]> {
   const c = dbCollections(await getDb());
   return c.obligations
-    .find({ type: "recurring", org: "yrbb" })
+    .find({ type: "recurring", org: ORG_ID })
     .sort({ category: 1, created_at: -1 })
     .toArray();
 }
@@ -171,8 +172,8 @@ export async function getDashboardSummary() {
         { $group: { _id: "$requestor", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { total: -1 } },
       ]).toArray(),
-      c.accounts.findOne({ _id: "cash_yayasan" }),
-      c.obligations.find({ type: "recurring", org: "yrbb", status: "active" }).toArray(),
+      c.accounts.findOne({ _id: ACCOUNTS.cash }),
+      c.obligations.find({ type: "recurring", org: ORG_ID, status: "active" }).toArray(),
     ]);
 
   const cashAwal = Number(cashAccount?.meta?.initial_amount ?? 0) || 0;
@@ -260,8 +261,8 @@ export async function getDanaPribadiSummary() {
   const c = dbCollections(await getDb());
 
   const [bcaAccount, briAccount, personalEntries, numpangActive] = await Promise.all([
-    c.accounts.findOne({ _id: "bca_angkasa" }),
-    c.accounts.findOne({ _id: "bri_angkasa" }),
+    c.accounts.findOne({ _id: ACCOUNTS.personalBca }),
+    c.accounts.findOne({ _id: ACCOUNTS.personalBri }),
     c.entries
       .find({ domain: "personal" })
       .sort({ date: -1 })
@@ -309,7 +310,7 @@ export async function getLaporanOpReconciliation(): Promise<LaporanOpReconciliat
   const ledger = await getLedger("laporan_op");
   if (!ledger?.laporan_op) return null;
 
-  const account = "btn_yayasan";
+  const account = ACCOUNTS.operasional;
   const agg = await c.entries.aggregate([
     { $match: { account } },
     { $group: {

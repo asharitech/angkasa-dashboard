@@ -14,6 +14,7 @@ import { SewaLocationEditButton } from "@/components/sewa-location-editor";
 import { Badge } from "@/components/ui/badge";
 import { toneVariant, type Tone } from "@/lib/colors";
 import { cn, idString } from "@/lib/utils";
+import { getSewaStageMeta, getRegionTone, SEWA_LOCATION_REFS } from "@/lib/sewa-meta";
 import {
   Building2,
   MapPin,
@@ -27,35 +28,6 @@ import {
   AlertTriangle,
   Inbox,
 } from "lucide-react";
-
-export const dynamic = "force-dynamic";
-
-const regionAccent: Record<string, Tone> = {
-  TOPILAUT: "info",
-  "Rangas Beach": "warning",
-  ANGKASA: "success",
-};
-
-const stageMap: Record<string, { label: string; tone: Tone }> = {
-  belum_diterima: { label: "Belum Diterima", tone: "danger" },
-  di_intermediate: { label: "Di Intermediate", tone: "warning" },
-  transfer_yayasan: { label: "Transfer ke Yayasan", tone: "info" },
-  tercatat: { label: "Tercatat", tone: "success" },
-};
-
-const LOCATION_REFERENCE: { code: string; bgn: string; name: string; region: string; holder: string }[] = [
-  { code: "SIMBORO", bgn: "RB", name: "Simboro", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "DIPO", bgn: "DP", name: "Dipo", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "KURBAS", bgn: "KB", name: "Kurbas", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "TAPALANG", bgn: "TPL", name: "Tapalang", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "KENJE", bgn: "CL", name: "Kenje", region: "TOPILAUT", holder: "Patta Wellang" },
-  { code: "SARUDU", bgn: "SRD", name: "Sarudu", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "BUDONG_BUDONG", bgn: "BDG", name: "Budong-Budong", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "SAMPAGA", bgn: "SPG", name: "Sampaga", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "KAROSSA", bgn: "KRS", name: "Karossa", region: "Rangas Beach", holder: "Pak Sandi" },
-  { code: "LARA", bgn: "LR", name: "Lara", region: "ANGKASA", holder: "—" },
-  { code: "SUMARE", bgn: "SMR", name: "Sumare", region: "ANGKASA", holder: "—" },
-];
 
 export default async function SewaPage({
   searchParams,
@@ -153,7 +125,7 @@ return (
           <div className="space-y-4">
             {Array.from(byRegion.entries()).map(([region, locations]) => {
               const regionTotal = locations.reduce((s, l) => s + (l.amount ?? 0), 0);
-              const tone = regionAccent[region] ?? "neutral";
+              const tone = getRegionTone(region);
               return (
                 <SectionCard
                   key={region}
@@ -167,8 +139,8 @@ return (
                 >
                   <div className="divide-y divide-border/60">
                     {locations.map((loc) => {
-                      const stage = loc.pipeline?.stage ? stageMap[loc.pipeline.stage] : null;
-                      const ref = LOCATION_REFERENCE.find((r) => r.code === loc.code);
+                      const stage = loc.pipeline?.stage ? getSewaStageMeta(loc.pipeline.stage) : null;
+                      const ref = SEWA_LOCATION_REFS.find((r) => r.code === loc.code);
                       const regionMismatch = ref && ref.region !== loc.region;
                       return (
                         <div
@@ -353,7 +325,7 @@ return (
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {LOCATION_REFERENCE.map((l) => (
+                  {SEWA_LOCATION_REFS.map((l) => (
                     <tr key={l.code} className="hover:bg-muted/30">
                       <td className="px-3 py-2 font-semibold">{l.code}</td>
                       <td className="px-3 py-2 text-muted-foreground">{l.bgn}</td>

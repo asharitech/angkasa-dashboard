@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getDb } from "@/lib/mongodb"
 import { dbCollections } from "@/lib/db/collections"
 import { getSession } from "@/lib/auth"
+import { ACCOUNTS } from "@/lib/config"
 
 /**
  * Syncs laporan_op.totals from live btn_yayasan entries.
@@ -20,7 +21,7 @@ export async function refreshLaporanOpTotals(): Promise<{ error?: string }> {
   if (!ledger?.laporan_op) return { error: "Ledger tidak ditemukan" }
 
   const agg = await c.entries.aggregate([
-    { $match: { account: "btn_yayasan" } },
+    { $match: { account: ACCOUNTS.operasional } },
     { $group: { _id: "$direction", total: { $sum: "$amount" } } },
   ]).toArray()
 

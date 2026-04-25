@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
+import { ACCOUNTS } from "@/lib/config";
 import type { EntryFields, ObligationDoc } from "@/lib/db/schema";
 import type { Account, Obligation } from "@/lib/types";
 import type { Filter } from "mongodb";
@@ -17,19 +18,19 @@ export async function getDanaCashSummary(opts: { period?: string } = {}) {
   const c = dbCollections(db);
 
   const entryFilter: Filter<EntryFields> = {
-    account: "cash_yayasan",
+    account: ACCOUNTS.cash,
     direction: "out",
     ...(opts.period ? { month: opts.period } : {}),
   };
 
   const [account, pengeluaranRaw, totalAgg, pengajuan] = await Promise.all([
-    c.accounts.findOne({ _id: "cash_yayasan" }),
+    c.accounts.findOne({ _id: ACCOUNTS.cash }),
 
     c.entries.find(entryFilter).sort({ date: -1 }).toArray(),
 
     c.entries
       .aggregate<{ total: number }>([
-        { $match: { account: "cash_yayasan", direction: "out" } },
+        { $match: { account: ACCOUNTS.cash, direction: "out" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ])
       .toArray(),
