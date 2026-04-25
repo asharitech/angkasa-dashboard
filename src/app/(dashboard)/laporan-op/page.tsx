@@ -9,6 +9,7 @@ import {
 } from "@/lib/data"
 import { getSession } from "@/lib/auth"
 import { formatRupiah, formatRupiahCompact, formatDate } from "@/lib/format"
+import { formatPeriodLabel } from "@/lib/period"
 import { kewajibanRows } from "@/lib/kewajiban-display"
 import { cn } from "@/lib/utils"
 import { SectionCard } from "@/components/section-card"
@@ -20,35 +21,33 @@ import { Sparkline } from "@/components/laporan-op/sparkline"
 import { StackBar } from "@/components/laporan-op/stack-bar"
 import { PeriodChips } from "@/components/laporan-op/period-chips"
 import { EntriesTable } from "@/components/laporan-op/entries-table"
+import { LaporanOpAdminActions } from "@/components/laporan-op/admin-actions"
 import {
   FileText,
   TrendingUp,
   TrendingDown,
   Scale,
-  GitCompare,
   Receipt,
   Inbox,
   ArrowUp,
   ArrowDown,
-  RefreshCw,
-  Download,
-  Pencil,
 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
-function formatPeriodLabel(period: string): string {
-  const [year, month] = period.split("-")
-  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
-  return `${months[parseInt(month) - 1]} ${year}`
-}
-
+// Destructive shades for stacked kewajiban bar — each a distinct opacity level
 const KEWAJIBAN_COLORS = [
-  "oklch(0.577 0.245 27.325)",
+  "var(--color-destructive, oklch(0.577 0.245 27.325))",
   "oklch(0.577 0.245 27.325 / 0.65)",
   "oklch(0.577 0.245 27.325 / 0.45)",
   "oklch(0.577 0.245 27.325 / 0.30)",
 ]
+
+// Chart bar colors keyed to semantic intent
+const CHART_COLORS = {
+  masuk: "var(--color-success, oklch(0.627 0.194 149.214))",
+  keluar: "var(--color-destructive, oklch(0.577 0.245 27.325))",
+} as const
 
 // Grouped bar chart for masuk vs keluar over last 6 months
 function GroupedBarChart({
@@ -88,7 +87,7 @@ function GroupedBarChart({
               width={barW}
               height={masukH}
               rx={2}
-              fill="oklch(0.627 0.194 149.214)"
+              style={{ fill: CHART_COLORS.masuk }}
               fillOpacity={0.85}
             />
             {/* Keluar bar */}
@@ -98,7 +97,7 @@ function GroupedBarChart({
               width={barW}
               height={keluarH}
               rx={2}
-              fill="oklch(0.577 0.245 27.325)"
+              style={{ fill: CHART_COLORS.keluar }}
               fillOpacity={0.85}
             />
             {/* Month label */}
@@ -140,7 +139,7 @@ export default async function LaporanOpPage({
   // Determine active period
   const activePeriod = periodParam ?? periods.find((p) => p.is_current)?.period ?? null
 
-  if (!ledger?.laporan_op) {
+  if (!ledger || !ledger.laporan_op) {
     return (
       <div className="space-y-5">
         {/* Header */}
@@ -164,16 +163,25 @@ export default async function LaporanOpPage({
   }
 
   const { entries, totals, kewajiban, dana_efektif } = ledger.laporan_op
-  const reconHasDiff = recon && (recon.diffMasuk !== 0 || recon.diffKeluar !== 0)
-  const reconSynced = recon && recon.diffMasuk === 0 && recon.diffKeluar === 0
+
+  type ReconState = "synced" | "diff" | "unknown"
+  const reconState: ReconState = !recon
+    ? "unknown"
+    : recon.diffMasuk === 0 && recon.diffKeluar === 0
+    ? "synced"
+    : "diff"
 
   // Trend data for sparkline
   const trendValues = trend.map((t) => t.net)
 
-  // Delta vs previous month
+  // Delta vs previous month — trend is sorted ascending; match by period or fall back to last two entries
   const currentIdx = trend.findIndex((t) => t.month === activePeriod)
-  const prevNet = currentIdx > 0 ? trend[currentIdx - 1].net : null
-  const delta = prevNet != null ? dana_efektif - prevNet : null
+  const prevTrend = currentIdx > 0
+    ? trend[currentIdx - 1]
+    : currentIdx === -1 && trend.length >= 2
+    ? trend[trend.length - 2]
+    : null
+  const delta = prevTrend != null ? dana_efektif - prevTrend.net : null
 
   // Kewajiban rows and segments for stack bar
   const kRows = kewajibanRows(kewajiban, { includeTotal: false })
@@ -205,34 +213,8 @@ export default async function LaporanOpPage({
           </div>
         </div>
         {isAdmin && (
-          <div className="hidden items-center gap-2 md:flex">
-            <button
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "gap-1.5",
-              )}
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Refresh dari entries
-            </button>
-            <button
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "gap-1.5",
-              )}
-            >
-              <Download className="h-3.5 w-3.5" />
-              Export CSV
-            </button>
-            <button
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "gap-1.5",
-              )}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit snapshot
-            </button>
+          <div className="hidden md:block">
+            <LaporanOpAdminActions entries={entries} period={activePeriod} />
           </div>
         )}
       </div>
@@ -261,7 +243,7 @@ export default async function LaporanOpPage({
                 data={trendValues}
                 width={240}
                 height={40}
-                color="oklch(0.627 0.194 149.214)"
+                color={CHART_COLORS.masuk}
                 strokeWidth={2}
                 showDot
               />
@@ -316,17 +298,11 @@ export default async function LaporanOpPage({
           )}
           <div className="mt-2 flex gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-sm"
-                style={{ background: "oklch(0.627 0.194 149.214)" }}
-              />
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS.masuk }} />
               masuk
             </span>
             <span className="flex items-center gap-1">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-sm"
-                style={{ background: "oklch(0.577 0.245 27.325)" }}
-              />
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS.keluar }} />
               keluar
             </span>
           </div>
@@ -338,37 +314,27 @@ export default async function LaporanOpPage({
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Rekonsiliasi
             </p>
-            {reconHasDiff ? (
+            {reconState === "diff" ? (
               <Badge variant="warning">ada selisih</Badge>
-            ) : reconSynced ? (
+            ) : reconState === "synced" ? (
               <Badge variant="success">synced</Badge>
             ) : (
               <Badge variant="secondary">—</Badge>
             )}
           </div>
-          {recon && (
+          {reconState !== "unknown" && recon ? (
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <p className="text-[10px] uppercase text-muted-foreground">Masuk diff</p>
-                  <p
-                    className={cn(
-                      "font-semibold tabular-nums",
-                      recon.diffMasuk !== 0 ? "text-warning" : "text-success",
-                    )}
-                  >
+                  <p className={cn("font-semibold tabular-nums", recon.diffMasuk !== 0 ? "text-warning" : "text-success")}>
                     {recon.diffMasuk > 0 ? "+" : recon.diffMasuk < 0 ? "−" : ""}
                     {formatRupiahCompact(Math.abs(recon.diffMasuk))}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase text-muted-foreground">Keluar diff</p>
-                  <p
-                    className={cn(
-                      "font-semibold tabular-nums",
-                      recon.diffKeluar !== 0 ? "text-warning" : "text-success",
-                    )}
-                  >
+                  <p className={cn("font-semibold tabular-nums", recon.diffKeluar !== 0 ? "text-warning" : "text-success")}>
                     {recon.diffKeluar > 0 ? "+" : recon.diffKeluar < 0 ? "−" : ""}
                     {formatRupiahCompact(Math.abs(recon.diffKeluar))}
                   </p>
@@ -378,25 +344,12 @@ export default async function LaporanOpPage({
                 Snapshot vs hitungan live (btn_yayasan). Selisih bukan error — update via mongo_helper bila perlu.
               </p>
               <div className="flex gap-2 pt-1">
-                <Link
-                  href="/audit"
-                  className={cn(buttonVariants({ variant: "outline", size: "xs" }))}
-                >
+                <Link href="/audit" className={cn(buttonVariants({ variant: "outline", size: "xs" }))}>
                   Detail
                 </Link>
-                {isAdmin && (
-                  <button
-                    className={cn(
-                      buttonVariants({ variant: "default", size: "xs" }),
-                    )}
-                  >
-                    Sync ke snapshot
-                  </button>
-                )}
               </div>
             </div>
-          )}
-          {!recon && (
+          ) : (
             <p className="text-xs text-muted-foreground">Data rekonsiliasi tidak tersedia.</p>
           )}
         </div>

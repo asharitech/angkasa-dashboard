@@ -5,7 +5,8 @@ import {
   getLaporanOpReconciliation,
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
-import { formatRupiah, formatRupiahCompact } from "@/lib/format";
+import { formatRupiah, formatRupiahCompact } from "@/lib/format"
+import { kewajibanRows } from "@/lib/kewajiban-display";
 import { formatRequestorName } from "@/lib/names";
 import { SectionCard } from "@/components/section-card";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
@@ -69,32 +70,7 @@ export default async function DashboardPage() {
 
   const kewajiban = op?.kewajiban;
   const kewajibanItems = kewajiban
-    ? [
-        kewajiban.dana_pinjam_angkasa_tahap1 != null && kewajiban.dana_pinjam_angkasa_tahap1 > 0
-          ? { label: "Dana Pinjam Angkasa Tahap 1", amount: kewajiban.dana_pinjam_angkasa_tahap1 }
-          : null,
-        kewajiban.dana_pinjam_angkasa_tahap2 != null && kewajiban.dana_pinjam_angkasa_tahap2 > 0
-          ? { label: "Dana Pinjam Angkasa Tahap 2", amount: kewajiban.dana_pinjam_angkasa_tahap2 }
-          : null,
-        kewajiban.dana_pinjam_angkasa_tahap3 != null && kewajiban.dana_pinjam_angkasa_tahap3 > 0
-          ? { label: "Dana Pinjam Angkasa Tahap 3", amount: kewajiban.dana_pinjam_angkasa_tahap3 }
-          : null,
-        kewajiban.dana_pinjam_angkasa_tahap4 != null && kewajiban.dana_pinjam_angkasa_tahap4 > 0
-          ? { label: "Dana Pinjam Angkasa Tahap 4", amount: kewajiban.dana_pinjam_angkasa_tahap4 }
-          : null,
-        kewajiban.lembar2_btn != null && kewajiban.lembar2_btn > 0
-          ? { label: "Lembar 2 BTN", amount: kewajiban.lembar2_btn }
-          : null,
-        kewajiban.pinjaman_btn != null && kewajiban.pinjaman_btn > 0
-          ? { label: "Pinjaman BTN", amount: kewajiban.pinjaman_btn }
-          : null,
-        kewajiban.pinjaman_btn_awal != null && kewajiban.pinjaman_btn_awal > 0
-          ? { label: "Pinjaman BTN Awal", amount: kewajiban.pinjaman_btn_awal }
-          : null,
-        kewajiban.pinjaman_btn_sumare != null && kewajiban.pinjaman_btn_sumare > 0
-          ? { label: "Pinjaman BTN Sumare", amount: kewajiban.pinjaman_btn_sumare }
-          : null,
-      ].filter(Boolean) as { label: string; amount: number }[]
+    ? kewajibanRows(kewajiban).map(([label, amount]) => ({ label, amount }))
     : [];
 
   const actionItems: {

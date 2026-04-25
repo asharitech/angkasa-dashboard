@@ -1,11 +1,6 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-
-function formatPeriodLabel(period: string): string {
-  const [year, month] = period.split("-")
-  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
-  return `${months[parseInt(month) - 1]} ${year}`
-}
+import { formatPeriodLabel } from "@/lib/period"
 
 type Props = {
   periods: { period: string; is_current: boolean }[]

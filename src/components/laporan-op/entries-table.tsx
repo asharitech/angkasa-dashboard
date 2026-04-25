@@ -104,6 +104,16 @@ export function EntriesTable({
 
   const saldoAkhir = entries.length > 0 ? entries[entries.length - 1].saldo : 0
 
+  // Precompute sparkline windows for current page rows — O(n) not O(n²)
+  const sparklineMap = useMemo(() => {
+    const map = new Map<number, number[]>()
+    filtered.forEach((row, idx) => {
+      const start = Math.max(0, idx - 4)
+      map.set(row.no, filtered.slice(start, idx + 1).map((r) => r.saldo))
+    })
+    return map
+  }, [filtered])
+
   function handleDirectionChange(d: Direction) {
     setDirection(d)
     setPage(1)
@@ -182,11 +192,6 @@ export function EntriesTable({
             ) : (
               pageRows.map((row) => {
                 const cat = deriveCategory(row.keterangan)
-                // Mini sparkline: last 5 saldo values up to this row in filtered list
-                const rowIdx = filtered.findIndex((r) => r.no === row.no)
-                const windowStart = Math.max(0, rowIdx - 4)
-                const sparkData = filtered.slice(windowStart, rowIdx + 1).map((r) => r.saldo)
-
                 return (
                   <tr key={row.no} className="hover:bg-muted/40">
                     <td className="px-4 py-2.5 text-xs text-muted-foreground">{row.no}</td>
@@ -214,7 +219,7 @@ export function EntriesTable({
                       {formatRupiah(row.saldo)}
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <MiniSparkline data={sparkData} />
+                      <MiniSparkline data={sparklineMap.get(row.no) ?? []} />
                     </td>
                   </tr>
                 )
