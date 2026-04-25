@@ -67,7 +67,6 @@ export default async function DashboardPage() {
   const warnCount = integrityIssues.filter((i) => i.severity === "warn").length;
   const auditIssueCount = errorCount + warnCount;
 
-  // Kewajiban items from laporan_op
   const kewajiban = op?.kewajiban;
   const kewajibanItems = kewajiban
     ? [
@@ -98,7 +97,6 @@ export default async function DashboardPage() {
       ].filter(Boolean) as { label: string; amount: number }[]
     : [];
 
-  // Build action items for "Perlu ditindak"
   const actionItems: {
     icon: React.ReactNode;
     title: string;
@@ -116,7 +114,7 @@ export default async function DashboardPage() {
         </div>
       ),
       title: `${data.pengajuanPending} pengajuan belum lunas`,
-      description: `${formatRupiah(data.pengajuanTotalAmount)}${topRequestor ? ` · top: ${formatRequestorName(topRequestor._id)} ${formatRupiahCompact(topRequestor.total)}` : ""}`,
+      description: `${formatRupiahCompact(data.pengajuanTotalAmount)}${topRequestor ? ` · top: ${formatRequestorName(topRequestor._id)} ${formatRupiahCompact(topRequestor.total)}` : ""}`,
       actionLabel: "Bayarkan",
       href: "/pengajuan",
     });
@@ -129,8 +127,8 @@ export default async function DashboardPage() {
           <GitCompare className="h-4 w-4 text-warning" />
         </div>
       ),
-      title: "Snapshot Laporan Op tidak sinkron",
-      description: `Selisih ledger vs entries: ${formatRupiah(reconAmount)}`,
+      title: "Laporan Op tidak sinkron",
+      description: `Selisih ledger vs entries: ${formatRupiahCompact(reconAmount)}`,
       actionLabel: "Reconcile",
       href: "/laporan-op",
     });
@@ -150,23 +148,60 @@ export default async function DashboardPage() {
     });
   }
 
+  const healthBadgeVariant =
+    health.tone === "success" ? "success" : health.tone === "warning" ? "warning" : "destructive";
+
   return (
-    <div className="space-y-5">
-      {/* Page header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div className="space-y-4">
+      {/* Mobile: teal hero card */}
+      <div className="md:hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-5 shadow-md">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+              <Landmark className="h-4 w-4" />
+            </div>
+            <span className="text-sm font-semibold">Yayasan YRBB</span>
+          </div>
+          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+            {health.label}
+          </span>
+        </div>
+        <div className="mt-4">
+          <p className="text-xs font-medium opacity-75">Dana efektif</p>
+          <p className="mt-0.5 text-3xl font-bold tabular-nums tracking-tight">
+            {formatRupiahCompact(danaEfektif)}
+          </p>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Link
+            href="/laporan-op"
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white/15 py-2 text-xs font-semibold hover:bg-white/25 transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            Laporan Op
+          </Link>
+          <Link
+            href="/pengajuan"
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white/90 py-2 text-xs font-bold text-primary hover:bg-white transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Pengajuan
+          </Link>
+        </div>
+      </div>
+
+      {/* Desktop: text header with action buttons */}
+      <div className="hidden md:flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <IconBadge icon={Landmark} tone="primary" size="lg" />
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Yayasan YRBB</h1>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+            <div className="mt-0.5 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 Dana efektif{" "}
                 <span className="font-semibold text-foreground">{formatRupiah(danaEfektif)}</span>
               </span>
-              <Badge
-                variant={health.tone === "success" ? "success" : health.tone === "warning" ? "warning" : "destructive"}
-                className="text-xs"
-              >
+              <Badge variant={healthBadgeVariant} className="text-xs">
                 {health.label}
               </Badge>
             </div>
@@ -194,19 +229,24 @@ export default async function DashboardPage() {
                 {actionItems.length} item
               </Badge>
             </div>
-            <span className="text-xs text-muted-foreground">Diurut berdasarkan dampak</span>
+            <span className="hidden sm:block text-xs text-muted-foreground">
+              Diurut berdasarkan dampak
+            </span>
           </div>
           <div className="divide-y divide-border/60">
             {actionItems.map((item, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3">
                 {item.icon}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                  <p className="text-sm font-semibold leading-snug">{item.title}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
                 </div>
-                <Link href={item.href} className={`${buttonVariants({ variant: "outline", size: "sm" })} shrink-0`}>
-                  {item.actionLabel}
-                  <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                <Link
+                  href={item.href}
+                  className={`${buttonVariants({ variant: "outline", size: "sm" })} shrink-0`}
+                >
+                  <span className="hidden sm:inline">{item.actionLabel}</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             ))}
@@ -216,52 +256,54 @@ export default async function DashboardPage() {
 
       {/* Pengajuan per Requestor */}
       {data.pengajuanPending > 0 && (
-        <SectionCard
-          icon={Clock}
-          title="Pengajuan per Requestor"
-          tone="danger"
-          badge={
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">{data.pengajuanPending} item</span>
-              <Badge variant="destructive" className="text-xs">
-                {formatRupiahCompact(data.pengajuanTotalAmount)}
-              </Badge>
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          {/* Card header */}
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-destructive/10">
+              <Clock className="h-3.5 w-3.5 text-destructive" />
             </div>
-          }
-          action={
-            <Link href="/pengajuan" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+            <span className="text-sm font-semibold">Pengajuan</span>
+            <Badge variant="secondary" className="text-xs tabular-nums">
+              {data.pengajuanPending}
+            </Badge>
+            <Badge variant="destructive" className="text-xs tabular-nums">
+              {formatRupiahCompact(data.pengajuanTotalAmount)}
+            </Badge>
+            <Link
+              href="/pengajuan"
+              className="ml-auto flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ChevronRight className="h-4 w-4" />
             </Link>
-          }
-        >
-          <div className="grid grid-cols-2 gap-2">
+          </div>
+          {/* Requestor grid */}
+          <div className="p-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-2">
             {data.pengajuanByRequestor.map((r) => {
-              const initials = (formatRequestorName(r._id) || "?").slice(0, 2).toUpperCase();
+              const name = formatRequestorName(r._id) || "—";
+              const initials = name === "—" ? "?" : name.slice(0, 2).toUpperCase();
               return (
                 <div
                   key={r._id}
-                  className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5"
+                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 p-3"
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
                     {initials}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {formatRequestorName(r._id) || "—"}
-                    </p>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold leading-tight">{name}</p>
                     <p className="text-xs text-muted-foreground">{r.count} tagihan</p>
+                    <p className="text-sm font-bold tabular-nums text-foreground">
+                      {formatRupiahCompact(r.total)}
+                    </p>
                   </div>
-                  <span className="shrink-0 text-sm font-bold tabular-nums">
-                    {formatRupiahCompact(r.total)}
-                  </span>
                 </div>
               );
             })}
           </div>
-        </SectionCard>
+        </div>
       )}
 
-      {/* Bottom 2x2 grid */}
+      {/* Bottom grid — single col on mobile, 2-col on desktop */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Rekening Yayasan */}
         {yayasanAccounts.length > 0 && (
@@ -270,12 +312,12 @@ export default async function DashboardPage() {
               {yayasanAccounts.map((acc) => (
                 <div key={acc._id} className="flex items-center justify-between py-2.5">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{acc.bank}</p>
-                    <p className="truncate max-w-[160px] text-xs text-muted-foreground">
+                    <p className="text-sm font-semibold">{acc.bank}</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[180px]">
                       {formatRequestorName(acc.holder)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
                     {isAdmin && <AccountAdjustButton account={acc} />}
                   </div>
@@ -297,7 +339,10 @@ export default async function DashboardPage() {
               </Badge>
             }
             action={
-              <Link href="/laporan-op" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+              <Link
+                href="/laporan-op"
+                className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Link>
             }
@@ -307,7 +352,7 @@ export default async function DashboardPage() {
                 kewajibanItems.map((item) => (
                   <div key={item.label} className="flex items-center justify-between py-2">
                     <span className="text-sm text-muted-foreground">{item.label}</span>
-                    <span className="text-sm font-semibold tabular-nums">
+                    <span className="text-sm font-semibold tabular-nums shrink-0 ml-2">
                       {formatRupiahCompact(item.amount)}
                     </span>
                   </div>
@@ -333,7 +378,10 @@ export default async function DashboardPage() {
               </Badge>
             }
             action={
-              <Link href="/sewa" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+              <Link
+                href="/sewa"
+                className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Link>
             }
@@ -373,21 +421,22 @@ export default async function DashboardPage() {
               </Badge>
             }
             action={
-              <Link href="/wajib-bulanan" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+              <Link
+                href="/wajib-bulanan"
+                className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Link>
             }
           >
             {runway !== null ? (
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Komitmen tetap bulanan. Turun dari sisa dana efektif ≈{" "}
-                  <span className="font-bold text-foreground">
-                    {runway.toFixed(1).replace(".", ",")} bulan
-                  </span>{" "}
-                  runway.
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Komitmen tetap bulanan. Turun dari sisa dana efektif ≈{" "}
+                <span className="font-bold text-foreground">
+                  {runway.toFixed(1).replace(".", ",")} bulan
+                </span>{" "}
+                runway.
+              </p>
             ) : (
               <div>
                 <span className="text-xl font-bold tabular-nums">
