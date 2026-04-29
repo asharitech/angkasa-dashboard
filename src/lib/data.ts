@@ -1,10 +1,15 @@
 import { getDb } from "./mongodb";
 import { dbCollections } from "./db/collections";
 import { ACCOUNTS, ORG_ID } from "./config";
-import type { DbDate, EntryDirection, EntryFields, ObligationDoc } from "./db/schema";
+import type { DbDate, EntryDirection, EntryFields, ObligationDoc, PemantauanDoc } from "./db/schema";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
+
+export async function getPemantauan(): Promise<PemantauanDoc[]> {
+  const c = dbCollections(await getDb());
+  return c.pemantauan.find().sort({ holder: 1, lokasi_code: 1 }).toArray();
+}
 
 export async function getNumpang(): Promise<Numpang[]> {
   const c = dbCollections(await getDb());

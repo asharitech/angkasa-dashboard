@@ -8,6 +8,7 @@ import type {
   NumpangFields,
   ObligationFields,
   OmprengFields,
+  PemantauanFields,
   UserFields,
 } from "./schema";
 
@@ -29,6 +30,7 @@ export function dbCollections(db: Db) {
     agenda: db.collection<AgendaFields>("agenda"),
     documents: db.collection<DocumentFields>("documents"),
     ompreng: db.collection<OmprengFields>("ompreng"),
+    pemantauan: db.collection<PemantauanFields>("pemantauan"),
   } as const;
 }
 

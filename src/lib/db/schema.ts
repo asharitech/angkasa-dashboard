@@ -306,6 +306,34 @@ export interface OmprengDoc {
   updated_at: DbDate | string;
 }
 
+export interface TemuanItemDoc {
+  id: string;
+  deskripsi: string;
+  kategori: string;
+  status: "belum" | "sedang" | "selesai";
+  catatan?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PemantauanDoc {
+  _id: ObjectId;
+  lokasi_code: string;
+  lokasi_name: string;
+  holder: string;
+  region: string;
+  bgn_code: string;
+  tanggal_pemantauan?: string | null;
+  temuan: TemuanItemDoc[];
+  kolom_belum?: string[];
+  status_keseluruhan: "aman" | "perlu_perhatian" | "kritis";
+  notes?: string | null;
+  created_at: DbDate;
+  updated_at: DbDate;
+}
+
+export type PemantauanFields = Omit<PemantauanDoc, "_id">;
+
 /**
  * Insert-safe field types: same as *Doc but without `_id`.
  * Use these as the Collection<T> generic so insertOne doesn't require _id.

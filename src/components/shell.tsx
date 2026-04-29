@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   UtensilsCrossed,
   CalendarDays,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ const yayasanNav: NavItem[] = [
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
   { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
+  { href: "/pemantauan", label: "Pemantauan", icon: ClipboardList },
 ];
 
 // Personal domain (consolidated — dana-pribadi & transaksi removed)
@@ -61,6 +63,7 @@ const mobileMore: NavItem[] = [
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
   { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
+  { href: "/pemantauan", label: "Pemantauan", icon: ClipboardList },
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
   { href: "/audit", label: "Audit Data", icon: ShieldCheck },
