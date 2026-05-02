@@ -57,7 +57,7 @@ export function PengajuanForm({
     requestor: obligation?.requestor ?? "",
     sumber_dana: obligation?.sumber_dana ?? "BTN_YAYASAN",
     month: obligation?.month ?? "",
-    date_spent: obligation?.date_spent?.slice(0, 10) ?? "",
+    date_spent: obligation?.date_spent ? new Date(obligation.date_spent).toISOString().slice(0, 10) : "",
     bukti_ref: obligation?.bukti_ref ?? "",
   });
   const [details, setDetails] = useState<DetailItem[]>(obligation?.detail ?? []);

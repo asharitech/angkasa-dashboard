@@ -62,7 +62,7 @@ export function EntryForm({
 }) {
   const isEdit = !!entry;
   const [form, setForm] = useState({
-    date: entry?.date?.slice(0, 10) ?? todayIsoWita(),
+    date: entry?.date ? new Date(entry.date).toISOString().slice(0, 10) : todayIsoWita(),
     account: entry?.account ?? accounts[0]?._id ?? "",
     direction: entry?.direction ?? "out",
     amount: entry?.amount?.toString() ?? "",
