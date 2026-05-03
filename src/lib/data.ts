@@ -617,27 +617,59 @@ export async function removeDuplicateObligations(keepFirst: boolean = true): Pro
 export async function getPengeluaranAngkasa(month?: string) {
   const c = dbCollections(await getDb());
 
-  const filter: Record<string, unknown> = { owner: "angkasa", domain: "personal", direction: "out" };
-  if (month) filter.month = month;
+  const baseFilter: Record<string, unknown> = { owner: "angkasa", domain: "personal" };
+  const monthFilter: Record<string, unknown> = month ? { ...baseFilter, month } : baseFilter;
 
-  const [entries, allMonths, categorySummary] = await Promise.all([
-    c.entries.find(filter).sort({ date: -1 }).toArray(),
-    c.entries.distinct("month", { owner: "angkasa", domain: "personal", direction: "out" }),
+  const [entriesOut, entriesIn, allMonths, categorySummary, monthlyCashflow] = await Promise.all([
+    c.entries.find({ ...monthFilter, direction: "out" }).sort({ date: -1 }).toArray(),
+    c.entries.find({ ...monthFilter, direction: "in" }).sort({ date: -1 }).toArray(),
+    c.entries.distinct("month", baseFilter),
     c.entries
       .aggregate([
-        { $match: filter },
+        { $match: { ...monthFilter, direction: "out" } },
         { $group: { _id: "$category", count: { $sum: 1 }, total: { $sum: "$amount" } } },
         { $sort: { total: -1 } },
       ])
       .toArray(),
+    c.entries
+      .aggregate([
+        { $match: baseFilter },
+        { $group: { _id: { month: "$month", direction: "$direction" }, total: { $sum: "$amount" } } },
+        { $sort: { "_id.month": -1 } },
+      ])
+      .toArray(),
   ]);
+
+  const entries = [...entriesOut, ...entriesIn].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  // Build cashflow map: month -> { in, out }
+  const cashflowMap = new Map<string, { in: number; out: number }>();
+  for (const m of allMonths as string[]) cashflowMap.set(m, { in: 0, out: 0 });
+  for (const row of monthlyCashflow) {
+    const m = row._id.month as string;
+    const d = row._id.direction as string;
+    const cur = cashflowMap.get(m) ?? { in: 0, out: 0 };
+    if (d === "in") cur.in = row.total;
+    if (d === "out") cur.out = row.total;
+    cashflowMap.set(m, cur);
+  }
+
+  const currentCashflow = month ? (cashflowMap.get(month) ?? { in: 0, out: 0 }) : null;
 
   return serializeDates({
     entries,
+    entriesOut,
+    entriesIn,
     months: (allMonths as string[]).sort().reverse(),
     categorySummary: categorySummary as { _id: string; count: number; total: number }[],
-    total: entries.reduce((s, e) => s + e.amount, 0),
-    count: entries.length,
+    totalOut: entriesOut.reduce((s, e) => s + e.amount, 0),
+    totalIn: entriesIn.reduce((s, e) => s + e.amount, 0),
+    countOut: entriesOut.length,
+    countIn: entriesIn.length,
+    cashflowByMonth: Object.fromEntries(cashflowMap),
+    currentCashflow,
   });
 }
 

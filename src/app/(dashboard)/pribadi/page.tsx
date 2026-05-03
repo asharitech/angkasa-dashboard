@@ -3,7 +3,7 @@ import { formatRupiah, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SectionCard } from "@/components/section-card";
-import { Wallet, Receipt, CalendarDays, Tag } from "lucide-react";
+import { Wallet, Receipt, CalendarDays, Tag, ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -71,16 +71,21 @@ export default async function PribadiPage({
 
   const filteredEntries = activeGrup
     ? data.entries.filter((e) => {
+        if (e.direction === "in") return false;
         const g = getGrupKategori(e.category);
         return g === activeGrup;
       })
     : data.entries;
 
-  const filteredTotal = filteredEntries.reduce((s, e) => s + e.amount, 0);
+  const cf = data.currentCashflow ?? { in: 0, out: 0 };
+  const net = cf.in - cf.out;
+  const totalFlow = cf.in + cf.out;
+  const inPct = totalFlow > 0 ? (cf.in / totalFlow) * 100 : 0;
+  const outPct = totalFlow > 0 ? (cf.out / totalFlow) * 100 : 0;
 
-  // Summary by category group for active month
+  // Summary by category group for OUT entries only
   const grupTotals = new Map<GrupKey, number>();
-  for (const e of data.entries) {
+  for (const e of data.entriesOut) {
     const g = getGrupKategori(e.category);
     if (!g) continue;
     grupTotals.set(g, (grupTotals.get(g) ?? 0) + e.amount);
@@ -119,18 +124,46 @@ export default async function PribadiPage({
         </div>
       )}
 
-      {/* Total Card */}
-      <SectionCard icon={Receipt} title={getNamaBulan(activeMonth)} tone="primary">
-        <div className="flex items-baseline justify-between py-2">
-          <span className="text-sm text-muted-foreground">Total Pengeluaran</span>
-          <span className="text-2xl font-extrabold tabular-nums text-destructive">
-            {formatRupiah(filteredTotal)}
-          </span>
+      {/* Cashflow Card */}
+      <SectionCard icon={Scale} title={`Cashflow — ${getNamaBulan(activeMonth)}`} tone="primary">
+        {/* In / Out Bars */}
+        <div className="space-y-3 py-1">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-1.5">
+              <ArrowDownLeft className="h-4 w-4 text-success" />
+              <span className="text-muted-foreground">Masuk</span>
+            </div>
+            <span className="font-bold tabular-nums text-success">{formatRupiah(cf.in)}</span>
+          </div>
+          <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden flex">
+            <div
+              className="h-full bg-success transition-all"
+              style={{ width: `${inPct}%` }}
+            />
+            <div
+              className="h-full bg-destructive transition-all"
+              style={{ width: `${outPct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-1.5">
+              <ArrowUpRight className="h-4 w-4 text-destructive" />
+              <span className="text-muted-foreground">Keluar</span>
+            </div>
+            <span className="font-bold tabular-nums text-destructive">{formatRupiah(cf.out)}</span>
+          </div>
         </div>
-        <div className="flex items-baseline justify-between py-2 border-t border-border/40">
-          <span className="text-sm text-muted-foreground">Jumlah Transaksi</span>
-          <span className="text-lg font-bold tabular-nums">
-            {filteredEntries.length} <span className="text-sm font-normal text-muted-foreground">item</span>
+
+        {/* Net */}
+        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+          <span className="text-sm font-medium">Selisih Bersih</span>
+          <span
+            className={cn(
+              "text-xl font-extrabold tabular-nums",
+              net >= 0 ? "text-success" : "text-destructive"
+            )}
+          >
+            {net >= 0 ? "+" : ""}{formatRupiah(net)}
           </span>
         </div>
       </SectionCard>
@@ -188,7 +221,8 @@ export default async function PribadiPage({
         ) : (
           <div className="divide-y divide-border/50">
             {filteredEntries.map((entry) => {
-              const grup = getGrupKategori(entry.category);
+              const isOut = entry.direction === "out";
+              const grup = isOut ? getGrupKategori(entry.category) : null;
               const grupConfig = grup ? KATEGORI_GRUP[grup] : null;
               return (
                 <div
@@ -203,13 +237,24 @@ export default async function PribadiPage({
                       <span className="text-xs text-muted-foreground">
                         {formatDateShort(entry.date)}
                       </span>
-                      <Badge variant={grupConfig?.color ?? "outline"} className="text-[10px] h-5 px-1.5">
-                        {namaKategori(entry.category)}
-                      </Badge>
+                      {isOut ? (
+                        <Badge variant={grupConfig?.color ?? "outline"} className="text-[10px] h-5 px-1.5">
+                          {namaKategori(entry.category)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" className="text-[10px] h-5 px-1.5">
+                          Masuk · {namaKategori(entry.category)}
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                  <span className="text-sm font-bold tabular-nums text-destructive shrink-0">
-                    {formatRupiah(entry.amount)}
+                  <span
+                    className={cn(
+                      "text-sm font-bold tabular-nums shrink-0",
+                      isOut ? "text-destructive" : "text-success"
+                    )}
+                  >
+                    {isOut ? "-" : "+"}{formatRupiah(entry.amount)}
                   </span>
                 </div>
               );
@@ -218,9 +263,9 @@ export default async function PribadiPage({
         )}
       </SectionCard>
 
-      {/* Category Summary */}
+      {/* Category Summary (OUT only) */}
       {data.categorySummary.length > 0 && (
-        <SectionCard icon={Tag} title="Rincian per Kategori" tone="info">
+        <SectionCard icon={Receipt} title="Rincian Pengeluaran per Kategori" tone="info">
           <div className="divide-y divide-border/50">
             {data.categorySummary.map((cat) => {
               const grup = getGrupKategori(cat._id);
@@ -240,7 +285,7 @@ export default async function PribadiPage({
                     </Badge>
                     <span className="text-xs text-muted-foreground">{cat.count}x</span>
                   </div>
-                  <span className="text-sm font-bold tabular-nums">
+                  <span className="text-sm font-bold tabular-nums text-destructive">
                     {formatRupiah(cat.total)}
                   </span>
                 </div>
