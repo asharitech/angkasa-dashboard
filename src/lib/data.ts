@@ -614,6 +614,33 @@ export async function removeDuplicateObligations(keepFirst: boolean = true): Pro
   return { removed, savedAmount };
 }
 
+export async function getPengeluaranAngkasa(month?: string) {
+  const c = dbCollections(await getDb());
+
+  const filter: Record<string, unknown> = { owner: "angkasa", domain: "personal", direction: "out" };
+  if (month) filter.month = month;
+
+  const [entries, allMonths, categorySummary] = await Promise.all([
+    c.entries.find(filter).sort({ date: -1 }).toArray(),
+    c.entries.distinct("month", { owner: "angkasa", domain: "personal", direction: "out" }),
+    c.entries
+      .aggregate([
+        { $match: filter },
+        { $group: { _id: "$category", count: { $sum: 1 }, total: { $sum: "$amount" } } },
+        { $sort: { total: -1 } },
+      ])
+      .toArray(),
+  ]);
+
+  return serializeDates({
+    entries,
+    months: (allMonths as string[]).sort().reverse(),
+    categorySummary: categorySummary as { _id: string; count: number; total: number }[],
+    total: entries.reduce((s, e) => s + e.amount, 0),
+    count: entries.length,
+  });
+}
+
 export async function getDashboardTrend(): Promise<{ month: string; net: number }[]> {
   const c = dbCollections(await getDb());
   const docs = await c.ledgers

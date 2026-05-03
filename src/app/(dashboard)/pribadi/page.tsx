@@ -1,522 +1,254 @@
-import { getPribadiSummary } from "@/lib/data";
-import { getSession } from "@/lib/auth";
-import type { Entry, Obligation, Numpang } from "@/lib/types";
+import { getPengeluaranAngkasa } from "@/lib/data";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
-import { ListSectionTitle } from "@/components/list-section-title";
-import { StatRowRupiah } from "@/components/stat-row";
-import { PageHeader } from "@/components/page-header";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
-import { SectionCard } from "@/components/section-card";
-import { EmptyState } from "@/components/empty-state";
-import { TransactionIcon, AmountText } from "@/components/transaction-item";
-import {
-  NumpangCreateButton,
-  NumpangRowActions,
-} from "@/components/numpang-manager";
-import { AccountAdjustButton } from "@/components/account-adjust-button";
-import { PribadiTabs } from "@/components/pribadi-tabs";
-import { ACCOUNTS } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
-import {
-  User,
-  Wallet,
-  HandCoins,
-  PiggyBank,
-  CreditCard,
-  Repeat,
-  Banknote,
-  CheckCircle2,
-  Clock,
-  CalendarDays,
-  ShoppingBag,
-  TrendingDown,
-  Target,
-  Inbox,
-} from "lucide-react";
+import { SectionCard } from "@/components/section-card";
+import { Wallet, Receipt, CalendarDays, Tag } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function PribadiPage() {
+const KATEGORI_GRUP = {
+  harian: {
+    label: "Harian",
+    cats: ["belanja", "makan", "pulsa", "gym", "pribadi_puang"],
+    color: "info" as const,
+  },
+  bulanan: {
+    label: "Bulanan",
+    cats: ["listrik"],
+    color: "warning" as const,
+  },
+  piutang: {
+    label: "Piutang Yayasan",
+    cats: ["piutang_yayasan"],
+    color: "destructive" as const,
+  },
+  savings: {
+    label: "Savings",
+    cats: ["savings"],
+    color: "success" as const,
+  },
+  lainnya: {
+    label: "Lainnya",
+    cats: ["reimburse_dilla", "angkasa_terpakai"],
+    color: "secondary" as const,
+  },
+};
 
-  const [data, session] = await Promise.all([getPribadiSummary(), getSession()]);
-  const isAdmin = session?.role === "admin";
+type GrupKey = keyof typeof KATEGORI_GRUP;
 
-  const bcaAccount = data.personalAccounts.find((a) => a._id === ACCOUNTS.personalBca);
-  const briAccount = data.personalAccounts.find((a) => a._id === ACCOUNTS.personalBri);
-  const bcaBalance = bcaAccount?.balance ?? 0;
-  const briEstatement = briAccount?.balance ?? 0;
-  const numpangTotal = data.numpang.reduce((s, n) => s + n.amount, 0);
-  const briKas = briEstatement - numpangTotal;
-  const cashTotal = bcaBalance + briKas;
-  const piutangTotal = data.piutangByMonth.reduce((s, p) => s + p.total, 0);
-
-  const totalSavings = data.savingsTotal.reduce((s, r) => {
-    return s + (r.total_out > 0 ? r.total_out : r.total_in > 0 ? r.total_in : r.total);
-  }, 0);
-
-  const witaParts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Makassar",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(new Date());
-  const witaYear = witaParts.find((p) => p.type === "year")?.value ?? "1970";
-  const witaMonth = witaParts.find((p) => p.type === "month")?.value ?? "01";
-  const currentMonth = `${witaYear}-${witaMonth}`;
-  let cicilanBulanIni = 0;
-  let totalRemainingDebt = 0;
-  for (const loan of data.loans) {
-    for (const s of loan.schedule ?? []) {
-      if (s.status !== "lunas") totalRemainingDebt += s.amount;
-      if (s.month === currentMonth) cicilanBulanIni += s.amount;
-    }
+function getGrupKategori(cat: string | null | undefined): GrupKey | null {
+  if (!cat) return null;
+  for (const [grup, config] of Object.entries(KATEGORI_GRUP)) {
+    if (config.cats.includes(cat)) return grup as GrupKey;
   }
-  const recurringTotal = data.recurring.reduce((s, r) => s + (r.amount ?? 0), 0);
-  const netPosition = cashTotal + piutangTotal - totalRemainingDebt;
-  const totalBulanan = cicilanBulanIni + recurringTotal;
+  return null;
+}
 
-  const kpis: KpiItem[] = [
-    {
-      label: "Posisi Bersih",
-      value: formatRupiah(netPosition),
-      icon: Target,
-      tone: netPosition >= 0 ? "info" : "danger",
-      hint: "Kas + piutang − hutang",
-      valueTone: netPosition >= 0 ? undefined : "danger",
-    },
-    {
-      label: "Cash Total",
-      value: formatRupiah(cashTotal),
-      icon: Wallet,
-      tone: "primary",
-      hint: `BCA ${formatRupiah(bcaBalance)} · BRI ${formatRupiah(briKas)}`,
-    },
-    {
-      label: "Piutang",
-      value: formatRupiah(piutangTotal),
-      icon: HandCoins,
-      tone: "warning",
-      hint: "Belum diganti yayasan",
-    },
-    {
-      label: "Sisa Cicilan",
-      value: formatRupiah(totalRemainingDebt),
-      icon: TrendingDown,
-      tone: "danger",
-      hint: `${data.loans.length} cicilan aktif`,
-      valueTone: "danger",
-    },
-  ];
+function getNamaBulan(monthCode: string): string {
+  const [year, month] = monthCode.split("-");
+  const names = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  const m = parseInt(month, 10);
+  return `${names[m] ?? month} ${year}`;
+}
+
+function namaKategori(cat: string | null | undefined): string {
+  if (!cat) return "Lainnya";
+  return cat.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
+export default async function PribadiPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bulan?: string; grup?: string }>;
+}) {
+  const params = await searchParams;
+  const data = await getPengeluaranAngkasa(params.bulan);
+  const activeMonth = params.bulan ?? data.months[0] ?? "";
+  const activeGrup = (params.grup as GrupKey | undefined) ?? undefined;
+
+  const filteredEntries = activeGrup
+    ? data.entries.filter((e) => {
+        const g = getGrupKategori(e.category);
+        return g === activeGrup;
+      })
+    : data.entries;
+
+  const filteredTotal = filteredEntries.reduce((s, e) => s + e.amount, 0);
+
+  // Summary by category group for active month
+  const grupTotals = new Map<GrupKey, number>();
+  for (const e of data.entries) {
+    const g = getGrupKategori(e.category);
+    if (!g) continue;
+    grupTotals.set(g, (grupTotals.get(g) ?? 0) + e.amount);
+  }
 
   return (
     <div className="space-y-5">
-      <PageHeader icon={User} title="Keuangan Pribadi">
-        {briAccount?.balance_as_of && (
-          <span className="text-xs text-muted-foreground">
-            BRI per {formatDateShort(briAccount.balance_as_of)}
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-bold tracking-tight md:text-2xl flex items-center gap-2">
+          <Wallet className="h-6 w-6 text-primary shrink-0" />
+          Pengeluaran Angkasa
+        </h2>
+      </div>
+
+      {/* Month Tabs */}
+      {data.months.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          {data.months.map((m) => {
+            const active = m === activeMonth;
+            return (
+              <Link
+                key={m}
+                href={`/pribadi?bulan=${m}${activeGrup ? `&grup=${activeGrup}` : ""}`}
+                className={cn(
+                  "flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all whitespace-nowrap",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+              >
+                {getNamaBulan(m)}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Total Card */}
+      <SectionCard icon={Receipt} title={getNamaBulan(activeMonth)} tone="primary">
+        <div className="flex items-baseline justify-between py-2">
+          <span className="text-sm text-muted-foreground">Total Pengeluaran</span>
+          <span className="text-2xl font-extrabold tabular-nums text-destructive">
+            {formatRupiah(filteredTotal)}
           </span>
-        )}
-      </PageHeader>
-
-      <KpiStrip items={kpis} cols={4} />
-
-      <PribadiTabs
-        ringkasan={
-          <RingkasanView
-            currentMonth={currentMonth}
-            cicilanBulanIni={cicilanBulanIni}
-            recurringTotal={recurringTotal}
-            totalBulanan={totalBulanan}
-            totalSavings={totalSavings}
-            savingsTotal={data.savingsTotal}
-            savings={data.savings}
-          />
-        }
-        akun={<AkunView accounts={data.personalAccounts} isAdmin={isAdmin} />}
-        cicilan={
-          <CicilanView
-            loans={data.loans}
-            totalRemainingDebt={totalRemainingDebt}
-            piutangByMonth={data.piutangByMonth}
-            piutangTotal={piutangTotal}
-          />
-        }
-        numpang={
-          <NumpangView
-            numpang={data.numpang}
-            numpangTotal={numpangTotal}
-            isAdmin={isAdmin}
-          />
-        }
-        pengeluaran={
-          <PengeluaranView recurring={data.recurring} recurringTotal={recurringTotal} spending={data.spending} />
-        }
-      />
-    </div>
-  );
-}
-
-type SavingsAggregate = { _id: string; count: number; total: number; total_in: number; total_out: number };
-
-function RingkasanView({
-  currentMonth,
-  cicilanBulanIni,
-  recurringTotal,
-  totalBulanan,
-  totalSavings,
-  savingsTotal,
-  savings,
-}: {
-  currentMonth: string;
-  cicilanBulanIni: number;
-  recurringTotal: number;
-  totalBulanan: number;
-  totalSavings: number;
-  savingsTotal: SavingsAggregate[];
-  savings: Entry[];
-}) {
-  return (
-    <div className="space-y-4">
-      <SectionCard
-        icon={CalendarDays}
-        title="Proyeksi Bulanan"
-        tone="danger"
-        badge={
-          <Badge variant="destructive" className="ml-1 tabular-nums">
-            {formatRupiah(totalBulanan)}/bln
-          </Badge>
-        }
-      >
-        <div className="divide-y divide-border/60">
-          <StatRowRupiah label={`Cicilan (${currentMonth})`} amount={cicilanBulanIni} />
-          <StatRowRupiah label="Pengeluaran Rutin" amount={recurringTotal} />
-          <StatRowRupiah label="Total Kewajiban/Bulan" amount={totalBulanan} highlight />
+        </div>
+        <div className="flex items-baseline justify-between py-2 border-t border-border/40">
+          <span className="text-sm text-muted-foreground">Jumlah Transaksi</span>
+          <span className="text-lg font-bold tabular-nums">
+            {filteredEntries.length} <span className="text-sm font-normal text-muted-foreground">item</span>
+          </span>
         </div>
       </SectionCard>
 
-      {savingsTotal.length > 0 && (
-        <SectionCard
-          icon={PiggyBank}
-          title="Tabungan"
-          tone="info"
-          badge={
-            <Badge variant="info" className="ml-1 tabular-nums">
-              {formatRupiah(totalSavings)}
-            </Badge>
-          }
-        >
-          <div className="divide-y divide-border/60">
-            {savingsTotal.map((s) => {
-              const displayAmount =
-                s.total_out > 0 ? s.total_out : s.total_in > 0 ? s.total_in : s.total;
+      {/* Category Group Filters */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Tag className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Filter Kategori</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/pribadi?bulan=${activeMonth}`}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all border",
+              !activeGrup
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-border hover:border-primary/50"
+            )}
+          >
+            Semua
+          </Link>
+          {(Object.entries(KATEGORI_GRUP) as [GrupKey, typeof KATEGORI_GRUP[GrupKey]][]).map(([key, config]) => {
+            const total = grupTotals.get(key) ?? 0;
+            const active = activeGrup === key;
+            return (
+              <Link
+                key={key}
+                href={`/pribadi?bulan=${activeMonth}&grup=${key}`}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all border flex items-center gap-1.5",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                )}
+              >
+                {config.label}
+                {total > 0 && (
+                  <span className={cn("tabular-nums", active ? "text-primary-foreground/70" : "text-muted-foreground/60")}>
+                    {formatRupiah(total).replace("Rp", "").trim()}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Transaction List */}
+      <SectionCard icon={CalendarDays} title="Detail Transaksi" tone="muted">
+        {filteredEntries.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground text-sm">
+            Tidak ada transaksi untuk filter ini.
+          </div>
+        ) : (
+          <div className="divide-y divide-border/50">
+            {filteredEntries.map((entry) => {
+              const grup = getGrupKategori(entry.category);
+              const grupConfig = grup ? KATEGORI_GRUP[grup] : null;
               return (
-                <div key={s._id} className="flex items-center justify-between py-2.5">
-                  <div>
-                    <span className="text-sm font-medium capitalize">{s._id}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{s.count} setoran</span>
+                <div
+                  key={idString(entry._id)}
+                  className="flex items-center justify-between gap-3 py-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">
+                      {entry.description}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        {formatDateShort(entry.date)}
+                      </span>
+                      <Badge variant={grupConfig?.color ?? "outline"} className="text-[10px] h-5 px-1.5">
+                        {namaKategori(entry.category)}
+                      </Badge>
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatRupiah(displayAmount)}
+                  <span className="text-sm font-bold tabular-nums text-destructive shrink-0">
+                    {formatRupiah(entry.amount)}
                   </span>
                 </div>
               );
             })}
           </div>
-          {savings.length > 0 && (
-            <>
-              <ListSectionTitle className="mt-4 pb-2">Riwayat Terakhir</ListSectionTitle>
-              <div className="divide-y divide-border/60">
-                {savings.slice(0, 8).map((entry) => (
-                  <div key={idString(entry._id)} className="flex items-center justify-between py-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm">{entry.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateShort(entry.date)} · {entry.owner}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold tabular-nums text-info">
-                      {formatRupiah(entry.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </SectionCard>
-      )}
-    </div>
-  );
-}
+        )}
+      </SectionCard>
 
-function AkunView({
-  accounts,
-  isAdmin,
-}: {
-  accounts: { _id: string; bank: string; holder: string; balance: number; balance_as_of?: string }[];
-  isAdmin: boolean;
-}) {
-  return (
-    <SectionCard icon={Wallet} title="Rekening Pribadi" tone="info">
-      <div className="divide-y divide-border/60">
-        {accounts.map((acc) => (
-          <div key={acc._id} className="flex items-center justify-between gap-2 py-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{acc.bank}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {acc.holder}
-                {acc.balance_as_of && <> · per {formatDateShort(acc.balance_as_of)}</>}
-              </p>
-            </div>
-            <p className="text-sm font-bold tabular-nums">{formatRupiah(acc.balance)}</p>
-            {isAdmin && <AccountAdjustButton account={acc} />}
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-function CicilanView({
-  loans,
-  totalRemainingDebt,
-  piutangByMonth,
-  piutangTotal,
-}: {
-  loans: Obligation[];
-  totalRemainingDebt: number;
-  piutangByMonth: { _id: string | null; count: number; total: number }[];
-  piutangTotal: number;
-}) {
-  return (
-    <div className="space-y-4">
-      {loans.length > 0 ? (
-        <SectionCard
-          icon={CreditCard}
-          title="Cicilan"
-          tone="danger"
-          badge={
-            <Badge variant="destructive" className="ml-1 tabular-nums">
-              sisa {formatRupiah(totalRemainingDebt)}
-            </Badge>
-          }
-        >
-          <div className="space-y-5">
-            {loans.map((loan) => {
-              const schedule = loan.schedule ?? [];
-              const paid = schedule.filter((s) => s.status === "lunas");
-              const remaining = schedule.filter((s) => s.status !== "lunas");
-              const lastMonth = loan.final_month ?? remaining[remaining.length - 1]?.month;
-              const remainingAmount = remaining.reduce((s, r) => s + r.amount, 0);
+      {/* Category Summary */}
+      {data.categorySummary.length > 0 && (
+        <SectionCard icon={Tag} title="Rincian per Kategori" tone="info">
+          <div className="divide-y divide-border/50">
+            {data.categorySummary.map((cat) => {
+              const grup = getGrupKategori(cat._id);
+              const grupConfig = grup ? KATEGORI_GRUP[grup] : null;
+              const isActive = !activeGrup || grup === activeGrup;
               return (
-                <div key={idString(loan._id)}>
-                  <div className="flex items-start justify-between gap-3 pb-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold">{loan.item}</span>
-                      {lastMonth && (
-                        <Badge variant="outline" className="text-xs">
-                          lunas {lastMonth}
-                        </Badge>
-                      )}
-                    </div>
-                    {loan.due_day && (
-                      <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                        <CalendarDays className="h-3 w-3" />
-                        Tgl {loan.due_day}
-                      </Badge>
-                    )}
+                <div
+                  key={cat._id}
+                  className={cn(
+                    "flex items-center justify-between py-2.5",
+                    !isActive && "opacity-40"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Badge variant={grupConfig?.color ?? "outline"} className="text-[10px] h-5 px-1.5">
+                      {namaKategori(cat._id)}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{cat.count}x</span>
                   </div>
-                  <p className="pb-2 text-xs text-muted-foreground">
-                    Sisa: {formatRupiah(remainingAmount)} · {remaining.length} bulan lagi
-                  </p>
-                  <div className="divide-y divide-border/60 border-y border-border/60">
-                    {paid.length > 0 && (
-                      <div className="flex items-center justify-between py-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
-                          <span className="text-sm text-muted-foreground">
-                            {paid.length} bulan lunas
-                          </span>
-                        </div>
-                        <span className="text-sm tabular-nums text-muted-foreground">
-                          {formatRupiah(paid.reduce((s, p) => s + p.amount, 0))}
-                        </span>
-                      </div>
-                    )}
-                    {remaining.map((s) => (
-                      <div key={s.month} className="flex items-center justify-between py-2">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{s.month}</span>
-                        </div>
-                        <span className="text-sm font-semibold tabular-nums">
-                          {formatRupiah(s.amount)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <span className="text-sm font-bold tabular-nums">
+                    {formatRupiah(cat.total)}
+                  </span>
                 </div>
               );
             })}
           </div>
         </SectionCard>
-      ) : (
-        <EmptyState icon={Inbox} title="Tidak ada cicilan aktif" />
-      )}
-
-      {piutangByMonth.length > 0 && (
-        <SectionCard
-          icon={HandCoins}
-          title="Hutang Yayasan ke Saya"
-          tone="warning"
-          badge={
-            <Badge variant="warning" className="ml-1 tabular-nums">
-              {formatRupiah(piutangTotal)}
-            </Badge>
-          }
-        >
-          <div className="divide-y divide-border/60">
-            {piutangByMonth.map((p) => (
-              <div key={p._id ?? "lain"} className="flex items-center justify-between py-2.5">
-                <div>
-                  <span className="text-sm font-medium">{p._id ?? "Lainnya"}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{p.count} item</span>
-                </div>
-                <span className="text-sm font-semibold tabular-nums">{formatRupiah(p.total)}</span>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
       )}
     </div>
   );
 }
-
-function NumpangView({
-  numpang,
-  numpangTotal,
-  isAdmin,
-}: {
-  numpang: Numpang[];
-  numpangTotal: number;
-  isAdmin: boolean;
-}) {
-  if (numpang.length === 0) {
-    return (
-      <div className="space-y-3">
-        {isAdmin && (
-          <div className="flex justify-end">
-            <NumpangCreateButton />
-          </div>
-        )}
-        <EmptyState
-          icon={Inbox}
-          title="Tidak ada dana numpang"
-          description="Saat ini tidak ada dana parkir di rekening pribadi."
-        />
-      </div>
-    );
-  }
-  return (
-    <SectionCard
-      icon={Banknote}
-      title="Dana Numpang di BRI"
-      tone="muted"
-      badge={
-        <span className="ml-1 text-sm font-bold tabular-nums text-muted-foreground">
-          {formatRupiah(numpangTotal)}
-        </span>
-      }
-      action={isAdmin ? <NumpangCreateButton /> : undefined}
-    >
-      <div className="divide-y divide-border/60">
-        {numpang.map((n) => (
-          <div key={idString(n._id)} className="flex items-center justify-between gap-2 py-2.5">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{n.description}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Parkir di {n.parked_in?.replace(/_/g, " ").toUpperCase()}
-                {n.notes && <> · {n.notes}</>}
-              </p>
-            </div>
-            <span className="text-sm font-semibold tabular-nums">
-              {formatRupiah(n.amount)}
-            </span>
-            {isAdmin && <NumpangRowActions numpang={n} />}
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-function PengeluaranView({
-  recurring,
-  recurringTotal,
-  spending,
-}: {
-  recurring: Obligation[];
-  recurringTotal: number;
-  spending: Entry[];
-}) {
-  return (
-    <div className="space-y-4">
-      {recurring.length > 0 && (
-        <SectionCard
-          icon={Repeat}
-          title="Pengeluaran Rutin"
-          tone="info"
-          badge={
-            <span className="ml-1 text-sm font-bold tabular-nums text-muted-foreground">
-              {formatRupiah(recurringTotal)}/bln
-            </span>
-          }
-        >
-          <div className="divide-y divide-border/60">
-            {recurring.map((r) => (
-              <div key={idString(r._id)} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{r.item}</p>
-                  <Badge variant="outline" className="mt-1">
-                    {r.category.replace(/_/g, " ")}
-                  </Badge>
-                </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {formatRupiah(r.amount ?? 0)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      )}
-
-      {spending.length > 0 ? (
-        <SectionCard icon={ShoppingBag} title="Pengeluaran Terakhir" tone="muted">
-          <ul className="divide-y divide-border/60">
-            {spending.slice(0, 25).map((entry) => (
-              <li key={idString(entry._id)} className="flex items-center justify-between py-2.5">
-                <div className="flex min-w-0 items-center gap-3">
-                  <TransactionIcon direction={entry.direction as "in" | "out"} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{entry.description}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatDateShort(entry.date)}
-                      {entry.category && <> · {entry.category.replace(/_/g, " ")}</>}
-                    </p>
-                  </div>
-                </div>
-                <AmountText
-                  amount={entry.amount}
-                  direction={entry.direction as "in" | "out"}
-                  formatter={formatRupiah}
-                />
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      ) : (
-        <EmptyState icon={Inbox} title="Belum ada pengeluaran" />
-      )}
-    </div>
-  );
-}
-
