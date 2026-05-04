@@ -617,7 +617,7 @@ export async function removeDuplicateObligations(keepFirst: boolean = true): Pro
 export async function getPengeluaranAngkasa(month?: string) {
   const c = dbCollections(await getDb());
 
-  const baseFilter: Record<string, unknown> = { owner: "angkasa", domain: "personal" };
+  const baseFilter: Record<string, unknown> = { owner: "angkasa", domain: "personal", category: { $ne: "savings" } };
   const monthFilter: Record<string, unknown> = month ? { ...baseFilter, month } : baseFilter;
 
   const [entriesOut, entriesIn, allMonths, categorySummary, monthlyCashflow] = await Promise.all([

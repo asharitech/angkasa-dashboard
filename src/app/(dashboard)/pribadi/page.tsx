@@ -3,48 +3,48 @@ import { formatRupiah, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SectionCard } from "@/components/section-card";
-import { Wallet, Receipt, CalendarDays, Tag, ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
+import { Wallet, Receipt, CalendarDays, Tag } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-const KATEGORI_GRUP = {
-  harian: {
-    label: "Harian",
-    cats: ["belanja", "makan", "pulsa", "gym", "pribadi_puang"],
-    color: "info" as const,
-  },
-  bulanan: {
-    label: "Bulanan",
-    cats: ["listrik"],
-    color: "warning" as const,
-  },
-  piutang: {
-    label: "Piutang Yayasan",
-    cats: ["piutang_yayasan"],
-    color: "destructive" as const,
-  },
-  savings: {
-    label: "Savings",
-    cats: ["savings"],
-    color: "success" as const,
-  },
-  lainnya: {
-    label: "Lainnya",
-    cats: ["reimburse_dilla", "angkasa_terpakai"],
-    color: "secondary" as const,
-  },
+// 6 label yang diminta Pak Angkasa
+const LABEL_ORDER = [
+  "makan_minum",
+  "grab_gojek",
+  "belanja",
+  "top_up",
+  "pulsa",
+  "lainnya",
+] as const;
+
+type LabelKey = typeof LABEL_ORDER[number];
+
+const LABEL_CONFIG: Record<
+  LabelKey,
+  { label: string; color: Parameters<typeof Badge>[0]["variant"] }
+> = {
+  makan_minum: { label: "Makan / Minum", color: "warning" },
+  grab_gojek: { label: "Grab / Gojek", color: "info" },
+  belanja: { label: "Belanja", color: "default" },
+  top_up: { label: "Top Up", color: "success" },
+  pulsa: { label: "Pulsa", color: "secondary" },
+  lainnya: { label: "Lainnya", color: "outline" },
 };
 
-type GrupKey = keyof typeof KATEGORI_GRUP;
+function getLabel(entry: { category: string | null; description: string }): LabelKey {
+  const desc = (entry.description ?? "").toLowerCase();
+  const cat = entry.category ?? "";
 
-function getGrupKategori(cat: string | null | undefined): GrupKey | null {
-  if (!cat) return null;
-  for (const [grup, config] of Object.entries(KATEGORI_GRUP)) {
-    if (config.cats.includes(cat)) return grup as GrupKey;
-  }
-  return null;
+  if (desc.includes("grab") || desc.includes("gojek")) return "grab_gojek";
+  if (desc.includes("top up") || desc.includes("topup") || desc.includes("shopeepay") || desc.includes("ovo") || desc.includes("gopay") || desc.includes("dana"))
+    return "top_up";
+  if (cat === "pulsa") return "pulsa";
+  if (cat === "makan") return "makan_minum";
+  if (cat === "belanja" || cat === "gym") return "belanja";
+
+  return "lainnya";
 }
 
 function getNamaBulan(monthCode: string): string {
@@ -54,42 +54,35 @@ function getNamaBulan(monthCode: string): string {
   return `${names[m] ?? month} ${year}`;
 }
 
-function namaKategori(cat: string | null | undefined): string {
-  if (!cat) return "Lainnya";
-  return cat.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
-}
-
 export default async function PribadiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bulan?: string; grup?: string }>;
+  searchParams: Promise<{ bulan?: string; label?: string }>;
 }) {
   const params = await searchParams;
   const data = await getPengeluaranAngkasa(params.bulan);
   const activeMonth = params.bulan ?? data.months[0] ?? "";
-  const activeGrup = (params.grup as GrupKey | undefined) ?? undefined;
+  const activeLabel = (params.label as LabelKey | undefined) ?? undefined;
 
-  const filteredEntries = activeGrup
-    ? data.entries.filter((e) => {
-        if (e.direction === "in") return false;
-        const g = getGrupKategori(e.category);
-        return g === activeGrup;
-      })
-    : data.entries;
-
-  const cf = data.currentCashflow ?? { in: 0, out: 0 };
-  const net = cf.in - cf.out;
-  const totalFlow = cf.in + cf.out;
-  const inPct = totalFlow > 0 ? (cf.in / totalFlow) * 100 : 0;
-  const outPct = totalFlow > 0 ? (cf.out / totalFlow) * 100 : 0;
-
-  // Summary by category group for OUT entries only
-  const grupTotals = new Map<GrupKey, number>();
-  for (const e of data.entriesOut) {
-    const g = getGrupKategori(e.category);
-    if (!g) continue;
-    grupTotals.set(g, (grupTotals.get(g) ?? 0) + e.amount);
+  // Compute label totals for OUT entries
+  const labelTotals = new Map<LabelKey, { total: number; count: number }>();
+  for (const key of LABEL_ORDER) {
+    labelTotals.set(key, { total: 0, count: 0 });
   }
+  for (const e of data.entriesOut) {
+    const key = getLabel(e);
+    const cur = labelTotals.get(key) ?? { total: 0, count: 0 };
+    cur.total += e.amount;
+    cur.count += 1;
+    labelTotals.set(key, cur);
+  }
+
+  // Filtered entries
+  const filteredEntries = activeLabel
+    ? data.entries.filter((e) => e.direction === "out" && getLabel(e) === activeLabel)
+    : data.entries.filter((e) => e.direction === "out");
+
+  const totalOut = data.entriesOut.reduce((s, e) => s + e.amount, 0);
 
   return (
     <div className="space-y-5">
@@ -101,7 +94,7 @@ export default async function PribadiPage({
         </h2>
       </div>
 
-      {/* Month List — berjejer ke bawah */}
+      {/* Month List */}
       {data.months.length > 0 && (
         <div className="space-y-2">
           {data.months.map((m) => {
@@ -110,7 +103,7 @@ export default async function PribadiPage({
             return (
               <Link
                 key={m}
-                href={`/pribadi?bulan=${m}${activeGrup ? `&grup=${activeGrup}` : ""}`}
+                href={`/pribadi?bulan=${m}${activeLabel ? `&label=${activeLabel}` : ""}`}
                 className={cn(
                   "block rounded-xl border px-4 py-3 transition-all",
                   active
@@ -132,7 +125,7 @@ export default async function PribadiPage({
                     keluar {formatRupiah(cfMonth.out)}
                   </span>
                   <span className={cn("text-xs tabular-nums", active ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                    net {cfMonth.in - cfMonth.out >= 0 ? "+" : ""}{formatRupiah(cfMonth.in - cfMonth.out)}
+                    {cfMonth.in - cfMonth.out >= 0 ? "+" : ""}{formatRupiah(cfMonth.in - cfMonth.out)}
                   </span>
                 </div>
               </Link>
@@ -141,75 +134,43 @@ export default async function PribadiPage({
         </div>
       )}
 
-      {/* Cashflow Card */}
-      <SectionCard icon={Scale} title={`Cashflow — ${getNamaBulan(activeMonth)}`} tone="primary">
-        {/* In / Out Bars */}
-        <div className="space-y-3 py-1">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-1.5">
-              <ArrowDownLeft className="h-4 w-4 text-success" />
-              <span className="text-muted-foreground">Masuk</span>
-            </div>
-            <span className="font-bold tabular-nums text-success">{formatRupiah(cf.in)}</span>
-          </div>
-          <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden flex">
-            <div
-              className="h-full bg-success transition-all"
-              style={{ width: `${inPct}%` }}
-            />
-            <div
-              className="h-full bg-destructive transition-all"
-              style={{ width: `${outPct}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-1.5">
-              <ArrowUpRight className="h-4 w-4 text-destructive" />
-              <span className="text-muted-foreground">Keluar</span>
-            </div>
-            <span className="font-bold tabular-nums text-destructive">{formatRupiah(cf.out)}</span>
-          </div>
-        </div>
-
-        {/* Net */}
-        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-          <span className="text-sm font-medium">Selisih Bersih</span>
-          <span
-            className={cn(
-              "text-xl font-extrabold tabular-nums",
-              net >= 0 ? "text-success" : "text-destructive"
-            )}
-          >
-            {net >= 0 ? "+" : ""}{formatRupiah(net)}
-          </span>
-        </div>
+      {/* Total Card */}
+      <SectionCard title={`Total Pengeluaran — ${getNamaBulan(activeMonth)}`} tone="danger" bodyClassName="py-3">
+        <p className="text-2xl font-extrabold tabular-nums text-destructive">
+          {formatRupiah(totalOut)}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {data.entriesOut.length} transaksi
+        </p>
       </SectionCard>
 
-      {/* Category Group Filters */}
+      {/* Label Filters */}
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Filter Kategori</span>
+          <span className="text-sm font-medium text-muted-foreground">Label Pengeluaran</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/pribadi?bulan=${activeMonth}`}
             className={cn(
               "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all border",
-              !activeGrup
+              !activeLabel
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-background text-muted-foreground border-border hover:border-primary/50"
             )}
           >
             Semua
           </Link>
-          {(Object.entries(KATEGORI_GRUP) as [GrupKey, typeof KATEGORI_GRUP[GrupKey]][]).map(([key, config]) => {
-            const total = grupTotals.get(key) ?? 0;
-            const active = activeGrup === key;
+          {LABEL_ORDER.map((key) => {
+            const config = LABEL_CONFIG[key];
+            const { total, count } = labelTotals.get(key) ?? { total: 0, count: 0 };
+            if (total === 0) return null;
+            const active = activeLabel === key;
             return (
               <Link
                 key={key}
-                href={`/pribadi?bulan=${activeMonth}&grup=${key}`}
+                href={`/pribadi?bulan=${activeMonth}&label=${key}`}
                 className={cn(
                   "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all border flex items-center gap-1.5",
                   active
@@ -218,11 +179,9 @@ export default async function PribadiPage({
                 )}
               >
                 {config.label}
-                {total > 0 && (
-                  <span className={cn("tabular-nums", active ? "text-primary-foreground/70" : "text-muted-foreground/60")}>
-                    {formatRupiah(total).replace("Rp", "").trim()}
-                  </span>
-                )}
+                <span className={cn("tabular-nums", active ? "text-primary-foreground/70" : "text-muted-foreground/60")}>
+                  {formatRupiah(total).replace("Rp", "").trim()}
+                </span>
               </Link>
             );
           })}
@@ -238,9 +197,8 @@ export default async function PribadiPage({
         ) : (
           <div className="divide-y divide-border/50">
             {filteredEntries.map((entry) => {
-              const isOut = entry.direction === "out";
-              const grup = isOut ? getGrupKategori(entry.category) : null;
-              const grupConfig = grup ? KATEGORI_GRUP[grup] : null;
+              const labelKey = getLabel(entry);
+              const labelConfig = LABEL_CONFIG[labelKey];
               return (
                 <div
                   key={idString(entry._id)}
@@ -254,24 +212,13 @@ export default async function PribadiPage({
                       <span className="text-xs text-muted-foreground">
                         {formatDateShort(entry.date)}
                       </span>
-                      {isOut ? (
-                        <Badge variant={grupConfig?.color ?? "outline"} className="text-[10px] h-5 px-1.5">
-                          {namaKategori(entry.category)}
-                        </Badge>
-                      ) : (
-                        <Badge variant="success" className="text-[10px] h-5 px-1.5">
-                          Masuk · {namaKategori(entry.category)}
-                        </Badge>
-                      )}
+                      <Badge variant={labelConfig.color} className="text-[10px] h-5 px-1.5">
+                        {labelConfig.label}
+                      </Badge>
                     </div>
                   </div>
-                  <span
-                    className={cn(
-                      "text-sm font-bold tabular-nums shrink-0",
-                      isOut ? "text-destructive" : "text-success"
-                    )}
-                  >
-                    {isOut ? "-" : "+"}{formatRupiah(entry.amount)}
+                  <span className="text-sm font-bold tabular-nums shrink-0 text-destructive">
+                    -{formatRupiah(entry.amount)}
                   </span>
                 </div>
               );
@@ -280,37 +227,36 @@ export default async function PribadiPage({
         )}
       </SectionCard>
 
-      {/* Category Summary (OUT only) */}
-      {data.categorySummary.length > 0 && (
-        <SectionCard icon={Receipt} title="Rincian Pengeluaran per Kategori" tone="info">
-          <div className="divide-y divide-border/50">
-            {data.categorySummary.map((cat) => {
-              const grup = getGrupKategori(cat._id);
-              const grupConfig = grup ? KATEGORI_GRUP[grup] : null;
-              const isActive = !activeGrup || grup === activeGrup;
-              return (
-                <div
-                  key={cat._id}
-                  className={cn(
-                    "flex items-center justify-between py-2.5",
-                    !isActive && "opacity-40"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Badge variant={grupConfig?.color ?? "outline"} className="text-[10px] h-5 px-1.5">
-                      {namaKategori(cat._id)}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{cat.count}x</span>
-                  </div>
-                  <span className="text-sm font-bold tabular-nums text-destructive">
-                    {formatRupiah(cat.total)}
-                  </span>
+      {/* Label Summary */}
+      <SectionCard icon={Receipt} title="Rincian per Label" tone="info">
+        <div className="divide-y divide-border/50">
+          {LABEL_ORDER.map((key) => {
+            const config = LABEL_CONFIG[key];
+            const { total, count } = labelTotals.get(key) ?? { total: 0, count: 0 };
+            if (total === 0) return null;
+            const isActive = !activeLabel || activeLabel === key;
+            return (
+              <div
+                key={key}
+                className={cn(
+                  "flex items-center justify-between py-2.5",
+                  !isActive && "opacity-40"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Badge variant={config.color} className="text-[10px] h-5 px-1.5">
+                    {config.label}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">{count}x</span>
                 </div>
-              );
-            })}
-          </div>
-        </SectionCard>
-      )}
+                <span className="text-sm font-bold tabular-nums text-destructive">
+                  {formatRupiah(total)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </SectionCard>
     </div>
   );
 }
