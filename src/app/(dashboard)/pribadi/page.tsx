@@ -101,23 +101,40 @@ export default async function PribadiPage({
         </h2>
       </div>
 
-      {/* Month Tabs */}
+      {/* Month List — berjejer ke bawah */}
       {data.months.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="space-y-2">
           {data.months.map((m) => {
             const active = m === activeMonth;
+            const cfMonth = (data.cashflowByMonth as Record<string, { in: number; out: number }>)[m] ?? { in: 0, out: 0 };
             return (
               <Link
                 key={m}
                 href={`/pribadi?bulan=${m}${activeGrup ? `&grup=${activeGrup}` : ""}`}
                 className={cn(
-                  "flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all whitespace-nowrap",
+                  "block rounded-xl border px-4 py-3 transition-all",
                   active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-card border-border hover:border-primary/40 hover:shadow-sm"
                 )}
               >
-                {getNamaBulan(m)}
+                <div className="flex items-center justify-between">
+                  <span className={cn("font-semibold", active ? "text-primary-foreground" : "text-foreground")}>
+                    {getNamaBulan(m)}
+                  </span>
+                  <span className={cn("text-sm font-bold tabular-nums", active ? "text-primary-foreground/90" : "text-destructive")}>
+                    {formatRupiah(cfMonth.out)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className={cn("text-xs", active ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                    {cfMonth.in > 0 && <>masuk {formatRupiah(cfMonth.in)} · </>}
+                    keluar {formatRupiah(cfMonth.out)}
+                  </span>
+                  <span className={cn("text-xs tabular-nums", active ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                    net {cfMonth.in - cfMonth.out >= 0 ? "+" : ""}{formatRupiah(cfMonth.in - cfMonth.out)}
+                  </span>
+                </div>
               </Link>
             );
           })}
