@@ -17,6 +17,13 @@ export default async function SavingsPage() {
     .filter((e) => e.direction === "in")
     .reduce((s, e) => s + e.amount, 0);
 
+  const angkasaEntries = entries.filter((e) => e.owner === "angkasa" && e.direction === "out");
+  const ebaEntries = entries.filter((e) => e.owner === "eba" && e.direction === "out");
+  const angkasaTotal = angkasaEntries.reduce((s, e) => s + e.amount, 0);
+  const ebaTotal = ebaEntries.reduce((s, e) => s + e.amount, 0);
+  const angkasaCount = angkasaEntries.length;
+  const ebaCount = ebaEntries.length;
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -26,8 +33,28 @@ export default async function SavingsPage() {
         </h2>
       </div>
 
-      <SectionCard title="Total Tabungan" tone="success" bodyClassName="py-3">
-        <p className="text-2xl font-extrabold tabular-nums text-success">
+      {/* Total per owner */}
+      <div className="grid grid-cols-2 gap-3">
+        <SectionCard title="Tabungan Angkasa" tone="primary" bodyClassName="py-3">
+          <p className="text-2xl font-extrabold tabular-nums text-primary">
+            {formatRupiah(angkasaTotal)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {angkasaCount} transaksi
+          </p>
+        </SectionCard>
+        <SectionCard title="Tabungan Eba" tone="success" bodyClassName="py-3">
+          <p className="text-2xl font-extrabold tabular-nums text-success">
+            {formatRupiah(ebaTotal)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {ebaCount} transaksi
+          </p>
+        </SectionCard>
+      </div>
+
+      <SectionCard title="Total Keseluruhan" tone="muted" bodyClassName="py-3">
+        <p className="text-xl font-extrabold tabular-nums text-foreground">
           {formatRupiah(totalOut)}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
