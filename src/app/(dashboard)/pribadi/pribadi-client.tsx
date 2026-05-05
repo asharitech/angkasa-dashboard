@@ -29,7 +29,8 @@ import {
   updateEntryAction,
   deleteEntryAction,
 } from "@/lib/actions/entries";
-import { Wallet, Receipt, CalendarDays, Tag, Plus, Pencil, Trash2 } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { Wallet, Receipt, CalendarDays, Tag, Plus, Pencil, Trash2, CalendarX2 } from "lucide-react";
 import type { Entry } from "@/lib/types";
 import type { Account } from "@/lib/types";
 
@@ -256,8 +257,21 @@ export function PribadiClient({
       </div>
 
       {/* Month List */}
-      {months.length > 0 && (
-        <div className="space-y-2">
+      {months.length === 0 ? (
+        <EmptyState
+          icon={CalendarX2}
+          title="Belum ada transaksi pribadi"
+          description="Tambah pengeluaran pertama untuk mulai melacak per bulan. Data akan muncul di sini setelah tercatat di basis data."
+          tone="muted"
+          action={
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" />
+              Tambah transaksi
+            </Button>
+          }
+        />
+      ) : (
+        <div className="max-h-[min(420px,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-0.5 md:max-h-none md:overflow-visible">
           {months.map((m) => {
             const active = m === activeMonth;
             const cfMonth = cashflowByMonth[m] ?? { in: 0, out: 0 };

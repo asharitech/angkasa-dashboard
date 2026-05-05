@@ -146,6 +146,23 @@
   html {
     @apply font-sans;
   }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Skip link: visible only on keyboard focus */
+.skip-link {
+  @apply sr-only;
+}
+.skip-link:focus {
+  @apply not-sr-only fixed left-4 top-4 z-[100] rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-lg;
 }
 
 @layer utilities {

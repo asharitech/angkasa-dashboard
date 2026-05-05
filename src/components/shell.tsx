@@ -29,6 +29,7 @@ import {
   Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { dashboardRouteTitle } from "@/lib/route-meta";
 
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
@@ -89,7 +90,10 @@ const monitorNav: NavItem[] = [
   { href: "/audit", label: "Audit Data", icon: ShieldCheck },
 ];
 
-const adminNav: NavItem[] = [{ href: "/users", label: "Users", icon: Users }];
+const adminNav: NavItem[] = [
+  { href: "/admin", label: "Master Data", icon: ShieldCheck },
+  { href: "/users", label: "Users", icon: Users },
+];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -108,15 +112,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const moreIsActive = mobileMore.some((item) => isActive(item.href));
 
-  // Derive current page title from pathname
-  const allNavItems: NavItem[] = [
-    ...yayasanNav,
-    ...pribadiNav,
-    ...monitorNav,
-    ...adminNav,
-  ];
-  const currentPageTitle =
-    allNavItems.find((item) => isActive(item.href))?.label ?? "Dashboard";
+  const currentPageTitle = dashboardRouteTitle(pathname);
 
   function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) {
     const active = isActive(href);
@@ -138,6 +134,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
+      <a
+        href="#main-content"
+        className="skip-link"
+      >
+        Langsung ke isi halaman
+      </a>
       {/* Mobile top header */}
       <header className="fixed inset-x-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border/60 bg-card/95 px-4 backdrop-blur-lg supports-[backdrop-filter]:bg-card/85 md:hidden">
         <div className="flex items-center gap-2">
@@ -202,7 +204,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 md:ml-60">
+      <main id="main-content" tabIndex={-1} className="flex-1 scroll-mt-20 outline-none md:ml-60 md:scroll-mt-0">
         <div className="mx-auto max-w-4xl px-4 pb-24 pt-[calc(3rem+1.25rem)] md:px-6 md:pb-10 md:pt-8">
           {children}
         </div>
