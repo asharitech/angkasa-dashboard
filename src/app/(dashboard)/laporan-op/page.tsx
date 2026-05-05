@@ -214,7 +214,7 @@ export default async function LaporanOpPage({
         </div>
         {isAdmin && (
           <div className="hidden md:block">
-            <LaporanOpAdminActions entries={entries} period={activePeriod} />
+            <LaporanOpAdminActions entries={entries} period={activePeriod} ledger={ledger} />
           </div>
         )}
       </div>
