@@ -44,7 +44,12 @@ import {
   ShoppingBag,
   Wallet,
   ListChecks,
+  AlertCircle,
 } from "lucide-react";
+
+function actionErrorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : "Terjadi kesalahan. Coba lagi.";
+}
 
 const CLASSIFICATIONS = [
   { value: "yayasan_puang", label: "Yayasan — Puang Imran" },
@@ -141,6 +146,7 @@ export function NotifikasiClient({
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<EmailNotif | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -163,43 +169,83 @@ export function NotifikasiClient({
   }, [items, query]);
 
   const handleClassify = async (id: string, classification: string) => {
+    setErrorBanner(null);
     setLoading(true);
-    await updateEmailNotifAction(id, { classification });
-    setItems((prev) => prev.map((n) => (idString(n._id) === id ? { ...n, classification } : n)));
-    setLoading(false);
+    try {
+      await updateEmailNotifAction(id, { classification });
+      setItems((prev) => prev.map((n) => (idString(n._id) === id ? { ...n, classification } : n)));
+    } catch (e) {
+      setErrorBanner(actionErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleApprove = async (id: string, data: { account_id: string; category: string; description: string }) => {
+    setErrorBanner(null);
     setLoading(true);
-    await approveEmailNotifAction(id, data);
-    setItems((prev) => prev.filter((n) => idString(n._id) !== id));
-    setApproveOpen(false);
-    setSelected(null);
-    setLoading(false);
+    try {
+      await approveEmailNotifAction(id, data);
+      setItems((prev) => prev.filter((n) => idString(n._id) !== id));
+      setApproveOpen(false);
+      setSelected(null);
+    } catch (e) {
+      setErrorBanner(actionErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     const id = idString(deleteTarget._id);
+    setErrorBanner(null);
     setDeletePending(true);
     try {
       await deleteEmailNotifAction(id);
       setItems((prev) => prev.filter((n) => idString(n._id) !== id));
       setDeleteTarget(null);
+    } catch (e) {
+      setErrorBanner(actionErrorMessage(e));
     } finally {
       setDeletePending(false);
     }
   };
 
   const handleIgnore = async (id: string) => {
+    setErrorBanner(null);
     setLoading(true);
-    await updateEmailNotifAction(id, { status: "ignored" });
-    setItems((prev) => prev.filter((n) => idString(n._id) !== id));
-    setLoading(false);
+    try {
+      await updateEmailNotifAction(id, { status: "ignored" });
+      setItems((prev) => prev.filter((n) => idString(n._id) !== id));
+    } catch (e) {
+      setErrorBanner(actionErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="space-y-8">
+      {errorBanner ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium leading-snug">{errorBanner}</p>
+            <button
+              type="button"
+              className="mt-2 text-xs font-medium underline underline-offset-2 hover:text-destructive/90"
+              onClick={() => setErrorBanner(null)}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {/* Hero + stats */}
       <section className="overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-sm">
         <div className="border-b border-border/60 bg-muted/30 px-4 py-5 md:px-6 md:py-6">
@@ -379,7 +425,12 @@ export function NotifikasiClient({
                       <Button
                         type="button"
                         className="h-10 w-full rounded-xl gap-2 font-semibold shadow-sm"
-                        disabled={loading}
+                        disabled={loading || accounts.length === 0}
+                        title={
+                          accounts.length === 0
+                            ? "Tambahkan akun bank terlebih dahulu untuk mencatat transaksi"
+                            : undefined
+                        }
                         onClick={() => {
                           setSelected(n);
                           setApproveOpen(true);
@@ -551,13 +602,35 @@ function ApproveForm({
     { value: "loan", label: "Pinjaman" },
   ];
 
+  const summary = (
+    <div className="rounded-xl border border-border/60 bg-muted/25 px-4 py-3 text-sm">
+      <p className="font-semibold text-foreground">{formatRupiah(notif.amount)}</p>
+      <p className="mt-1 text-muted-foreground">{notif.description}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(notif.parsed_date)}</p>
+    </div>
+  );
+
+  if (accounts.length === 0) {
+    return (
+      <div className="space-y-5">
+        {summary}
+        <div className="flex gap-3 rounded-xl border border-border/80 bg-card px-4 py-4 text-sm text-muted-foreground">
+          <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <p>
+            Belum ada akun terdaftar. Tambahkan rekening di data yayasan/pribadi terlebih dahulu agar entri bisa
+            diposting ke saldo yang benar.
+          </p>
+        </div>
+        <Button type="button" variant="outline" className="w-full rounded-xl sm:w-auto" onClick={onCancel}>
+          Tutup
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-border/60 bg-muted/25 px-4 py-3 text-sm">
-        <p className="font-semibold text-foreground">{formatRupiah(notif.amount)}</p>
-        <p className="mt-1 text-muted-foreground">{notif.description}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(notif.parsed_date)}</p>
-      </div>
+      {summary}
 
       <div className="space-y-2">
         <Label htmlFor="approve-account">Akun</Label>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   getDashboardSummary,
   getDataIntegrityIssues,
@@ -32,6 +33,10 @@ import {
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Beranda",
+};
 
 export default async function DashboardPage() {
   const [data, integrityIssues, recon, session, notifStats] = await Promise.all([
@@ -110,6 +115,20 @@ export default async function DashboardPage() {
       description: `Selisih ledger vs entries: ${formatRupiahCompact(reconAmount)}`,
       actionLabel: "Reconcile",
       href: "/laporan-op",
+    });
+  }
+
+  if (notifStats.pending > 0) {
+    actionItems.push({
+      icon: (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-info/10">
+          <Mail className="h-4 w-4 text-info" />
+        </div>
+      ),
+      title: `${notifStats.pending} notifikasi email menunggu`,
+      description: "Klasifikasi lalu catat ke buku besar dari alert bank atau e-wallet.",
+      actionLabel: "Proses",
+      href: "/notifikasi",
     });
   }
 

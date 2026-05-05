@@ -13,7 +13,7 @@ export default async function PribadiPage({
     params.bulan && /^\d{4}-\d{2}$/.test(params.bulan) ? params.bulan : undefined;
 
   let data = await getPengeluaranAngkasa(bulanParam);
-  let activeMonth =
+  const activeMonth =
     bulanParam && data.months.includes(bulanParam)
       ? bulanParam
       : (data.months[0] ?? "");
@@ -29,7 +29,7 @@ export default async function PribadiPage({
   const accounts = await getAccounts();
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-6">
+    <div className="mx-auto max-w-3xl py-4 md:py-2">
       <PribadiClient
         entries={data.entries}
         entriesOut={data.entriesOut}
@@ -39,6 +39,6 @@ export default async function PribadiPage({
         activeLabel={params.label as "makan_minum" | "grab_gojek" | "belanja" | "top_up" | "pulsa" | "lainnya" | undefined}
         accounts={accounts}
       />
-    </main>
+    </div>
   );
 }

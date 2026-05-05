@@ -119,6 +119,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return (
       <Link
         href={href}
+        aria-current={active ? "page" : undefined}
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
           active
@@ -145,7 +146,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2">
           {!mobilePrimary.some((item) => isActive(item.href)) ? (
             <button
+              type="button"
               onClick={() => router.back()}
+              aria-label="Kembali ke halaman sebelumnya"
               className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -205,7 +208,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main id="main-content" tabIndex={-1} className="flex-1 scroll-mt-20 outline-none md:ml-60 md:scroll-mt-0">
-        <div className="mx-auto max-w-4xl px-4 pb-24 pt-[calc(3rem+1.25rem)] md:px-6 md:pb-10 md:pt-8">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-[calc(3rem+1.25rem)] md:px-6 md:pb-10 md:pt-8">
           {children}
         </div>
       </main>
@@ -216,10 +219,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
           "fixed inset-0 z-40 md:hidden transition-opacity duration-300",
           moreOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         )}
+        aria-hidden={!moreOpen}
         onClick={() => setMoreOpen(false)}
       >
         <div className="absolute inset-0 bg-black/40" />
         <div
+          id="mobile-more-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu navigasi tambahan"
           className={cn(
             "absolute inset-x-0 bottom-0 rounded-t-2xl bg-card pb-20 pt-3 px-4 shadow-xl transition-transform duration-300 ease-out",
             moreOpen ? "translate-y-0" : "translate-y-full"
@@ -243,6 +251,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     key={href}
                     href={href}
                     onClick={() => setMoreOpen(false)}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex flex-col items-center gap-1.5 rounded-xl py-3 text-xs font-medium transition-colors",
                       active
@@ -277,6 +286,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Link
                 key={href}
                 href={href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors min-w-[48px]",
                   active ? "text-primary" : "text-muted-foreground"
@@ -288,7 +298,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
             );
           })}
           <button
+            type="button"
             onClick={() => setMoreOpen(!moreOpen)}
+            aria-expanded={moreOpen}
+            aria-controls="mobile-more-sheet"
+            aria-label={moreOpen ? "Tutup menu lainnya" : "Buka menu lainnya"}
             className={cn(
               "flex flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors min-w-[48px]",
               moreIsActive ? "text-primary" : "text-muted-foreground"

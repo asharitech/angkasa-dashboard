@@ -13,7 +13,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Angkasa Dashboard",
+  title: {
+    default: "Angkasa Dashboard",
+    template: "%s · Angkasa",
+  },
   description: "Dashboard Keuangan — Yayasan Rangas Batara Berlayar",
   manifest: "/manifest.json",
   appleWebApp: {
