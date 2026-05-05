@@ -79,9 +79,13 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && (
-              <p className="text-sm text-destructive font-medium">{error}</p>
-            )}
+            <div role="status" aria-live="polite" aria-atomic="true" className="min-h-[1.25rem]">
+              {error ? (
+                <p className="text-sm font-medium text-destructive" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </div>
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Masuk

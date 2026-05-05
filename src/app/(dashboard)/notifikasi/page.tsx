@@ -1,5 +1,7 @@
 import { getEmailNotifs, getEmailNotifStats, getAccounts } from "@/lib/data";
 import { NotifikasiClient } from "./notifikasi-client";
+import { PageHeader } from "@/components/page-header";
+import { Mail } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +13,12 @@ export default async function NotifikasiPage() {
   ]);
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Notifikasi Email</h1>
-        <p className="text-muted-foreground text-sm">
-          Notifikasi transfer dari BRI & BCA yang masuk via email — klasifikasikan sebelum dicatat.
+    <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <div className="space-y-1.5">
+        <PageHeader icon={Mail} title="Notifikasi email" />
+        <p className="text-sm text-muted-foreground md:pl-8">
+          Antrean pending dari inbox terhubung (bank, e-commerce, e-wallet, dll.). Klasifikasi lalu
+          catat ke ledger — atau abaikan jika bukan transaksi relevan.
         </p>
       </div>
       <NotifikasiClient notifs={notifs} stats={stats} accounts={accounts} />

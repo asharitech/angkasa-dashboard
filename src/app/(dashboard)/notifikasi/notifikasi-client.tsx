@@ -4,13 +4,17 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/empty-state";
 import { updateEmailNotifAction, approveEmailNotifAction, deleteEmailNotifAction } from "@/lib/actions/email-notifs";
 import { formatRupiah, formatDateTime } from "@/lib/format";
 import type { EmailNotif } from "@/lib/data";
 import type { Account } from "@/lib/types";
+import { Inbox, Clock, CheckCircle2, XCircle, Mail } from "lucide-react";
 
 const CLASSIFICATIONS = [
   { value: "yayasan_puang", label: "Yayasan — Puang Imran" },
@@ -25,12 +29,20 @@ const CLASSIFICATIONS = [
   { value: "lainnya", label: "Lainnya" },
 ];
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  approved: "bg-green-100 text-green-800 border-green-200",
-  rejected: "bg-red-100 text-red-800 border-red-200",
-  ignored: "bg-gray-100 text-gray-800 border-gray-200",
-};
+function statusBadgeVariant(status: string): BadgeVariant {
+  switch (status) {
+    case "pending":
+      return "warning";
+    case "approved":
+      return "success";
+    case "rejected":
+      return "destructive";
+    case "ignored":
+      return "secondary";
+    default:
+      return "outline";
+  }
+}
 
 const SOURCE_LABELS: Record<string, string> = {
   bri: "BRI",
@@ -91,37 +103,49 @@ export function NotifikasiClient({
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <Card className="border-border/80 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Total
+            </CardTitle>
+            <Inbox className="h-4 w-4 text-muted-foreground" aria-hidden />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-600">Pending</CardTitle>
+        <Card className="border-border/80 shadow-sm ring-1 ring-warning/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-warning">
+              Pending
+            </CardTitle>
+            <Clock className="h-4 w-4 text-warning" aria-hidden />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight text-warning">{stats.pending}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">Approved</CardTitle>
+        <Card className="border-border/80 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-success">
+              Approved
+            </CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight text-success">{stats.approved}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-600">Rejected</CardTitle>
+        <Card className="border-border/80 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-destructive">
+              Rejected
+            </CardTitle>
+            <XCircle className="h-4 w-4 text-destructive" aria-hidden />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight text-destructive">{stats.rejected}</div>
           </CardContent>
         </Card>
       </div>
@@ -129,11 +153,12 @@ export function NotifikasiClient({
       {/* List */}
       <div className="space-y-3">
         {items.length === 0 && (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              Tidak ada notifikasi pending. Semua sudah diklasifikasikan.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Mail}
+            title="Antrian kosong"
+            description="Tidak ada notifikasi dengan status pending. Yang sudah dicatat, diabaikan, atau ditolak tetap tercatat di statistik di atas."
+            tone="muted"
+          />
         )}
 
         {items.map((n) => (
@@ -143,9 +168,7 @@ export function NotifikasiClient({
                 {/* Left: info */}
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className={STATUS_COLORS[n.status] || ""}>
-                      {n.status}
-                    </Badge>
+                    <Badge variant={statusBadgeVariant(n.status)}>{n.status}</Badge>
                     <Badge variant="secondary">{SOURCE_LABELS[n.source] || n.source}</Badge>
                     {n.transfer_method && (
                       <Badge variant="outline" className="text-xs">
@@ -153,7 +176,7 @@ export function NotifikasiClient({
                       </Badge>
                     )}
                     {n.classification && (
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
+                      <Badge variant="info" className="text-xs">
                         {CLASSIFICATIONS.find((c) => c.value === n.classification)?.label || n.classification}
                       </Badge>
                     )}
@@ -295,9 +318,9 @@ function ApproveForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Akun</label>
+        <Label htmlFor="approve-account">Akun</Label>
         <Select value={accountId} onValueChange={(v) => setAccountId(v ?? "")}>
-          <SelectTrigger>
+          <SelectTrigger id="approve-account">
             <SelectValue placeholder="Pilih akun..." />
           </SelectTrigger>
           <SelectContent>
@@ -311,9 +334,9 @@ function ApproveForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Kategori</label>
+        <Label htmlFor="approve-category">Kategori</Label>
         <Select value={category} onValueChange={(v) => setCategory(v ?? "")}>
-          <SelectTrigger>
+          <SelectTrigger id="approve-category">
             <SelectValue placeholder="Pilih kategori..." />
           </SelectTrigger>
           <SelectContent>
@@ -327,8 +350,13 @@ function ApproveForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Deskripsi</label>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+        <Label htmlFor="approve-description">Deskripsi</Label>
+        <Textarea
+          id="approve-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={2}
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
