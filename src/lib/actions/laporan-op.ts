@@ -47,3 +47,63 @@ export async function refreshLaporanOpTotals(): Promise<{ error?: string }> {
   revalidatePath("/")
   return {}
 }
+
+export interface UpdateLaporanOpInput {
+  period: string;
+  period_code?: string | null;
+  as_of?: string | null;
+  is_current?: boolean;
+  laporan_op?: {
+    dana_efektif?: number;
+    totals?: {
+      masuk: number;
+      keluar: number;
+      saldo: number;
+    };
+    kewajiban?: {
+      total: number;
+      fields: Record<string, number>;
+    };
+  };
+}
+
+export async function updateLaporanOpAction(id: string, input: UpdateLaporanOpInput): Promise<{ ok?: boolean; error?: string }> {
+  const session = await getSession()
+  if (session?.role !== "admin") return { error: "Unauthorized" }
+
+  const c = dbCollections(await getDb())
+  
+  const updateData: any = {
+    period: input.period,
+    period_code: input.period_code ?? null,
+    is_current: input.is_current ?? false,
+    updated_at: new Date(),
+  }
+
+  if (input.as_of) updateData.as_of = new Date(input.as_of);
+  if (input.laporan_op) {
+    if (input.laporan_op.dana_efektif !== undefined) updateData["laporan_op.dana_efektif"] = input.laporan_op.dana_efektif;
+    if (input.laporan_op.totals) {
+      updateData["laporan_op.totals.masuk"] = input.laporan_op.totals.masuk;
+      updateData["laporan_op.totals.keluar"] = input.laporan_op.totals.keluar;
+      updateData["laporan_op.totals.saldo"] = input.laporan_op.totals.saldo;
+    }
+    if (input.laporan_op.kewajiban) {
+      await c.ledgers.updateOne(
+        { _id: new (require("mongodb").ObjectId)(id) },
+        { $set: { "laporan_op.kewajiban": { total: input.laporan_op.kewajiban.total, ...input.laporan_op.kewajiban.fields } } }
+      );
+    }
+  }
+
+  await c.ledgers.updateOne(
+    { _id: new (require("mongodb").ObjectId)(id) },
+    { $set: updateData }
+  )
+
+  revalidatePath("/laporan-op")
+  revalidatePath("/")
+  return { ok: true }
+}
+
+

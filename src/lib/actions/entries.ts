@@ -1,146 +1,157 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
-import { validateEntry } from "@/lib/validate";
-import { requireAdmin, actionError } from "@/lib/auth-helpers";
-import type { Entry } from "@/lib/types";
-import type { EntryFields } from "@/lib/db/schema";
-
-type ActionResult = { ok: true; id?: string } | { error: string };
-
-export async function getEntryByIdAction(
-  id: string,
-): Promise<{ entry: Entry } | { error: string }> {
-  try {
-    await requireAdmin();
-    const c = dbCollections(await getDb());
-    const doc = await c.entries.findOne({ _id: toObjectId(id) });
-    if (!doc) return { error: "Entry tidak ditemukan" };
-    return {
-      entry: {
-        ...doc,
-        _id: doc._id.toString(),
-      } as unknown as Entry,
-    };
-  } catch (err) {
-    return actionError(err);
-  }
-}
-
-function toObjectId(id: string): ObjectId {
-  return new ObjectId(id);
-}
-
-function monthFromDate(date: string): string {
-  return date.slice(0, 7);
-}
+import { ObjectId } from "mongodb";
 
 export interface EntryInput {
   date: string;
   account: string;
   direction: "in" | "out";
   amount: number;
-  counterparty?: string;
+  counterparty: string;
   description: string;
-  domain: "yayasan" | "personal";
+  domain: string;
   category: string;
   owner?: string;
   dana_sumber?: "sewa" | "operasional" | null;
   tahap_sewa?: string | null;
-  source?: string;
   ref_no?: string | null;
 }
 
-export async function createEntryAction(input: EntryInput): Promise<ActionResult> {
+export interface EntryActionResult {
+  ok: boolean;
+  id?: string;
+  error?: string;
+}
+
+export async function createEntryAction(data: EntryInput): Promise<EntryActionResult> {
   try {
-    const session = await requireAdmin();
     const c = dbCollections(await getDb());
-    const now = new Date();
-    const doc: EntryFields = {
-      date: input.date,
-      month: monthFromDate(input.date),
-      account: input.account,
-      direction: input.direction,
-      amount: input.amount,
-      counterparty: input.counterparty ?? "",
-      description: input.description.trim(),
-      domain: input.domain,
-      category: input.category.trim().toLowerCase().replace(/\s+/g, "_"),
-      owner: input.owner ?? (input.domain === "personal" ? "angkasa" : "yayasan"),
-      dana_sumber: input.dana_sumber ?? null,
-      tahap_sewa: input.tahap_sewa ?? null,
-      source: input.source ?? "manual",
-      ref_no: input.ref_no ?? null,
-      created_by: session.userId,
-      updated_by: session.userId,
-      created_at: now,
-      updated_at: now,
+    const entry = {
+      ...data,
+      owner: data.owner ?? "angkasa",
+      month: data.date.substring(0, 7),
+      source: "manual",
+      created_at: new Date(),
+      updated_at: new Date(),
     };
-    validateEntry(doc);
-    const result = await c.entries.insertOne(doc);
-    revalidatePath("/aktivitas");
+    const result = await c.entries.insertOne(entry);
+
+    // Update account balance
+    if (entry.direction === "out") {
+      await c.accounts.updateOne(
+        { _id: entry.account },
+        { $inc: { balance: -entry.amount }, $set: { updated_at: new Date() } }
+      );
+    } else {
+      await c.accounts.updateOne(
+        { _id: entry.account },
+        { $inc: { balance: entry.amount }, $set: { updated_at: new Date() } }
+      );
+    }
+
+    revalidatePath("/pribadi");
     revalidatePath("/");
-    revalidatePath("/laporan-op");
     return { ok: true, id: result.insertedId.toString() };
-  } catch (err) {
-    return actionError(err);
+  } catch (e: any) {
+    return { ok: false, error: e.message };
   }
 }
 
 export async function updateEntryAction(
   id: string,
-  patch: Partial<EntryInput>,
-): Promise<ActionResult> {
+  data: Partial<EntryInput>
+): Promise<EntryActionResult> {
   try {
-    const session = await requireAdmin();
     const c = dbCollections(await getDb());
-    const existing = await c.entries.findOne({ _id: toObjectId(id) });
-    if (!existing) return { error: "Entry tidak ditemukan" };
-    const month = patch.date ? monthFromDate(patch.date) : undefined;
-    const merged: EntryFields = { ...existing, ...patch, ...(month ? { month } : {}) };
-    validateEntry(merged);
-    const update: Partial<EntryFields> & { updated_by: string; updated_at: Date } = {
-      ...patch,
-      ...(month ? { month } : {}),
-      updated_by: session.userId,
-      updated_at: new Date(),
-    };
-    await c.entries.updateOne({ _id: toObjectId(id) }, { $set: update });
-    revalidatePath("/aktivitas");
+
+    // Get old entry to adjust balance
+    const old = await c.entries.findOne({ _id: new ObjectId(id) });
+    if (!old) throw new Error("Transaksi tidak ditemukan");
+
+    const update: Record<string, unknown> = { updated_at: new Date() };
+    if (data.date != null) {
+      update.date = data.date;
+      update.month = data.date.substring(0, 7);
+    }
+    if (data.account != null) update.account = data.account;
+    if (data.direction != null) update.direction = data.direction;
+    if (data.amount != null) update.amount = data.amount;
+    if (data.counterparty != null) update.counterparty = data.counterparty;
+    if (data.description != null) update.description = data.description;
+    if (data.domain != null) update.domain = data.domain;
+    if (data.category != null) update.category = data.category;
+    if (data.dana_sumber !== undefined) update.dana_sumber = data.dana_sumber;
+    if (data.tahap_sewa !== undefined) update.tahap_sewa = data.tahap_sewa;
+    if (data.ref_no !== undefined) update.ref_no = data.ref_no;
+
+    await c.entries.updateOne({ _id: new ObjectId(id) }, { $set: update });
+
+    // Adjust balance if amount/direction/account changed
+    const oldDelta = old.direction === "out" ? -old.amount : old.amount;
+    const newAmount = data.amount ?? old.amount;
+    const newDirection = data.direction ?? (old.direction as "in" | "out");
+    const newAccount = data.account ?? old.account;
+    const newDelta = newDirection === "out" ? -newAmount : newAmount;
+
+    if (old.account === newAccount) {
+      const diff = newDelta - oldDelta;
+      if (diff !== 0) {
+        await c.accounts.updateOne(
+          { _id: newAccount },
+          { $inc: { balance: diff }, $set: { updated_at: new Date() } }
+        );
+      }
+    } else {
+      // Revert old account
+      await c.accounts.updateOne(
+        { _id: old.account },
+        { $inc: { balance: -oldDelta }, $set: { updated_at: new Date() } }
+      );
+      // Apply to new account
+      await c.accounts.updateOne(
+        { _id: newAccount },
+        { $inc: { balance: newDelta }, $set: { updated_at: new Date() } }
+      );
+    }
+
+    revalidatePath("/pribadi");
     revalidatePath("/");
-    revalidatePath("/laporan-op");
     return { ok: true };
-  } catch (err) {
-    return actionError(err);
+  } catch (e: any) {
+    return { ok: false, error: e.message };
   }
 }
 
-/**
- * Delete an entry. Blocks if this entry resolved an obligation (has obligation_id set);
- * user must first unresolve the obligation. Prevents silent drift between ledger and
- * pengajuan status.
- */
-export async function deleteEntryAction(id: string): Promise<ActionResult> {
+export async function deleteEntryAction(id: string): Promise<EntryActionResult> {
   try {
-    await requireAdmin();
     const c = dbCollections(await getDb());
-    const entry = await c.entries.findOne({ _id: toObjectId(id) });
-    if (!entry) return { error: "Entry tidak ditemukan" };
-    if (entry.obligation_id) {
-      return {
-        error:
-          "Entry ini terkait dengan pengajuan yang sudah lunas. Batalkan lunas-nya dulu dari halaman Pengajuan.",
-      };
-    }
-    await c.entries.deleteOne({ _id: toObjectId(id) });
-    revalidatePath("/aktivitas");
+    const entry = await c.entries.findOne({ _id: new ObjectId(id) });
+    if (!entry) throw new Error("Transaksi tidak ditemukan");
+
+    await c.entries.deleteOne({ _id: new ObjectId(id) });
+
+    // Revert balance
+    const delta = entry.direction === "out" ? entry.amount : -entry.amount;
+    await c.accounts.updateOne(
+      { _id: entry.account },
+      { $inc: { balance: delta }, $set: { updated_at: new Date() } }
+    );
+
+    revalidatePath("/pribadi");
     revalidatePath("/");
-    revalidatePath("/laporan-op");
     return { ok: true };
-  } catch (err) {
-    return actionError(err);
+  } catch (e: any) {
+    return { ok: false, error: e.message };
   }
+}
+
+export async function getEntryByIdAction(id: string) {
+  const c = dbCollections(await getDb());
+  const entry = await c.entries.findOne({ _id: new ObjectId(id) });
+  if (!entry) return null;
+  // Simple serialization for RSC/Client boundary
+  return JSON.parse(JSON.stringify(entry));
 }

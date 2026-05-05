@@ -263,3 +263,81 @@ export async function unmarkLunasAction(id: string): Promise<ActionResult> {
     return actionError(err);
   }
 }
+
+/**
+ * Toggle a single schedule month status between "lunas" and "pending".
+ * Used by the cicilan page to mark individual monthly payments.
+ */
+export async function toggleScheduleMonthAction(
+  obligationId: string,
+  month: string,
+  checked: boolean,
+): Promise<ActionResult> {
+  try {
+    const session = await requireAdmin();
+    const c = dbCollections(await getDb());
+    const existing = await c.obligations.findOne({ _id: toObjectId(obligationId) });
+    if (!existing) return { error: "Cicilan tidak ditemukan" };
+
+    const schedule = (existing.schedule ?? []).map((s: any) =>
+      s.month === month
+        ? { ...s, status: checked ? "lunas" : "pending", paid_at: checked ? new Date().toISOString().slice(0, 10) : undefined }
+        : s,
+    );
+
+    await c.obligations.updateOne(
+      { _id: toObjectId(obligationId) },
+      {
+        $set: {
+          schedule,
+          updated_by: session.userId,
+          updated_at: new Date(),
+        },
+      },
+    );
+
+    revalidatePath("/cicilan");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+/**
+ * Update the amount of a single schedule month.
+ */
+export async function updateScheduleAmountAction(
+  obligationId: string,
+  month: string,
+  amount: number,
+): Promise<ActionResult> {
+  try {
+    const session = await requireAdmin();
+    const c = dbCollections(await getDb());
+    const existing = await c.obligations.findOne({ _id: toObjectId(obligationId) });
+    if (!existing) return { error: "Cicilan tidak ditemukan" };
+
+    const schedule = (existing.schedule ?? []).map((s: any) =>
+      s.month === month ? { ...s, amount } : s,
+    );
+
+    await c.obligations.updateOne(
+      { _id: toObjectId(obligationId) },
+      {
+        $set: {
+          schedule,
+          updated_by: session.userId,
+          updated_at: new Date(),
+        },
+      },
+    );
+
+    revalidatePath("/cicilan");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (err) {
+    return actionError(err);
+  }
+}
+

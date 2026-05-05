@@ -30,8 +30,7 @@ export interface BalanceAdjustmentInput {
 /**
  * Reconcile an account balance by recording a synthetic balance_adjustment
  * entry (direction inferred from delta) rather than silently overwriting
- * accounts.balance. Preserves the audit trail and keeps entries.sum consistent
- * with accounts.balance when ledger and statement drift apart.
+ * accounts.balance.
  */
 export async function adjustAccountBalanceAction(
   input: BalanceAdjustmentInput,
@@ -104,8 +103,40 @@ export async function adjustAccountBalanceAction(
     revalidatePath("/pribadi");
     revalidatePath("/aktivitas");
     revalidatePath("/laporan-op");
+    revalidatePath("/anggaran");
     return { ok: true };
   } catch (err) {
     return actionError(err);
+  }
+}
+
+/**
+ * Direct balance update (requested for Budget Page quick edits)
+ */
+export async function updateAccountBalanceAction(accountId: string, newBalance: number): Promise<ActionResult> {
+  try {
+    const c = dbCollections(await getDb());
+    
+    if (accountId === "bri_kas_virtual") {
+      const numpangActive = await c.numpang.find({ status: "active" }).toArray();
+      const numpangTotal = numpangActive.reduce((s, n) => s + n.amount, 0);
+      const newBriTotal = newBalance + numpangTotal;
+      
+      await c.accounts.updateOne(
+        { _id: "bri_angkasa" },
+        { $set: { balance: newBriTotal, updated_at: new Date() } }
+      );
+    } else {
+      await c.accounts.updateOne(
+        { _id: accountId },
+        { $set: { balance: newBalance, updated_at: new Date() } }
+      );
+    }
+
+    revalidatePath("/anggaran");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (e: any) {
+    return { error: e.message };
   }
 }

@@ -63,6 +63,45 @@ export function formatRelativeTime(date: string | Date): string {
   return formatDateShort(date);
 }
 
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
+/** "YYYY-MM" → "Januari 2026". Safe for null, invalid, or non-ISO strings from legacy DB rows. */
+export function formatMonthCodeLong(monthCode: string | null | undefined): string {
+  if (!monthCode || typeof monthCode !== "string") return "—";
+  const parts = monthCode.split("-");
+  if (parts.length < 2) return monthCode;
+  const year = parts[0];
+  const monthNum = parseInt(parts[1], 10);
+  const names = [
+    "",
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+  if (!year || !Number.isFinite(monthNum) || monthNum < 1 || monthNum > 12) return monthCode;
+  return `${names[monthNum]} ${year}`;
+}
+
 export function formatDateRange(period: string | null | undefined): string {
   if (!period) return "—";
   // Handle raw period strings like "2026-03-30_2026-04-07"

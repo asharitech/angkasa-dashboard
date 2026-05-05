@@ -25,6 +25,8 @@ import {
   ClipboardList,
   CreditCard,
   PiggyBank,
+  Target,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,11 +43,13 @@ const yayasanNav: NavItem[] = [
   { href: "/dokumen", label: "Dokumen", icon: FolderOpen },
   { href: "/ompreng", label: "Ompreng", icon: UtensilsCrossed },
   { href: "/pemantauan", label: "Pemantauan", icon: ClipboardList },
+  { href: "/notifikasi", label: "Notifikasi", icon: Mail },
 ];
 
 // Personal domain
 const pribadiNav: NavItem[] = [
   { href: "/pribadi", label: "Pengeluaran", icon: User },
+  { href: "/anggaran", label: "Anggaran", icon: Target },
   { href: "/cicilan", label: "Cicilan Bulanan", icon: CreditCard },
   { href: "/savings", label: "Savings", icon: PiggyBank },
   { href: "/agenda", label: "Agenda", icon: CalendarCheck2 },
@@ -62,8 +66,10 @@ const mobilePrimary: NavItem[] = [
 // Mobile: overflow items under "Lainnya"
 const mobileMore: NavItem[] = [
   { href: "/cicilan", label: "Cicilan", icon: CreditCard },
+  { href: "/anggaran", label: "Anggaran", icon: Target },
   { href: "/savings", label: "Savings", icon: PiggyBank },
   { href: "/laporan-op", label: "Laporan Op", icon: FileText },
+  { href: "/notifikasi", label: "Notifikasi", icon: Mail },
   { href: "/wajib-bulanan", label: "Wajib Bulanan", icon: CalendarDays },
   { href: "/sewa", label: "Sewa Dapur", icon: Building2 },
   { href: "/dana-cash", label: "Cash Yayasan", icon: Banknote },

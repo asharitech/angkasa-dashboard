@@ -1,7 +1,8 @@
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
 
 /** Formats a "YYYY-MM" period code to "Apr 2026". Returns the year alone if no month part. */
-export function formatPeriodLabel(period: string): string {
+export function formatPeriodLabel(period: string | null | undefined): string {
+  if (!period || typeof period !== "string") return "—";
   const [year, month] = period.split("-")
   if (!month || isNaN(parseInt(month))) return year
   const monthName = MONTHS[parseInt(month) - 1]

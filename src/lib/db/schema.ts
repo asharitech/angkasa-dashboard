@@ -367,3 +367,67 @@ export interface ActivityEvent {
   category?: string;
   created_at: string;
 }
+
+export interface BudgetConfigDoc {
+  _id: string;
+  monthly_income: number;
+  bonus_income: number;
+  categories: Array<{
+    key: string;
+    name: string;
+    limit: number;
+    color: string;
+  }>;
+  fixed_deductions: Array<{
+    name: string;
+    amount: number;
+    type?: string;
+    obligation_id?: string | null;
+  }>;
+  updated_at: DbDate;
+}
+
+// ── Email Notification / Pending Transaction ──
+export interface EmailNotifDoc {
+  _id: ObjectId;
+  source: "bri" | "bca" | "mega" | "shopee" | "other";
+  email_subject: string;
+  email_date: Date;
+  parsed_date: Date;
+  amount: number;
+  fee?: number;
+  total?: number;
+  currency: string;
+  type: "debit" | "credit";
+  transfer_method?: string;
+  beneficiary_name?: string;
+  beneficiary_bank?: string;
+  beneficiary_account?: string;
+  source_account?: string;
+  reference_no?: string;
+  description: string;
+  raw_body: string;
+  status: "pending" | "approved" | "rejected" | "ignored";
+  classification?:
+    | "yayasan_puang"
+    | "yayasan_staff"
+    | "pribadi_angkasa"
+    | "pribadi_eba"
+    | "piutang"
+    | "numpang"
+    | "tabungan"
+    | "cicilan"
+    | "transit"
+    | "lainnya";
+  assigned_category?: string;
+  assigned_account?: string;
+  assigned_obligation_id?: ObjectId;
+  entry_id?: ObjectId;
+  notes?: string;
+  created_at: Date;
+  updated_at?: Date;
+  reviewed_by?: string;
+  reviewed_at?: Date;
+}
+
+export type EmailNotifFields = Omit<EmailNotifDoc, "_id">;

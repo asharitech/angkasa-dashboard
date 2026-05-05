@@ -32,8 +32,10 @@ export function recentMonths(count: number, from?: string): string[] {
   return out;
 }
 
-export function monthLabel(period: string, style: "short" | "long" = "short"): string {
+export function monthLabel(period: string | null | undefined, style: "short" | "long" = "short"): string {
+  if (!period || typeof period !== "string") return "—";
   const [y, m] = period.split("-");
+  if (y == null || m == null) return "—";
   const idx = Number(m) - 1;
   const names = style === "long" ? MONTH_NAMES_ID : MONTH_NAMES_SHORT;
   return `${names[idx] ?? m} ${y}`;

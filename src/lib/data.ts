@@ -1,10 +1,11 @@
 import { getDb } from "./mongodb";
 import { dbCollections } from "./db/collections";
 import { ACCOUNTS, ORG_ID } from "./config";
-import type { DbDate, EntryDirection, EntryFields, ObligationDoc, PemantauanDoc } from "./db/schema";
+import type { DbDate, EntryDirection, EntryFields, ObligationDoc, PemantauanDoc, BudgetConfigDoc } from "./db/schema";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
+import { currentWitaMonth } from "./periods";
 
 export async function getPemantauan(): Promise<PemantauanDoc[]> {
   const c = dbCollections(await getDb());
@@ -617,10 +618,10 @@ export async function removeDuplicateObligations(keepFirst: boolean = true): Pro
 export async function getPengeluaranAngkasa(month?: string) {
   const c = dbCollections(await getDb());
 
-  const baseFilter: Record<string, unknown> = { owner: "angkasa", domain: "personal", category: { $ne: "savings" } };
+  const baseFilter: Record<string, unknown> = { owner: "angkasa", domain: "personal" };
   const monthFilter: Record<string, unknown> = month ? { ...baseFilter, month } : baseFilter;
 
-  const [entriesOut, entriesIn, allMonths, categorySummary, monthlyCashflow] = await Promise.all([
+  const [entriesOut, entriesIn, allMonthsRaw, categorySummary, monthlyCashflow, loanSchedules] = await Promise.all([
     c.entries.find({ ...monthFilter, direction: "out" }).sort({ date: -1 }).toArray(),
     c.entries.find({ ...monthFilter, direction: "in" }).sort({ date: -1 }).toArray(),
     c.entries.distinct("month", baseFilter),
@@ -638,17 +639,58 @@ export async function getPengeluaranAngkasa(month?: string) {
         { $sort: { "_id.month": -1 } },
       ])
       .toArray(),
+    c.obligations.find({ type: "loan", status: "active" }).toArray(),
   ]);
 
-  const entries = [...entriesOut, ...entriesIn].sort(
+  const allMonths = (allMonthsRaw as unknown[]).filter(
+    (m): m is string => typeof m === "string" && /^\d{4}-\d{2}$/.test(m)
+  );
+
+  // Convert paid loan schedules to virtual entries
+  const paidLoanEntries: any[] = [];
+  const targetMonth = month ?? currentWitaMonth();
+  
+  for (const loan of loanSchedules) {
+    const sched = (loan.schedule ?? []).find(s => s.month === targetMonth && s.status === "lunas");
+    if (sched) {
+      // Check if there's already an entry for this loan payment to avoid double counting
+      // Simple check: same month, category "cicilan" or "loan", and roughly same amount
+      const alreadyExists = entriesOut.some(e => 
+        e.amount === sched.amount && 
+        (e.category === "cicilan" || e.category === "loan" || (e.description || "").toLowerCase().includes(loan.item.toLowerCase()))
+      );
+      
+      if (!alreadyExists) {
+        paidLoanEntries.push({
+          _id: `loan_${loan._id}_${targetMonth}`,
+          date: sched.paid_at ? new Date(sched.paid_at) : new Date(), // fallback to today
+          amount: sched.amount,
+          description: `Cicilan: ${loan.item}`,
+          category: "cicilan",
+          direction: "out",
+          owner: "angkasa",
+          domain: "personal",
+          month: targetMonth,
+          is_virtual: true,
+        });
+      }
+    }
+  }
+
+  const allEntriesOut = [...entriesOut, ...paidLoanEntries].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const entries = [...allEntriesOut, ...entriesIn].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   // Build cashflow map: month -> { in, out }
   const cashflowMap = new Map<string, { in: number; out: number }>();
-  for (const m of allMonths as string[]) cashflowMap.set(m, { in: 0, out: 0 });
+  for (const m of allMonths) cashflowMap.set(m, { in: 0, out: 0 });
   for (const row of monthlyCashflow) {
-    const m = row._id.month as string;
+    const m = row._id.month as string | null | undefined;
+    if (m == null || typeof m !== "string" || !/^\d{4}-\d{2}$/.test(m)) continue;
     const d = row._id.direction as string;
     const cur = cashflowMap.get(m) ?? { in: 0, out: 0 };
     if (d === "in") cur.in = row.total;
@@ -656,17 +698,21 @@ export async function getPengeluaranAngkasa(month?: string) {
     cashflowMap.set(m, cur);
   }
 
-  const currentCashflow = month ? (cashflowMap.get(month) ?? { in: 0, out: 0 }) : null;
+  // Update current month out with paid loans
+  const currentCashflow = month ? (cashflowMap.get(month) ?? { in: 0, out: 0 }) : (cashflowMap.get(targetMonth) ?? { in: 0, out: 0 });
+  if (targetMonth === (month ?? currentWitaMonth())) {
+    currentCashflow.out += paidLoanEntries.reduce((s, e) => s + e.amount, 0);
+  }
 
   return serializeDates({
     entries,
-    entriesOut,
+    entriesOut: allEntriesOut,
     entriesIn,
-    months: (allMonths as string[]).sort().reverse(),
+    months: [...allMonths].sort().reverse(),
     categorySummary: categorySummary as { _id: string; count: number; total: number }[],
-    totalOut: entriesOut.reduce((s, e) => s + e.amount, 0),
+    totalOut: allEntriesOut.reduce((s, e) => s + e.amount, 0),
     totalIn: entriesIn.reduce((s, e) => s + e.amount, 0),
-    countOut: entriesOut.length,
+    countOut: allEntriesOut.length,
     countIn: entriesIn.length,
     cashflowByMonth: Object.fromEntries(cashflowMap),
     currentCashflow,
@@ -688,6 +734,183 @@ export async function getDashboardTrend(): Promise<{ month: string; net: number 
     });
   result.sort((a, b) => a.month.localeCompare(b.month));
   return result;
+}
+
+export async function getBudgetConfig(month?: string) {
+  const c = dbCollections(await getDb());
+  const cfg = await c.budget_configs.findOne({ _id: "angkasa" });
+  if (cfg) return serializeDates(cfg);
+
+  // Seed default config on first read
+  const now = new Date();
+  const defaultMonth = month ?? currentWitaMonth();
+  const defaultConfig = {
+    _id: "angkasa",
+    monthly_income: 10_000_000,
+    bonus_income: 0,
+    fixed_deductions: [
+      { name: "Cicilan", amount: 6_000_000, type: "loan" as const, obligation_id: null },
+    ],
+    categories: [
+      { key: "belanja", name: "Belanja", limit: 2_000_000, color: "#3b82f6" },
+      { key: "makan_minum", name: "Makan / Minum", limit: 1_000_000, color: "#f59e0b" },
+      { key: "lainnya", name: "Lain-lain (kado, tak terduga)", limit: 500_000, color: "#8b5cf6" },
+      { key: "savings", name: "Tabungan", limit: 500_000, color: "#10b981" },
+    ],
+    month: defaultMonth,
+    created_at: now,
+    updated_at: now,
+  };
+  await c.budget_configs.insertOne({ ...defaultConfig });
+  return serializeDates(defaultConfig);
+}
+
+export interface BudgetSummary {
+  config: ReturnType<typeof serializeDates<BudgetConfigDoc>>;
+  bcaBalance: number;
+  briKas: number;
+  totalSaldo: number;
+  month: string;
+  actualSpending: Record<string, number>;
+  spendingDetails: Record<string, Entry[]>;
+  loanTotalThisMonth: number;
+  loanPaidThisMonth: number;
+  recurringTotalThisMonth: number;
+  fixedDeductionsTotal: number;
+  netAvailable: number;
+  totalBudgeted: number;
+  totalRemainingBudget: number;
+}
+
+export async function getBudgetSummary(month?: string): Promise<BudgetSummary> {
+  const c = dbCollections(await getDb());
+  const targetMonth = month ?? currentWitaMonth();
+
+  const [configRaw, bcaAccount, briKasData, personalOut, loanSchedules, recurring] =
+    await Promise.all([
+      getBudgetConfig(targetMonth),
+      c.accounts.findOne({ _id: ACCOUNTS.personalBca }),
+      computeBriKas(),
+      c.entries
+        .find({
+          owner: "angkasa",
+          domain: "personal",
+          direction: "out",
+          month: targetMonth,
+          category: { $ne: "savings" },
+        })
+        .toArray(),
+      c.obligations
+        .find({ type: "loan", status: "active" })
+        .toArray(),
+      c.obligations
+        .find({
+          type: "recurring",
+          status: "active",
+          $or: [{ month: targetMonth }, { month: null }, { month: { $exists: false } }],
+        })
+        .toArray(),
+    ]);
+
+  const config = configRaw as unknown as BudgetConfigDoc;
+  const bcaBalance = bcaAccount?.balance ?? 0;
+  const briKas = briKasData.briKas;
+  const totalSaldo = bcaBalance + briKas;
+
+  // Actual spending per budget category key
+  const actualSpending: Record<string, number> = {};
+  const spendingDetails: Record<string, Entry[]> = {};
+  for (const cat of config.categories) {
+    actualSpending[cat.key] = 0;
+    spendingDetails[cat.key] = [];
+  }
+  spendingDetails["lainnya"] = []; // Ensure lainnya exists
+
+  for (const e of personalOut) {
+    const cat = e.category ?? "";
+    const desc = (e.description ?? "").toLowerCase();
+
+    // Skip transfers (antar akun pribadi bukan spending)
+    if (cat === "transfer") continue;
+    // Skip fixed tagihan — ini bukan variable spending
+    if (cat === "pln" || cat === "bpjs" || cat === "token" || cat === "pulsa" || cat === "internet") continue;
+
+    // Map entry category to budget key
+    let key = "lainnya";
+    if (cat === "belanja" || cat === "gym") key = "belanja";
+    else if (cat === "makan" || cat === "makan_minum" || cat === "qris") key = "makan_minum";
+    else if (cat === "savings") key = "savings";
+    else if (
+      desc.includes("grab") ||
+      desc.includes("gojek") ||
+      desc.includes("top up") ||
+      desc.includes("topup") ||
+      desc.includes("shopeepay") ||
+      desc.includes("ovo") ||
+      desc.includes("gopay") ||
+      desc.includes("dana") ||
+      desc.includes("pulsa")
+    ) {
+      key = "lainnya";
+    }
+
+    if (actualSpending[key] !== undefined) {
+      actualSpending[key] += e.amount;
+      spendingDetails[key].push(serializeDates(e) as unknown as Entry);
+    } else {
+      actualSpending["lainnya"] += e.amount;
+      spendingDetails["lainnya"].push(serializeDates(e) as unknown as Entry);
+    }
+  }
+
+  // Loan total for current month from schedules
+  let loanTotalThisMonth = 0;
+  let loanPaidThisMonth = 0;
+  for (const loan of loanSchedules) {
+    const sched = (loan.schedule ?? []).find((s) => s.month === targetMonth);
+    if (sched) {
+      loanTotalThisMonth += sched.amount;
+      if (sched.status === "lunas") {
+        loanPaidThisMonth += sched.amount;
+      }
+    }
+  }
+
+  // Recurring total
+  const recurringTotalThisMonth = recurring.reduce((s, r) => s + (r.amount ?? 0), 0);
+
+  // Fixed deductions total
+  // PENTING: Sesuai request Pak Angkasa, cicilan/tabungan TETAP memotong dana bersih 
+  // meskipun sudah dibayar (ceklist). Jadi kita pakai totalBudgeted fixed deductions.
+  const fixedDeductionsTotal = config.fixed_deductions.reduce((s, d) => {
+    if (d.type === "loan") return s + loanTotalThisMonth;
+    if (d.type === "recurring") return s + recurringTotalThisMonth;
+    return s + d.amount;
+  }, 0);
+
+  const netAvailable = config.monthly_income + config.bonus_income - fixedDeductionsTotal;
+  const totalBudgeted = config.categories.reduce((s, cat) => s + cat.limit, 0);
+  const totalRemainingBudget = config.categories.reduce(
+    (s, cat) => s + Math.max(0, cat.limit - (actualSpending[cat.key] ?? 0)),
+    0
+  );
+
+  return {
+    config: config as unknown as ReturnType<typeof serializeDates<BudgetConfigDoc>>,
+    bcaBalance,
+    briKas,
+    totalSaldo,
+    month: targetMonth,
+    actualSpending,
+    spendingDetails,
+    loanTotalThisMonth,
+    loanPaidThisMonth,
+    recurringTotalThisMonth,
+    fixedDeductionsTotal,
+    netAvailable,
+    totalBudgeted,
+    totalRemainingBudget,
+  };
 }
 
 export async function getLaporanOpPeriods(): Promise<{ period: string; is_current: boolean }[]> {
@@ -720,4 +943,67 @@ export async function getLaporanOpMonthlyFlow(): Promise<{ month: string; masuk:
       })
       .sort((a, b) => a.month.localeCompare(b.month))
   );
+}
+
+// ── Email Notifications ──
+
+export type EmailNotif = {
+  _id: string;
+  source: string;
+  email_subject: string;
+  email_date: string;
+  parsed_date: string;
+  amount: number;
+  fee?: number;
+  total?: number;
+  currency: string;
+  type: string;
+  transfer_method?: string;
+  beneficiary_name?: string;
+  beneficiary_bank?: string;
+  beneficiary_account?: string;
+  source_account?: string;
+  reference_no?: string;
+  description: string;
+  status: string;
+  classification?: string;
+  assigned_category?: string;
+  assigned_account?: string;
+  assigned_obligation_id?: string;
+  entry_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+};
+
+export async function getEmailNotifs(opts?: { status?: string; limit?: number; skip?: number }): Promise<EmailNotif[]> {
+  const c = dbCollections(await getDb());
+  const filter: Filter<import("./db/schema").EmailNotifDoc> = {};
+  if (opts?.status) filter.status = opts.status as any;
+  const docs = await c.email_notifs
+    .find(filter)
+    .sort({ email_date: -1 })
+    .limit(opts?.limit ?? 100)
+    .skip(opts?.skip ?? 0)
+    .toArray();
+  return serializeDates(docs) as unknown as EmailNotif[];
+}
+
+export async function getEmailNotifById(id: string) {
+  const c = dbCollections(await getDb());
+  const doc = await c.email_notifs.findOne({ _id: new ObjectId(id) });
+  return doc ? serializeDates(doc) : null;
+}
+
+export async function getEmailNotifStats(): Promise<{ total: number; pending: number; approved: number; rejected: number }> {
+  const c = dbCollections(await getDb());
+  const [total, pending, approved, rejected] = await Promise.all([
+    c.email_notifs.countDocuments(),
+    c.email_notifs.countDocuments({ status: "pending" }),
+    c.email_notifs.countDocuments({ status: "approved" }),
+    c.email_notifs.countDocuments({ status: "rejected" }),
+  ]);
+  return { total, pending, approved, rejected };
 }

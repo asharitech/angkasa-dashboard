@@ -2,7 +2,9 @@ import type { Db } from "mongodb";
 import type {
   AccountDoc,
   AgendaFields,
+  BudgetConfigDoc,
   DocumentFields,
+  EmailNotifFields,
   EntryFields,
   LedgerFields,
   NumpangFields,
@@ -31,6 +33,8 @@ export function dbCollections(db: Db) {
     documents: db.collection<DocumentFields>("documents"),
     ompreng: db.collection<OmprengFields>("ompreng"),
     pemantauan: db.collection<PemantauanFields>("pemantauan"),
+    budget_configs: db.collection<BudgetConfigDoc>("budget_configs"),
+    email_notifs: db.collection<EmailNotifFields>("email_notifs"),
   } as const;
 }
 

@@ -113,7 +113,7 @@ export function EntryForm({
       const result = isEdit
         ? await updateEntryAction(idString(entry!._id), payload)
         : await createEntryAction(payload);
-      if ("error" in result) {
+      if ("error" in result && result.error) {
         setError(result.error);
         return;
       }

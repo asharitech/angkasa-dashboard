@@ -3,8 +3,10 @@
 import { useState, useTransition } from "react"
 import { RefreshCw, Download, Pencil } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { refreshLaporanOpTotals } from "@/lib/actions/laporan-op"
+import { LaporanOpForm } from "./laporan-op-form"
 import type { EntryRow } from "./entries-table"
 
 function exportCsv(entries: EntryRow[], filename: string) {
@@ -25,12 +27,15 @@ function exportCsv(entries: EntryRow[], filename: string) {
 export function LaporanOpAdminActions({
   entries,
   period,
+  ledger,
 }: {
   entries: EntryRow[]
   period: string | null
+  ledger: any
 }) {
   const [refreshPending, startRefresh] = useTransition()
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
 
   function handleRefresh() {
     setRefreshMsg(null)
@@ -65,14 +70,30 @@ export function LaporanOpAdminActions({
           Export CSV
         </button>
         <button
-          disabled
-          title="Gunakan mongo_helper untuk edit snapshot"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5 cursor-not-allowed opacity-50")}
+          onClick={() => setEditOpen(true)}
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
         >
           <Pencil className="h-3.5 w-3.5" />
           Edit snapshot
         </button>
       </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Snapshot Laporan Op</DialogTitle>
+          </DialogHeader>
+          <LaporanOpForm 
+            ledger={ledger} 
+            onSuccess={() => {
+              setEditOpen(false)
+              window.location.reload()
+            }} 
+            onCancel={() => setEditOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
       {refreshMsg && (
         <p className="text-xs text-muted-foreground">{refreshMsg}</p>
       )}
