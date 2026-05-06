@@ -194,7 +194,7 @@ export default async function AgendaPage({
           icon={ListChecks}
           title={emptyTitle}
           description={emptyDescription}
-          className="border-dashed border-border/60 bg-transparent shadow-none"
+          variant="dashed"
         />
       )}
 

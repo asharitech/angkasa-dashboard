@@ -2,6 +2,8 @@
 
 import { useCallback, useState, useTransition } from "react";
 import { SectionCard } from "@/components/section-card";
+import { DASHBOARD_INSET_PANEL } from "@/lib/dashboard-card-shell";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,7 +99,10 @@ export function AdminMasterClient() {
               <select
                 value={collection}
                 onChange={(e) => setCollection(e.target.value)}
-                className="w-full bg-background border rounded-md px-3 py-2 text-sm"
+                className={cn(
+                  DASHBOARD_INSET_PANEL,
+                  "w-full bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                )}
               >
                 {ADMIN_RAW_COLLECTIONS.map((c) => (
                   <option key={c} value={c}>
@@ -147,7 +152,10 @@ export function AdminMasterClient() {
               <textarea
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
-                className="w-full h-96 font-mono text-xs p-3 border rounded-md bg-muted/20"
+                className={cn(
+                  DASHBOARD_INSET_PANEL,
+                  "h-96 w-full resize-y bg-muted/20 p-3 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                )}
               />
             </div>
           )}

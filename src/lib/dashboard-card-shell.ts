@@ -24,3 +24,10 @@ export const DASHBOARD_DROPZONE_SHELL =
 /** Search field with icon gutter (toolbar / filter row). */
 export const DASHBOARD_SEARCH_INPUT_CLASS =
   "h-10 rounded-xl border-border/80 bg-background pl-9 pr-3 shadow-sm" as const;
+
+/**
+ * EmptyState `variant="dashed"`: list pages where the shell should read as “slot kosong”.
+ * Merges with Card chrome (rounded-xl border from parent).
+ */
+export const DASHBOARD_EMPTY_LIST_CARD_CLASS =
+  "border-dashed border-border/60 bg-transparent shadow-none" as const;

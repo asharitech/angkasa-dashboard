@@ -101,7 +101,7 @@ export default async function DokumenPage({
           icon={FolderOpen}
           title={emptyTitle}
           description={emptyDescription}
-          className="border-dashed border-border/60 bg-transparent shadow-none"
+          variant="dashed"
         />
       )}
 

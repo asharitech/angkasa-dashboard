@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconBadge } from "@/components/primitives/icon-badge";
+import { DASHBOARD_EMPTY_LIST_CARD_CLASS } from "@/lib/dashboard-card-shell";
 import type { Tone } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ export function EmptyState({
   action,
   className,
   embedded,
+  variant = "default",
 }: {
   icon: LucideIcon;
   title: string;
@@ -22,6 +24,8 @@ export function EmptyState({
   className?: string;
   /** Inside tables/cards: no border, no outer shadow, tighter padding */
   embedded?: boolean;
+  /** Dashed outline for full-width list empty slots (agenda, dokumen, …). */
+  variant?: "default" | "dashed";
 }) {
   const isLegacyAction =
     action &&
@@ -33,6 +37,7 @@ export function EmptyState({
     <Card
       className={cn(
         "shadow-sm",
+        variant === "dashed" && DASHBOARD_EMPTY_LIST_CARD_CLASS,
         embedded && "border-0 bg-transparent shadow-none",
         className,
       )}
