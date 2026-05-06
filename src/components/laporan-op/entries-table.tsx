@@ -3,7 +3,15 @@
 import { useState, useMemo } from "react"
 import { Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { DataTable, type DataTableColumn } from "@/components/data-table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 import { formatRupiah, formatRupiahCompact } from "@/lib/format"
 
 export type EntryRow = {
@@ -115,74 +123,6 @@ export function EntriesTable({
     return map
   }, [filtered])
 
-  const columns = useMemo<DataTableColumn<EntryRow>[]>(
-    () => [
-      {
-        key: "no",
-        header: "#",
-        headerClassName: "w-10",
-        className: "w-10 text-xs text-muted-foreground",
-        cell: (row) => row.no,
-      },
-      {
-        key: "keterangan",
-        header: "Keterangan",
-        nowrap: false,
-        className: "max-w-[240px]",
-        cell: (row) => (
-          <span className="block truncate" title={row.keterangan}>
-            {row.keterangan}
-          </span>
-        ),
-      },
-      {
-        key: "kategori",
-        header: "Kategori",
-        cell: (row) => {
-          const cat = deriveCategory(row.keterangan)
-          return <Badge variant={cat.variant}>{cat.label}</Badge>
-        },
-      },
-      {
-        key: "masuk",
-        header: "Masuk",
-        align: "right",
-        cell: (row) =>
-          row.masuk > 0 ? (
-            <span className="font-semibold text-success">{formatRupiah(row.masuk)}</span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          ),
-      },
-      {
-        key: "keluar",
-        header: "Keluar",
-        align: "right",
-        cell: (row) =>
-          row.keluar > 0 ? (
-            <span className="font-semibold text-destructive">{formatRupiah(row.keluar)}</span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          ),
-      },
-      {
-        key: "saldo",
-        header: "Saldo",
-        align: "right",
-        cell: (row) => <span className="font-bold">{formatRupiah(row.saldo)}</span>,
-      },
-      {
-        key: "trend",
-        header: "Trend",
-        align: "right",
-        headerClassName: "w-[72px]",
-        className: "w-[72px]",
-        cell: (row) => <MiniSparkline data={sparklineMap.get(row.no) ?? []} />,
-      },
-    ],
-    [sparklineMap],
-  )
-
   function handleDirectionChange(d: Direction) {
     setDirection(d)
     setPage(1)
@@ -237,15 +177,112 @@ export function EntriesTable({
         </div>
       </div>
 
-      <DataTable<EntryRow>
-        bleedMobile={false}
-        compact
-        minWidth={640}
-        rows={pageRows}
-        rowKey={(row) => String(row.no)}
-        columns={columns}
-        emptyRowsLabel="Tidak ada transaksi ditemukan."
-      />
+      <Table className="w-full text-sm" style={{ minWidth: "640px" }}>
+        <TableHeader>
+          <TableRow className="border-border/60 hover:bg-transparent">
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-left w-10",
+              )}
+            >
+              #
+            </TableHead>
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-left",
+              )}
+            >
+              Keterangan
+            </TableHead>
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-left whitespace-nowrap",
+              )}
+            >
+              Kategori
+            </TableHead>
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-right tabular-nums whitespace-nowrap",
+              )}
+            >
+              Masuk
+            </TableHead>
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-right tabular-nums whitespace-nowrap",
+              )}
+            >
+              Keluar
+            </TableHead>
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-right tabular-nums whitespace-nowrap",
+              )}
+            >
+              Saldo
+            </TableHead>
+            <TableHead
+              className={cn(
+                "h-9 px-3 py-2 text-[11px] bg-muted/45 font-semibold tracking-wide text-muted-foreground text-right tabular-nums w-[72px]",
+              )}
+            >
+              Trend
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {pageRows.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="h-24 text-center text-sm text-muted-foreground">
+                Tidak ada transaksi ditemukan.
+              </TableCell>
+            </TableRow>
+          ) : (
+            pageRows.map((row) => {
+              const cat = deriveCategory(row.keterangan)
+              return (
+                <TableRow
+                  key={row.no}
+                  className="border-border/50 transition-colors hover:bg-muted/35"
+                >
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-left w-10 text-xs text-muted-foreground">
+                    {row.no}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-left max-w-[240px]">
+                    <span className="block truncate" title={row.keterangan}>
+                      {row.keterangan}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-left whitespace-nowrap">
+                    <Badge variant={cat.variant}>{cat.label}</Badge>
+                  </TableCell>
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-right tabular-nums whitespace-nowrap">
+                    {row.masuk > 0 ? (
+                      <span className="font-semibold text-success">{formatRupiah(row.masuk)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-right tabular-nums whitespace-nowrap">
+                    {row.keluar > 0 ? (
+                      <span className="font-semibold text-destructive">{formatRupiah(row.keluar)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-right tabular-nums whitespace-nowrap font-bold">
+                    {formatRupiah(row.saldo)}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 align-middle text-foreground text-right tabular-nums whitespace-nowrap w-[72px]">
+                    <MiniSparkline data={sparklineMap.get(row.no) ?? []} />
+                  </TableCell>
+                </TableRow>
+              )
+            })
+          )}
+        </TableBody>
+      </Table>
 
       {/* Pagination */}
       {totalPages > 1 && (
