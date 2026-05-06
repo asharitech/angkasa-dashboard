@@ -72,3 +72,86 @@ export function DashboardInteractiveRow({
     </div>
   );
 }
+
+/** Square icon holder for dense list rows (e.g. email-notif source). */
+export function DashboardIconFrame({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Inline destructive alert (form errors, action failures). */
+export function DashboardAlertBanner({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "flex items-start gap-3 rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm text-destructive",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Hero / summary panel with gradient shell (notifikasi queue, similar marketing-style headers). */
+export function DashboardHeroPanel({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-sm",
+        className,
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Bordered interactive card shell (rounded-2xl). Add `border-l-*` etc. via className.
+ */
+export function DashboardInteractivePanel({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <article
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:shadow-md",
+        className,
+      )}
+    >
+      {children}
+    </article>
+  );
+}

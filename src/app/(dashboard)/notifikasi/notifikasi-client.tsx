@@ -29,6 +29,13 @@ import type { EmailNotif } from "@/lib/dal";
 import type { Account } from "@/lib/types";
 import { idString, cn } from "@/lib/utils";
 import {
+  DashboardAlertBanner,
+  DashboardHeroPanel,
+  DashboardIconFrame,
+  DashboardInteractivePanel,
+  DashboardSurface,
+} from "@/components/layout/dashboard-surface";
+import {
   Inbox,
   CheckCircle2,
   XCircle,
@@ -117,17 +124,35 @@ function sourceTint(source: string): string {
 
 function SourceIcon({ source }: { source: string }) {
   const k = (source || "").toLowerCase();
-  const wrap = "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm";
-  if (k === "bca") return <div className={wrap}><Building2 className="h-5 w-5 text-sky-600 dark:text-sky-400" aria-hidden /></div>;
-  if (k === "bri") return <div className={wrap}><Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden /></div>;
-  if (k === "mega") return <div className={wrap}><CreditCard className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden /></div>;
+  if (k === "bca")
+    return (
+      <DashboardIconFrame>
+        <Building2 className="h-5 w-5 text-sky-600 dark:text-sky-400" aria-hidden />
+      </DashboardIconFrame>
+    );
+  if (k === "bri")
+    return (
+      <DashboardIconFrame>
+        <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
+      </DashboardIconFrame>
+    );
+  if (k === "mega")
+    return (
+      <DashboardIconFrame>
+        <CreditCard className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
+      </DashboardIconFrame>
+    );
   if (k === "shopee" || k === "tokopedia")
     return (
-      <div className={wrap}>
+      <DashboardIconFrame>
         <ShoppingBag className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden />
-      </div>
+      </DashboardIconFrame>
     );
-  return <div className={wrap}><Sparkles className="h-5 w-5 text-primary" aria-hidden /></div>;
+  return (
+    <DashboardIconFrame>
+      <Sparkles className="h-5 w-5 text-primary" aria-hidden />
+    </DashboardIconFrame>
+  );
 }
 
 export function NotifikasiClient({
@@ -228,10 +253,7 @@ export function NotifikasiClient({
   return (
     <div className="space-y-8">
       {errorBanner ? (
-        <div
-          role="alert"
-          className="flex items-start gap-3 rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
+        <DashboardAlertBanner>
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="font-medium leading-snug">{errorBanner}</p>
@@ -243,11 +265,11 @@ export function NotifikasiClient({
               Tutup
             </button>
           </div>
-        </div>
+        </DashboardAlertBanner>
       ) : null}
 
       {/* Hero + stats */}
-      <section className="overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-sm">
+      <DashboardHeroPanel>
         <div className="border-b border-border/60 bg-muted/30 px-4 py-5 md:px-6 md:py-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="space-y-1.5">
@@ -274,7 +296,7 @@ export function NotifikasiClient({
             </div>
           </div>
         </div>
-      </section>
+      </DashboardHeroPanel>
 
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -325,12 +347,8 @@ export function NotifikasiClient({
             const nid = idString(n._id);
             return (
               <li key={nid}>
-                <article
-                  className={cn(
-                    "group relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:shadow-md",
-                    "border-l-4 pl-0",
-                    sourceBorder(n.source)
-                  )}
+                <DashboardInteractivePanel
+                  className={cn("border-l-4 pl-0", sourceBorder(n.source))}
                 >
                   <div
                     className={cn(
@@ -467,7 +485,7 @@ export function NotifikasiClient({
                       </DropdownMenu>
                     </div>
                   </div>
-                </article>
+                </DashboardInteractivePanel>
               </li>
             );
           })}
@@ -539,10 +557,10 @@ function StatMini({
   muted?: boolean;
 }) {
   return (
-    <div
+    <DashboardSurface
       className={cn(
-        "rounded-xl border border-border/60 bg-background/90 px-3 py-2.5 text-center shadow-sm backdrop-blur-sm",
-        muted && "opacity-90"
+        "border-border/60 bg-background/90 px-3 py-2.5 text-center shadow-sm backdrop-blur-sm",
+        muted && "opacity-90",
       )}
     >
       <Icon
@@ -564,7 +582,7 @@ function StatMini({
       >
         {value}
       </p>
-    </div>
+    </DashboardSurface>
   );
 }
 
@@ -603,24 +621,24 @@ function ApproveForm({
   ];
 
   const summary = (
-    <div className="rounded-xl border border-border/60 bg-muted/25 px-4 py-3 text-sm">
+    <DashboardSurface className="border-border/60 bg-muted/25 px-4 py-3 text-sm shadow-sm">
       <p className="font-semibold text-foreground">{formatRupiah(notif.amount)}</p>
       <p className="mt-1 text-muted-foreground">{notif.description}</p>
       <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(notif.parsed_date)}</p>
-    </div>
+    </DashboardSurface>
   );
 
   if (accounts.length === 0) {
     return (
       <div className="space-y-5">
         {summary}
-        <div className="flex gap-3 rounded-xl border border-border/80 bg-card px-4 py-4 text-sm text-muted-foreground">
+        <DashboardSurface className="flex gap-3 border-border/80 px-4 py-4 text-sm text-muted-foreground shadow-sm">
           <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
           <p>
             Belum ada akun terdaftar. Tambahkan rekening di data yayasan/pribadi terlebih dahulu agar entri bisa
             diposting ke saldo yang benar.
           </p>
-        </div>
+        </DashboardSurface>
         <Button type="button" variant="outline" className="w-full rounded-xl sm:w-auto" onClick={onCancel}>
           Tutup
         </Button>
