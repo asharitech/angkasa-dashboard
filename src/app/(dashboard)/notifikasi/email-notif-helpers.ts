@@ -109,3 +109,57 @@ export function notifDefaultEntryType(notifType: string): "debit" | "credit" {
   if (t === "credit") return "credit";
   return "debit";
 }
+
+/** Strip tags and collapse whitespace for safe display of stored email excerpts. */
+export function stripHtmlToPlain(htmlish: string): string {
+  const s = htmlish.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return s;
+}
+
+/**
+ * Remove common bank email footers accidentally merged into beneficiary/counterparty fields.
+ */
+export function sanitizeBeneficiaryDisplay(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  let v = value.trim();
+  const cutRes = [
+    /Note\s*\(s\)\s*:/i,
+    /\bPlease save this email\b/i,
+    /\bHalo BCA\b/i,
+    /\bNPWP\s*:/i,
+    /\bBest Regards\b/i,
+    /\bThis email is generated\b/i,
+    /PT BANK CENTRAL ASIA/i,
+    /\bMENARA BCA\b/i,
+    /\bFees Include VAT\b/i,
+  ];
+  for (const re of cutRes) {
+    const m = re.exec(v);
+    if (m?.index != null && m.index > 0) {
+      v = v.slice(0, m.index).trim();
+    }
+  }
+  v = v.replace(/\s+/g, " ").trim();
+  if (v.length > 120) v = `${v.slice(0, 117)}…`;
+  return v || undefined;
+}
+
+/**
+ * True if description looks like subject-only / legacy template (kurang konteks dari badan email).
+ */
+export function isLikelyShallowDescription(n: {
+  description: string;
+  email_subject: string;
+  source: string;
+  beneficiary_name?: string;
+}): boolean {
+  const d = (n.description || "").trim();
+  const sub = (n.email_subject || "").trim();
+  if (!d) return true;
+  if (d === sub) return true;
+  const src = (n.source || "").toLowerCase();
+  if (src === "bri" && /^BRI:\s/i.test(d) && !n.beneficiary_name && d.length <= sub.length + 10) {
+    return true;
+  }
+  return false;
+}

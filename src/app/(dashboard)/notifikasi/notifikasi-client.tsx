@@ -79,6 +79,7 @@ export function NotifikasiClient({
         n.reference_no,
         n.source,
         n.transfer_method,
+        n.raw_body,
       ]
         .filter(Boolean)
         .join(" ")

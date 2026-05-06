@@ -67,6 +67,8 @@ export type EmailNotif = {
   source_account?: string;
   reference_no?: string;
   description: string;
+  /** Plain excerpt from email body for review (may be HTML stripped server-side or by agent). */
+  raw_body?: string;
   status: string;
   classification?: string;
   assigned_category?: string;

@@ -22,6 +22,9 @@ import {
   sourceLabel,
   sourceBorderClass,
   sourceTintClass,
+  stripHtmlToPlain,
+  sanitizeBeneficiaryDisplay,
+  isLikelyShallowDescription,
 } from "./email-notif-helpers";
 import {
   ArrowRightLeft,
@@ -34,6 +37,7 @@ import {
   Wallet,
   Sparkles,
   Landmark,
+  AlertTriangle,
 } from "lucide-react";
 
 function SourceIcon({ source }: { source: string }) {
@@ -95,6 +99,14 @@ export function EmailNotifRow({
   onRequestDelete: (n: EmailNotif) => void;
 }) {
   const nid = idString(n._id);
+  const beneficiaryDisplay = sanitizeBeneficiaryDisplay(n.beneficiary_name);
+  const rawPlain = n.raw_body ? stripHtmlToPlain(n.raw_body) : "";
+  const shallow = isLikelyShallowDescription({
+    description: n.description,
+    email_subject: n.email_subject,
+    source: n.source,
+    beneficiary_name: n.beneficiary_name,
+  });
 
   return (
     <DashboardInteractivePanel className={cn("border-l-4 pl-0", sourceBorderClass(n.source))}>
@@ -144,15 +156,41 @@ export function EmailNotifRow({
             ) : null}
           </div>
 
+          {shallow ? (
+            <p className="flex gap-2 rounded-lg border border-warning/35 bg-warning/10 px-3 py-2 text-xs leading-snug text-warning-foreground">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>
+                Ringkasan tampak hanya dari subjek atau template. Gunakan cuplikan email di bawah (jika ada) atau edit
+                saat mencatat — cron AI diinstruksikan untuk membaca <strong>badan email penuh</strong> pada jalan
+                berikutnya.
+              </span>
+            </p>
+          ) : null}
+
+          {rawPlain.length > 40 ? (
+            <details className="rounded-lg border border-border/70 bg-muted/20 text-xs">
+              <summary className="cursor-pointer list-none px-3 py-2 font-medium text-muted-foreground marker:content-none [&::-webkit-details-marker]:hidden hover:text-foreground">
+                Cuplikan isi email
+              </summary>
+              <div className="max-h-52 overflow-y-auto border-t border-border/50 px-3 py-2">
+                <p className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
+                  {rawPlain.length > 4500 ? `${rawPlain.slice(0, 4500)}…` : rawPlain}
+                </p>
+              </div>
+            </details>
+          ) : null}
+
           <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-2">
             <div className="flex gap-2">
               <dt className="shrink-0 font-medium text-foreground/80">Waktu</dt>
               <dd>{formatDateTime(n.parsed_date)}</dd>
             </div>
-            {n.beneficiary_name ? (
+            {beneficiaryDisplay ? (
               <div className="flex min-w-0 gap-2">
                 <dt className="shrink-0 font-medium text-foreground/80">Penerima</dt>
-                <dd className="truncate">{n.beneficiary_name}</dd>
+                <dd className="truncate" title={beneficiaryDisplay}>
+                  {beneficiaryDisplay}
+                </dd>
               </div>
             ) : null}
             {n.beneficiary_bank ? (
