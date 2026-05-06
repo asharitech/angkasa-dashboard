@@ -13,6 +13,8 @@ import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { KategoriChips } from "@/components/kategori-chips";
 import { SectionGroupHeader } from "@/components/section-group-header";
 import { PageToolbar } from "@/components/layout/page-toolbar";
+import { DashboardSurface } from "@/components/layout/dashboard-surface";
+import { EmptyState } from "@/components/empty-state";
 import { cn } from "@/lib/utils";
 import type { AgendaKategori } from "@/lib/actions/agenda";
 import { CalendarCheck2, ListChecks, AlertCircle } from "lucide-react";
@@ -107,6 +109,18 @@ export default async function AgendaPage({
     { label: "Semua",         href: "/agenda?view=semua",  active: view === "semua",  count: all.length },
   ];
 
+  const emptyTitle = kategoriFilter
+    ? `Tidak ada agenda "${KATEGORI_CONFIG[kategoriFilter as AgendaKategori]?.label ?? kategoriFilter}"`
+    : view === "belum"
+      ? "Semua agenda selesai! 🎉"
+      : view === "selesai"
+        ? "Belum ada yang diselesaikan."
+        : "Belum ada agenda.";
+  const emptyDescription =
+    view === "belum" && !kategoriFilter
+      ? "Tambah agenda baru dengan tombol di atas."
+      : undefined;
+
   const kpis: KpiItem[] = [
     {
       label: "Mendesak",
@@ -140,7 +154,7 @@ export default async function AgendaPage({
       {all.length > 0 && <KpiStrip items={kpis} cols={3} />}
 
       {all.length > 0 && (
-        <div className="rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+        <DashboardSurface className="border-border/60 px-4 py-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span className="font-medium">Progress keseluruhan</span>
             <span>
@@ -159,7 +173,7 @@ export default async function AgendaPage({
             fillClassName={cn(agendaMeterFillClass(pct), "duration-700 ease-out")}
             heightClassName="h-2.5"
           />
-        </div>
+        </DashboardSurface>
       )}
 
       <PageToolbar>
@@ -176,25 +190,12 @@ export default async function AgendaPage({
       </PageToolbar>
 
       {displayed.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/60 py-16 text-center">
-          <ListChecks className="h-10 w-10 text-muted-foreground/20" />
-          <div>
-            <p className="text-sm font-semibold text-muted-foreground">
-              {kategoriFilter
-                ? `Tidak ada agenda "${KATEGORI_CONFIG[kategoriFilter as AgendaKategori]?.label ?? kategoriFilter}"`
-                : view === "belum"
-                ? "Semua agenda selesai! 🎉"
-                : view === "selesai"
-                ? "Belum ada yang diselesaikan."
-                : "Belum ada agenda."}
-            </p>
-            {view === "belum" && !kategoriFilter && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Tambah agenda baru dengan tombol di atas.
-              </p>
-            )}
-          </div>
-        </div>
+        <EmptyState
+          icon={ListChecks}
+          title={emptyTitle}
+          description={emptyDescription}
+          className="border-dashed border-border/60 bg-transparent shadow-none"
+        />
       )}
 
       {grouped && grouped.length > 0 && (

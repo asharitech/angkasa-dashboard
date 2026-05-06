@@ -16,6 +16,13 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { FolderOpen, ExternalLink } from "lucide-react";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import {
+  DashboardInteractiveRow,
+  DashboardStatTile,
+  DashboardStatTileGrid,
+} from "@/components/layout/dashboard-surface";
+import { PageToolbar } from "@/components/layout/page-toolbar";
+import { EmptyState } from "@/components/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +60,13 @@ export default async function DokumenPage({
     countByKat.set(k, (countByKat.get(k) ?? 0) + 1);
   }
 
+  const emptyTitle = kategoriFilter
+    ? `Tidak ada dokumen kategori "${KATEGORI_DOC_CONFIG[kategoriFilter as DocKategori]?.label ?? kategoriFilter}"`
+    : "Belum ada dokumen tersimpan";
+  const emptyDescription = kategoriFilter
+    ? undefined
+    : "Upload dokumen yayasan dengan tombol di atas.";
+
   return (
     <DashboardPageShell>
       <PageHeader icon={FolderOpen} title="Dokumen Yayasan">
@@ -60,50 +74,35 @@ export default async function DokumenPage({
       </PageHeader>
 
       {all.length > 0 && (
-        <div className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold tabular-nums">{all.length}</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">Total dokumen</p>
-          </div>
-          <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold tabular-nums">{countByKat.size}</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">Kategori</p>
-          </div>
-          <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold tabular-nums">
-              {(all.reduce((s, d) => s + (d.file_size ?? 0), 0) / (1024 * 1024)).toFixed(1)}
-            </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">MB total</p>
-          </div>
-        </div>
+        <DashboardStatTileGrid>
+          <DashboardStatTile value={all.length} label="Total dokumen" />
+          <DashboardStatTile value={countByKat.size} label="Kategori" />
+          <DashboardStatTile
+            value={(all.reduce((s, d) => s + (d.file_size ?? 0), 0) / (1024 * 1024)).toFixed(1)}
+            label="MB total"
+          />
+        </DashboardStatTileGrid>
       )}
 
       {all.length > 0 && (
-        <KategoriChips
-          items={all}
-          getKey={(d) => (d.kategori ?? "lainnya") as string}
-          configMap={KATEGORI_DOC_CONFIG as Record<string, { label: string; emoji: string; cls: string }>}
-          activeKey={kategoriFilter}
-          baseHref="/dokumen"
-        />
+        <PageToolbar>
+          <KategoriChips
+            items={all}
+            getKey={(d) => (d.kategori ?? "lainnya") as string}
+            configMap={KATEGORI_DOC_CONFIG as Record<string, { label: string; emoji: string; cls: string }>}
+            activeKey={kategoriFilter}
+            baseHref="/dokumen"
+          />
+        </PageToolbar>
       )}
 
       {displayed.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/60 py-16 text-center">
-          <FolderOpen className="h-10 w-10 text-muted-foreground/20" />
-          <div>
-            <p className="text-sm font-semibold text-muted-foreground">
-              {kategoriFilter
-                ? `Tidak ada dokumen kategori "${KATEGORI_DOC_CONFIG[kategoriFilter as DocKategori]?.label ?? kategoriFilter}"`
-                : "Belum ada dokumen tersimpan"}
-            </p>
-            {!kategoriFilter && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Upload dokumen yayasan dengan tombol di atas.
-              </p>
-            )}
-          </div>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title={emptyTitle}
+          description={emptyDescription}
+          className="border-dashed border-border/60 bg-transparent shadow-none"
+        />
       )}
 
       {displayed.length > 0 && (
@@ -113,10 +112,7 @@ export default async function DokumenPage({
             const IconComp = fileTypeIcon(doc.file_type);
 
             return (
-              <div
-                key={doc._id.toString()}
-                className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-border"
-              >
+              <DashboardInteractiveRow key={doc._id.toString()}>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted/60">
                   <IconComp className="h-5 w-5 text-muted-foreground" />
                 </div>
@@ -166,7 +162,7 @@ export default async function DokumenPage({
                   </a>
                   <DocumentRowActions doc={doc} />
                 </div>
-              </div>
+              </DashboardInteractiveRow>
             );
           })}
         </div>
