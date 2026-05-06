@@ -7,6 +7,8 @@ import { updateAccountBalanceAction } from "@/lib/actions/accounts";
 import { SectionCard } from "@/components/section-card";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { DashboardSurface } from "@/components/layout/dashboard-surface";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,7 +204,7 @@ export default function AnggaranClientPage({
       </PageHeader>
 
       {/* Month selector */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <PageToolbar className="flex-row flex-wrap gap-2 overflow-x-auto pb-1">
         {months.map((m) => {
           const active = m === month;
           return (
@@ -220,7 +222,7 @@ export default function AnggaranClientPage({
             </a>
           );
         })}
-      </div>
+      </PageToolbar>
 
       {/* Saldo Cards */}
       <div className="grid grid-cols-2 gap-3">
@@ -468,10 +470,12 @@ export default function AnggaranClientPage({
       </SectionCard>
 
       {/* Net Available */}
-      <div className={cn(
-        "rounded-xl border p-4 shadow-sm",
-        isOverBudget ? "bg-destructive/5 border-destructive/30" : "bg-primary/5 border-primary/30"
-      )}>
+      <DashboardSurface
+        className={cn(
+          "p-4 shadow-sm",
+          isOverBudget ? "border-destructive/30 bg-destructive/5" : "border-primary/30 bg-primary/5",
+        )}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-muted-foreground">
@@ -494,7 +498,7 @@ export default function AnggaranClientPage({
             Budget melebihi dana bersih sebesar {formatRupiah(budgetDeficit)}
           </div>
         )}
-      </div>
+      </DashboardSurface>
 
       {/* Budget Categories */}
       <div className="space-y-3">
@@ -509,7 +513,7 @@ export default function AnggaranClientPage({
         </div>
 
         {editing ? (
-          <div className="space-y-2 rounded-xl border p-4 bg-card">
+          <DashboardSurface className="space-y-2 bg-card p-4">
             {editCats.map((cat, idx) => (
               <div key={cat.key} className="flex items-center gap-3">
                 <label className="text-sm min-w-[140px] truncate">{cat.name}</label>
@@ -525,7 +529,7 @@ export default function AnggaranClientPage({
                 />
               </div>
             ))}
-          </div>
+          </DashboardSurface>
         ) : (
           <div className="space-y-3">
             {config.categories.map((cat) => {
@@ -538,12 +542,12 @@ export default function AnggaranClientPage({
               const isExpanded = expandedCat === cat.key;
 
               return (
-                <div
+                <DashboardSurface
                   key={cat.key}
                   className={cn(
-                    "rounded-xl border shadow-sm transition-all overflow-hidden",
-                    over ? "bg-destructive/5 border-destructive/30" : "bg-card border-border",
-                    isExpanded && "ring-1 ring-primary/20"
+                    "overflow-hidden p-0 shadow-sm transition-all",
+                    over ? "border-destructive/30 bg-destructive/5" : "border-border bg-card",
+                    isExpanded && "ring-1 ring-primary/20",
                   )}
                 >
                   <div 
@@ -603,7 +607,7 @@ export default function AnggaranClientPage({
                     <div className="bg-muted/30 border-t border-border/50 px-4 py-3 space-y-2">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Rincian Pengeluaran</p>
                       {details.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic py-1">Belama ada transaksi tercatat.</p>
+                        <p className="text-xs text-muted-foreground italic py-1">Belum ada transaksi tercatat.</p>
                       ) : (
                         <div className="space-y-2">
                           {details.map((d, idx) => (
@@ -619,7 +623,7 @@ export default function AnggaranClientPage({
                       )}
                     </div>
                   )}
-                </div>
+                </DashboardSurface>
               );
             })}
           </div>
