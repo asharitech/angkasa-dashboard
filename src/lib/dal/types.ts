@@ -1,0 +1,81 @@
+import type { BudgetConfigDoc } from "@/lib/db/schema";
+import type { Entry, Obligation } from "@/lib/types";
+
+export interface LaporanOpReconciliation {
+  ledgerMasuk: number;
+  ledgerKeluar: number;
+  entriesMasuk: number;
+  entriesKeluar: number;
+  diffMasuk: number;
+  diffKeluar: number;
+  account: string;
+  asOf?: string;
+}
+
+export interface DuplicateGroup {
+  key: string;
+  date: string;
+  amount: number;
+  entries: Entry[];
+}
+
+export interface DuplicateObligation {
+  amount: number;
+  obligations: Obligation[];
+}
+
+export interface DataQualityReport {
+  duplicateObligations: DuplicateObligation[];
+  missingFields: Record<string, number>;
+  totalObligations: number;
+  duplicateCount: number;
+  missingFieldCount: number;
+}
+
+export interface BudgetSummary {
+  config: BudgetConfigDoc;
+  bcaBalance: number;
+  briKas: number;
+  totalSaldo: number;
+  month: string;
+  actualSpending: Record<string, number>;
+  spendingDetails: Record<string, Entry[]>;
+  loanTotalThisMonth: number;
+  loanPaidThisMonth: number;
+  recurringTotalThisMonth: number;
+  fixedDeductionsTotal: number;
+  netAvailable: number;
+  totalBudgeted: number;
+  totalRemainingBudget: number;
+}
+
+export type EmailNotif = {
+  _id: string;
+  source: string;
+  email_subject: string;
+  email_date: string;
+  parsed_date: string;
+  amount: number;
+  fee?: number;
+  total?: number;
+  currency: string;
+  type: string;
+  transfer_method?: string;
+  beneficiary_name?: string;
+  beneficiary_bank?: string;
+  beneficiary_account?: string;
+  source_account?: string;
+  reference_no?: string;
+  description: string;
+  status: string;
+  classification?: string;
+  assigned_category?: string;
+  assigned_account?: string;
+  assigned_obligation_id?: string;
+  entry_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+};

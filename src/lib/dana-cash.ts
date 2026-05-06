@@ -1,6 +1,5 @@
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { ACCOUNTS } from "@/lib/config";
+import { getCollections } from "@/lib/dal/context";
 import type { EntryFields, ObligationDoc } from "@/lib/db/schema";
 import type { Account, Obligation } from "@/lib/types";
 import type { Filter } from "mongodb";
@@ -14,8 +13,7 @@ export type DanaCashPengeluaranRow = {
 };
 
 export async function getDanaCashSummary(opts: { period?: string } = {}) {
-  const db = await getDb();
-  const c = dbCollections(db);
+  const c = await getCollections();
 
   const entryFilter: Filter<EntryFields> = {
     account: ACCOUNTS.cash,
