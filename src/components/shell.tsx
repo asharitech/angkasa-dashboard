@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -27,6 +27,7 @@ import {
   PiggyBank,
   Target,
   Mail,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dashboardRouteTitle } from "@/lib/route-meta";
@@ -64,8 +65,8 @@ const mobilePrimary: NavItem[] = [
   { href: "/agenda", label: "Agenda", icon: CalendarCheck2 },
 ];
 
-// Mobile: overflow items under "Lainnya"
-const mobileMore: NavItem[] = [
+// Mobile: overflow items under "Lainnya" (admin-only links appended when isAdmin)
+const mobileMoreBase: NavItem[] = [
   { href: "/cicilan", label: "Cicilan", icon: CreditCard },
   { href: "/anggaran", label: "Anggaran", icon: Target },
   { href: "/savings", label: "Savings", icon: PiggyBank },
@@ -80,6 +81,10 @@ const mobileMore: NavItem[] = [
   { href: "/aktivitas", label: "Aktivitas", icon: Activity },
   { href: "/duplikat", label: "Cek Duplikat", icon: AlertTriangle },
   { href: "/audit", label: "Audit Data", icon: ShieldCheck },
+];
+
+const adminMobileExtra: NavItem[] = [
+  { href: "/admin", label: "Master Data", icon: Database },
   { href: "/users", label: "Users", icon: Users },
 ];
 
@@ -95,10 +100,34 @@ const adminNav: NavItem[] = [
   { href: "/users", label: "Users", icon: Users },
 ];
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({
+  children,
+  isAdmin = false,
+}: {
+  children: React.ReactNode;
+  /** From server session; gates Admin nav + mobile Master Data / Users. */
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  const mobileMore = useMemo(
+    () => [...mobileMoreBase, ...(isAdmin ? adminMobileExtra : [])],
+    [isAdmin]
+  );
+
+  const sidebarSections = useMemo(() => {
+    const rows: { label: string; items: NavItem[]; first: boolean }[] = [
+      { label: "Yayasan", items: yayasanNav, first: true },
+      { label: "Pribadi", items: pribadiNav, first: false },
+      { label: "Monitor", items: monitorNav, first: false },
+    ];
+    if (isAdmin) {
+      rows.push({ label: "Admin", items: adminNav, first: false });
+    }
+    return rows;
+  }, [isAdmin]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -175,14 +204,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-3">
-          {(
-            [
-              { label: "Yayasan", items: yayasanNav, first: true },
-              { label: "Pribadi", items: pribadiNav, first: false },
-              { label: "Monitor", items: monitorNav, first: false },
-              { label: "Admin",   items: adminNav,   first: false },
-            ] as const
-          ).map(({ label, items, first }) => (
+          {sidebarSections.map(({ label, items, first }) => (
             <div key={label}>
               <p className={cn("px-3 pb-1.5 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider", first ? "pt-1" : "pt-4")}>
                 {label}
