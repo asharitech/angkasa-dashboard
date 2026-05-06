@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import {
   Table,
@@ -40,6 +42,8 @@ export type DataTableProps<T> = {
   footer?: ReactNode;
   /** Extra classes on each body row (e.g. muted row when data missing). */
   getRowClassName?: (row: T, index: number) => string | undefined;
+  /** Body colspan row when `rows` is empty and `empty` is not set (still renders table shell). */
+  emptyRowsLabel?: ReactNode;
 };
 
 function headAlignClass(align: CellAlign): string {
@@ -70,6 +74,7 @@ export function DataTable<T>({
   caption,
   footer,
   getRowClassName,
+  emptyRowsLabel = "Tidak ada baris.",
 }: DataTableProps<T>) {
   if (rows.length === 0 && empty != null) {
     return (
@@ -118,7 +123,7 @@ export function DataTable<T>({
         {rows.length === 0 ? (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center text-sm text-muted-foreground">
-              Tidak ada baris.
+              {emptyRowsLabel}
             </TableCell>
           </TableRow>
         ) : (

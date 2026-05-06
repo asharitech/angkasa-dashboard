@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { formatRupiah, formatRupiahCompact } from "@/lib/format"
 
 export type EntryRow = {
@@ -114,6 +115,74 @@ export function EntriesTable({
     return map
   }, [filtered])
 
+  const columns = useMemo<DataTableColumn<EntryRow>[]>(
+    () => [
+      {
+        key: "no",
+        header: "#",
+        headerClassName: "w-10",
+        className: "w-10 text-xs text-muted-foreground",
+        cell: (row) => row.no,
+      },
+      {
+        key: "keterangan",
+        header: "Keterangan",
+        nowrap: false,
+        className: "max-w-[240px]",
+        cell: (row) => (
+          <span className="block truncate" title={row.keterangan}>
+            {row.keterangan}
+          </span>
+        ),
+      },
+      {
+        key: "kategori",
+        header: "Kategori",
+        cell: (row) => {
+          const cat = deriveCategory(row.keterangan)
+          return <Badge variant={cat.variant}>{cat.label}</Badge>
+        },
+      },
+      {
+        key: "masuk",
+        header: "Masuk",
+        align: "right",
+        cell: (row) =>
+          row.masuk > 0 ? (
+            <span className="font-semibold text-success">{formatRupiah(row.masuk)}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+      {
+        key: "keluar",
+        header: "Keluar",
+        align: "right",
+        cell: (row) =>
+          row.keluar > 0 ? (
+            <span className="font-semibold text-destructive">{formatRupiah(row.keluar)}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+      {
+        key: "saldo",
+        header: "Saldo",
+        align: "right",
+        cell: (row) => <span className="font-bold">{formatRupiah(row.saldo)}</span>,
+      },
+      {
+        key: "trend",
+        header: "Trend",
+        align: "right",
+        headerClassName: "w-[72px]",
+        className: "w-[72px]",
+        cell: (row) => <MiniSparkline data={sparklineMap.get(row.no) ?? []} />,
+      },
+    ],
+    [sparklineMap],
+  )
+
   function handleDirectionChange(d: Direction) {
     setDirection(d)
     setPage(1)
@@ -168,66 +237,15 @@ export function EntriesTable({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs text-muted-foreground">
-              <th className="w-10 px-4 py-2 text-left font-medium">#</th>
-              <th className="px-4 py-2 text-left font-medium">Keterangan</th>
-              <th className="px-4 py-2 text-left font-medium">Kategori</th>
-              <th className="px-4 py-2 text-right font-medium">Masuk</th>
-              <th className="px-4 py-2 text-right font-medium">Keluar</th>
-              <th className="px-4 py-2 text-right font-medium">Saldo</th>
-              <th className="px-4 py-2 text-right font-medium">Trend</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/60">
-            {pageRows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Tidak ada transaksi ditemukan.
-                </td>
-              </tr>
-            ) : (
-              pageRows.map((row) => {
-                const cat = deriveCategory(row.keterangan)
-                return (
-                  <tr key={row.no} className="hover:bg-muted/40">
-                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{row.no}</td>
-                    <td className="max-w-[240px] px-4 py-2.5">
-                      <span className="block truncate">{row.keterangan}</span>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <Badge variant={cat.variant}>{cat.label}</Badge>
-                    </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">
-                      {row.masuk > 0 ? (
-                        <span className="font-semibold text-success">{formatRupiah(row.masuk)}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">
-                      {row.keluar > 0 ? (
-                        <span className="font-semibold text-destructive">{formatRupiah(row.keluar)}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-bold tabular-nums">
-                      {formatRupiah(row.saldo)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
-                      <MiniSparkline data={sparklineMap.get(row.no) ?? []} />
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable<EntryRow>
+        bleedMobile={false}
+        compact
+        minWidth={640}
+        rows={pageRows}
+        rowKey={(row) => String(row.no)}
+        columns={columns}
+        emptyRowsLabel="Tidak ada transaksi ditemukan."
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (
