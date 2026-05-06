@@ -29,6 +29,7 @@ import type { EmailNotif } from "@/lib/dal";
 import type { Account } from "@/lib/types";
 import { idString, cn } from "@/lib/utils";
 import {
+  DASHBOARD_SEARCH_INPUT_CLASS,
   DashboardAlertBanner,
   DashboardHeroPanel,
   DashboardIconFrame,
@@ -306,7 +307,7 @@ export function NotifikasiClient({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari deskripsi, ref, penerima, bank…"
-            className="h-10 rounded-xl border-border/80 bg-background pl-9 pr-3 shadow-sm"
+            className={DASHBOARD_SEARCH_INPUT_CLASS}
             aria-label="Cari notifikasi"
           />
         </div>

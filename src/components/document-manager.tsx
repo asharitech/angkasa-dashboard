@@ -24,6 +24,7 @@ import {
   deleteDocumentAction,
   type DocKategori,
 } from "@/lib/actions/documents";
+import { DASHBOARD_DROPZONE_SHELL } from "@/lib/dashboard-card-shell";
 import {
   Upload,
   Trash2,
@@ -130,7 +131,8 @@ export function DocumentUploadButton() {
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors",
+                DASHBOARD_DROPZONE_SHELL,
+                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl p-6 text-center transition-colors",
                 dragOver
                   ? "border-primary bg-primary/5"
                   : selectedFile

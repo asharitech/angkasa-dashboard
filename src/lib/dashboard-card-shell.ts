@@ -20,3 +20,7 @@ export const DASHBOARD_PLACEHOLDER_SHELL =
 /** Compact dashed dropzone (dialogs, file pickers). */
 export const DASHBOARD_DROPZONE_SHELL =
   "rounded-lg border-2 border-dashed border-muted-foreground/25" as const;
+
+/** Search field with icon gutter (toolbar / filter row). */
+export const DASHBOARD_SEARCH_INPUT_CLASS =
+  "h-10 rounded-xl border-border/80 bg-background pl-9 pr-3 shadow-sm" as const;

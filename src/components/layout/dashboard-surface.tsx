@@ -6,6 +6,7 @@ import {
   DASHBOARD_DROPZONE_SHELL,
   DASHBOARD_INSET_PANEL,
   DASHBOARD_PLACEHOLDER_SHELL,
+  DASHBOARD_SEARCH_INPUT_CLASS,
 } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ export {
   DASHBOARD_DROPZONE_SHELL,
   DASHBOARD_INSET_PANEL,
   DASHBOARD_PLACEHOLDER_SHELL,
+  DASHBOARD_SEARCH_INPUT_CLASS,
 };
 
 /** Standard bordered panel for dashboard metrics and dense blocks. */
