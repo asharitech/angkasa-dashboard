@@ -21,7 +21,7 @@ export interface UpdateBudgetInput {
 
 export async function updateBudgetAction(input: UpdateBudgetInput): Promise<ActionResult> {
   try {
-    const session = await requireAdmin();
+    await requireAdmin();
     const c = dbCollections(await getDb());
 
     if (!Number.isFinite(input.monthly_income) || input.monthly_income < 0) {
@@ -55,7 +55,7 @@ export async function updateBudgetAction(input: UpdateBudgetInput): Promise<Acti
   }
 }
 
-export async function addBonusIncomeAction(amount: number, note?: string): Promise<ActionResult> {
+export async function addBonusIncomeAction(amount: number, _note?: string): Promise<ActionResult> {
   try {
     await requireAdmin();
     const c = dbCollections(await getDb());

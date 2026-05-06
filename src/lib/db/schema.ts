@@ -60,6 +60,8 @@ export interface EntryFields {
   notes?: string | null;
   created_at: DbDate;
   updated_at: DbDate;
+  /** Synthetic row (e.g. paid loan month) merged into personal expense lists */
+  is_virtual?: boolean;
 }
 
 export type EntryDoc = WithId<EntryFields>;

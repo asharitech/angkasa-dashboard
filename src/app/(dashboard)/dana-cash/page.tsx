@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDanaCashSummary, type DanaCashPengeluaranRow } from "@/lib/dana-cash";
+import { getAccounts } from "@/lib/data";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";
@@ -9,6 +10,7 @@ import { EmptyState } from "@/components/empty-state";
 import { DataTable } from "@/components/data-table";
 import { MeterBarLabeled } from "@/components/meter-bar";
 import { Card, CardContent } from "@/components/ui/card";
+import { EntryRowActions } from "@/components/entry-row-actions";
 import {
   Banknote,
   TrendingDown,
@@ -26,7 +28,10 @@ export default async function DanaCashPage({
   searchParams: Promise<{ period?: string }>;
 }) {
   const { period } = await searchParams;
-  const summary = await getDanaCashSummary({ period });
+  const [summary, accounts] = await Promise.all([
+    getDanaCashSummary({ period }),
+    getAccounts(),
+  ]);
   const { saldoAwal, saldoSisa, pengeluaran, pengajuan } = summary;
 
   const totalTerpakai = period
@@ -120,10 +125,14 @@ export default async function DanaCashPage({
               header: "Jumlah",
               align: "right",
               cell: (r) => (
-                <span className="text-sm font-semibold text-destructive">
-                  {formatRupiah(r.amount)}
-                </span>
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-sm font-semibold text-destructive">
+                    {formatRupiah(r.amount)}
+                  </span>
+                  <EntryRowActions entryId={r._id} accounts={accounts} />
+                </div>
               ),
+              className: "w-40",
             },
           ]}
         />

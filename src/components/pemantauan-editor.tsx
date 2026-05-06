@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2, Plus, X, Check, ChevronDown } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
 
 export interface TemuanItem {
   id: string;

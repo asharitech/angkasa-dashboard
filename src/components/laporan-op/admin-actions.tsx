@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { refreshLaporanOpTotals } from "@/lib/actions/laporan-op"
 import { LaporanOpForm } from "./laporan-op-form"
 import type { EntryRow } from "./entries-table"
+import type { Ledger } from "@/lib/types"
 
 function exportCsv(entries: EntryRow[], filename: string) {
   const header = "No,Keterangan,Masuk,Keluar,Saldo"
@@ -31,7 +32,7 @@ export function LaporanOpAdminActions({
 }: {
   entries: EntryRow[]
   period: string | null
-  ledger: any
+  ledger: Ledger
 }) {
   const [refreshPending, startRefresh] = useTransition()
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null)

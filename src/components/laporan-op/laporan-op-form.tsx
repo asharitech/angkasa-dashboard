@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { updateLaporanOpAction } from "@/lib/actions/laporan-op"
+import type { Ledger } from "@/lib/types"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 
 interface LaporanOpFormProps {
-  ledger: any
+  ledger: Ledger
   onSuccess: () => void
   onCancel: () => void
 }
+
+type KewajibanItem = { key: string; amount: number }
 
 export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProps) {
   const [pending, start] = useTransition()
@@ -44,7 +47,7 @@ export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProp
     setKewajibanList(kewajibanList.filter((_, i) => i !== index))
   }
 
-  const updateKewajiban = (index: number, patch: any) => {
+  const updateKewajiban = (index: number, patch: Partial<KewajibanItem>) => {
     const next = [...kewajibanList]
     next[index] = { ...next[index], ...patch }
     setKewajibanList(next)
@@ -54,7 +57,7 @@ export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProp
     e.preventDefault()
     setError(null)
 
-    const kewajibanObj: any = {}
+    const kewajibanObj: Record<string, number> = {}
     let totalKewajiban = 0
     kewajibanList.forEach((item) => {
       if (item.key.trim()) {
@@ -65,7 +68,7 @@ export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProp
     kewajibanObj.total = totalKewajiban
 
     start(async () => {
-      const result = await updateLaporanOpAction(ledger._id, {
+      const result = await updateLaporanOpAction(String(ledger._id), {
         period,
         period_code: periodCode || null,
         as_of: asOf,
@@ -79,11 +82,6 @@ export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProp
           }
         }
       })
-      
-      // Note: Our action used 'list' in the interface but the schema uses fields. 
-      // I should align the action to use the object approach or handle both.
-      // Actually let's fix the action to be more robust.
-      
       if (result.error) {
         setError(result.error)
       } else {

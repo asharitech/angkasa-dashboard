@@ -1,7 +1,15 @@
 import { getDb } from "./mongodb";
 import { dbCollections } from "./db/collections";
 import { ACCOUNTS, ORG_ID } from "./config";
-import type { DbDate, EntryDirection, EntryFields, ObligationDoc, PemantauanDoc, BudgetConfigDoc } from "./db/schema";
+import type {
+  DbDate,
+  EntryDirection,
+  EntryFields,
+  EmailNotifDoc,
+  ObligationDoc,
+  PemantauanDoc,
+  BudgetConfigDoc,
+} from "./db/schema";
 import type { Account, Obligation, Ledger, Entry, ActivityEvent, Numpang, DataIntegrityIssue } from "./types";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
@@ -646,33 +654,41 @@ export async function getPengeluaranAngkasa(month?: string) {
     (m): m is string => typeof m === "string" && /^\d{4}-\d{2}$/.test(m)
   );
 
-  // Convert paid loan schedules to virtual entries
-  const paidLoanEntries: any[] = [];
+  // Paid loan months without a matching `entries` row: synthetic rows for UI only (typed as Entry).
+  const paidLoanEntries: Entry[] = [];
   const targetMonth = month ?? currentWitaMonth();
-  
+
   for (const loan of loanSchedules) {
-    const sched = (loan.schedule ?? []).find(s => s.month === targetMonth && s.status === "lunas");
+    const sched = (loan.schedule ?? []).find((s) => s.month === targetMonth && s.status === "lunas");
     if (sched) {
-      // Check if there's already an entry for this loan payment to avoid double counting
-      // Simple check: same month, category "cicilan" or "loan", and roughly same amount
-      const alreadyExists = entriesOut.some(e => 
-        e.amount === sched.amount && 
-        (e.category === "cicilan" || e.category === "loan" || (e.description || "").toLowerCase().includes(loan.item.toLowerCase()))
+      const alreadyExists = entriesOut.some(
+        (e) =>
+          e.amount === sched.amount &&
+          (e.category === "cicilan" ||
+            e.category === "loan" ||
+            (e.description || "").toLowerCase().includes(loan.item.toLowerCase()))
       );
-      
+
       if (!alreadyExists) {
+        const paidAt = sched.paid_at ? new Date(sched.paid_at) : new Date();
+        const dateStr = paidAt.toISOString().substring(0, 10);
         paidLoanEntries.push({
-          _id: `loan_${loan._id}_${targetMonth}`,
-          date: sched.paid_at ? new Date(sched.paid_at) : new Date(), // fallback to today
-          amount: sched.amount,
-          description: `Cicilan: ${loan.item}`,
-          category: "cicilan",
-          direction: "out",
-          owner: "angkasa",
-          domain: "personal",
+          _id: `loan_${String(loan._id)}_${targetMonth}`,
+          date: dateStr,
           month: targetMonth,
+          owner: "angkasa",
+          account: "bri_angkasa",
+          direction: "out",
+          amount: sched.amount,
+          counterparty: "",
+          description: `Cicilan: ${loan.item}`,
+          domain: "personal",
+          category: "cicilan",
+          source: "loan_schedule",
+          created_at: paidAt,
+          updated_at: paidAt,
           is_virtual: true,
-        });
+        } as unknown as Entry);
       }
     }
   }
@@ -980,8 +996,8 @@ export type EmailNotif = {
 
 export async function getEmailNotifs(opts?: { status?: string; limit?: number; skip?: number }): Promise<EmailNotif[]> {
   const c = dbCollections(await getDb());
-  const filter: Filter<import("./db/schema").EmailNotifDoc> = {};
-  if (opts?.status) filter.status = opts.status as any;
+  const filter: Filter<EmailNotifDoc> = {};
+  if (opts?.status) filter.status = opts.status as EmailNotifDoc["status"];
   const docs = await c.email_notifs
     .find(filter)
     .sort({ email_date: -1 })

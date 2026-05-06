@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,14 +109,14 @@ interface PribadiClientProps {
 
 export function PribadiClient({
   entries,
-  entriesOut,
+  entriesOut: _entriesOut,
   months,
   cashflowByMonth,
   activeMonth,
   activeLabel,
   accounts,
 }: PribadiClientProps) {
-  const [items, setItems] = useState<Entry[]>(entries);
+  const items = entries;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [loading, setLoading] = useState(false);
@@ -340,7 +339,7 @@ export function PribadiClient({
           </Link>
           {LABEL_ORDER.map((key) => {
             const config = LABEL_CONFIG[key];
-            const { total, count } = labelTotals.get(key) ?? { total: 0, count: 0 };
+            const { total } = labelTotals.get(key) ?? { total: 0, count: 0 };
             if (total === 0) return null;
             const isActive = activeLabel === key;
             return (
@@ -380,7 +379,7 @@ export function PribadiClient({
                   key={idString(entry._id)}
                   className={cn(
                     "flex items-center justify-between gap-3 py-3",
-                    (entry as any).is_virtual && "opacity-80"
+                    entry.is_virtual && "opacity-80"
                   )}
                 >
                   <div className="min-w-0 flex-1">
@@ -394,7 +393,7 @@ export function PribadiClient({
                       <Badge variant={labelConfig.color} className="text-[10px] h-5 px-1.5">
                         {labelConfig.label}
                       </Badge>
-                      {(entry as any).is_virtual && (
+                      {entry.is_virtual && (
                         <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-primary/20 bg-primary/5 text-primary">
                           PAID
                         </Badge>
@@ -405,7 +404,7 @@ export function PribadiClient({
                     <span className="text-sm font-bold tabular-nums text-destructive">
                       -{formatRupiah(entry.amount)}
                     </span>
-                    {!(entry as any).is_virtual && (
+                    {!entry.is_virtual && (
                       <>
                         <Button
                           size="icon"

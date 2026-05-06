@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getObligations, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
@@ -18,6 +19,9 @@ import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
 import type { Obligation, Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Pengajuan",
+};
 
 type SP = {
   period?: string;
@@ -72,7 +76,20 @@ function RequestorGroup({
   const categoryGroups: { cat: string; rows: { o: Obligation; globalIdx: number }[] }[] = [];
   let globalIndex = 0;
   for (const o of items) {
-    const cat = o.category || 'lainnya';
+    let cat = o.category || 'lainnya';
+    
+    // Klasifikasi Perbaikan Dapur per lokasi
+    if (cat === 'perbaikan_dapur') {
+      const itemLower = (o.item || '').toLowerCase();
+      const locations = ['SIMBORO', 'DIPO', 'KURBAS', 'TAPALANG', 'KENJE', 'SARUDU', 'BUDONG_BUDONG', 'SAMPAGA', 'KAROSSA', 'LARA', 'SUMARE'];
+      for (const loc of locations) {
+        if (itemLower.includes(loc.toLowerCase().replace('_', ' '))) {
+          cat = `perbaikan_dapur_${loc}`;
+          break;
+        }
+      }
+    }
+
     let group = categoryGroups.find((g) => g.cat === cat);
     if (!group) {
       group = { cat, rows: [] };
@@ -92,22 +109,30 @@ function RequestorGroup({
       </div>
 
       <div className="space-y-4">
-        {categoryGroups.map(({ cat, rows }) => (
-          <div key={`${requestorName}-${cat}`}>
-            <ListSectionTitle>{cat.replace(/_/g, " ")}</ListSectionTitle>
-            <div className="divide-y divide-border/60 border-y border-border/60">
-              {rows.map(({ o, globalIdx }) => (
-                <PengajuanAccordionRow
-                  key={idString(o._id)}
-                  o={o}
-                  index={globalIdx}
-                  isAdmin={isAdmin}
-                  yayasanAccounts={yayasanAccounts}
-                />
-              ))}
+        {categoryGroups.map(({ cat, rows }) => {
+          let displayTitle = cat.replace(/_/g, " ");
+          if (cat.startsWith('perbaikan_dapur_')) {
+            const locPart = cat.replace('perbaikan_dapur_', '').replace(/_/g, " ");
+            displayTitle = `Perbaikan Dapur: ${locPart}`;
+          }
+          
+          return (
+            <div key={`${requestorName}-${cat}`}>
+              <ListSectionTitle>{displayTitle}</ListSectionTitle>
+              <div className="divide-y divide-border/60 border-y border-border/60">
+                {rows.map(({ o, globalIdx }) => (
+                  <PengajuanAccordionRow
+                    key={idString(o._id)}
+                    o={o}
+                    index={globalIdx}
+                    isAdmin={isAdmin}
+                    yayasanAccounts={yayasanAccounts}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

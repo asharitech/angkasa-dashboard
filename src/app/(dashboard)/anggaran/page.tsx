@@ -1,4 +1,4 @@
-import { getBudgetSummary, getPengeluaranAngkasa } from "@/lib/data";
+import { getBudgetSummary } from "@/lib/data";
 import { recentMonths, currentWitaMonth } from "@/lib/periods";
 import AnggaranClientPage from "./anggaran-client";
 
@@ -12,10 +12,7 @@ export default async function AnggaranPage({
   const params = await searchParams;
   const month = params.bulan ?? currentWitaMonth();
 
-  const [budgetData, pengeluaranData] = await Promise.all([
-    getBudgetSummary(month),
-    getPengeluaranAngkasa(month),
-  ]);
+  const budgetData = await getBudgetSummary(month);
 
   const months = recentMonths(6);
   if (!months.includes(month)) months.push(month);

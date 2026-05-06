@@ -7,7 +7,7 @@ import { dbCollections } from "@/lib/db/collections";
 import { validateObligation, validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import { ORG_ID } from "@/lib/config";
-import type { ObligationDoc, EntryFields } from "@/lib/db/schema";
+import type { ObligationDoc, EntryFields, ScheduleItemDoc } from "@/lib/db/schema";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -279,7 +279,7 @@ export async function toggleScheduleMonthAction(
     const existing = await c.obligations.findOne({ _id: toObjectId(obligationId) });
     if (!existing) return { error: "Cicilan tidak ditemukan" };
 
-    const schedule = (existing.schedule ?? []).map((s: any) =>
+    const schedule = (existing.schedule ?? []).map((s: ScheduleItemDoc) =>
       s.month === month
         ? { ...s, status: checked ? "lunas" : "pending", paid_at: checked ? new Date().toISOString().slice(0, 10) : undefined }
         : s,
@@ -318,7 +318,7 @@ export async function updateScheduleAmountAction(
     const existing = await c.obligations.findOne({ _id: toObjectId(obligationId) });
     if (!existing) return { error: "Cicilan tidak ditemukan" };
 
-    const schedule = (existing.schedule ?? []).map((s: any) =>
+    const schedule = (existing.schedule ?? []).map((s: ScheduleItemDoc) =>
       s.month === month ? { ...s, amount } : s,
     );
 

@@ -1,13 +1,17 @@
-import { getEntries } from "@/lib/data";
+import { getEntries, getAccounts } from "@/lib/data";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { SectionCard } from "@/components/section-card";
+import { EntryRowActions } from "@/components/entry-row-actions";
 import { PiggyBank } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function SavingsPage() {
-  const entries = await getEntries({ category: "savings" }, 100);
+  const [entries, accounts] = await Promise.all([
+    getEntries({ category: "savings" }, 100),
+    getAccounts(),
+  ]);
 
   const totalOut = entries
     .filter((e) => e.direction === "out")
@@ -77,13 +81,16 @@ export default async function SavingsPage() {
                       {formatDateShort(entry.date)} · {entry.owner}
                     </p>
                   </div>
-                  <span
-                    className={`text-sm font-bold tabular-nums shrink-0 ${
-                      isOut ? "text-success" : "text-destructive"
-                    }`}
-                  >
-                    {isOut ? "+" : "-"}{formatRupiah(entry.amount)}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-sm font-bold tabular-nums ${
+                        isOut ? "text-success" : "text-destructive"
+                      }`}
+                    >
+                      {isOut ? "+" : "-"}{formatRupiah(entry.amount)}
+                    </span>
+                    <EntryRowActions entryId={idString(entry._id)} accounts={accounts} />
+                  </div>
                 </div>
               );
             })}

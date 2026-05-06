@@ -40,7 +40,7 @@ export function BalanceSheetPanel({
   saldo,
   kewajiban,
   danaEfektif,
-  healthRatio,
+  healthRatio: _healthRatio,
   healthLabel,
   healthTone,
   displayDate,

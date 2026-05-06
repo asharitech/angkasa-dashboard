@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import {
   getLedger,
@@ -8,7 +9,7 @@ import {
   getLaporanOpMonthlyFlow,
 } from "@/lib/data"
 import { getSession } from "@/lib/auth"
-import { formatRupiah, formatRupiahCompact, formatDate } from "@/lib/format"
+import { formatRupiahCompact, formatDate } from "@/lib/format"
 import { formatPeriodLabel } from "@/lib/period"
 import { kewajibanRows } from "@/lib/kewajiban-display"
 import { cn } from "@/lib/utils"
@@ -34,6 +35,9 @@ import {
 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
+export const metadata: Metadata = {
+  title: "Laporan Op",
+}
 
 // Destructive shades for stacked kewajiban bar — each a distinct opacity level
 const KEWAJIBAN_COLORS = [

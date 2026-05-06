@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage } from "@/lib/data";
+import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";
@@ -11,6 +11,7 @@ import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { SewaTabs } from "@/components/sewa-tabs";
 import { StatusBadge } from "@/components/status-badge";
 import { SewaLocationEditButton } from "@/components/sewa-location-editor";
+import { EntryRowActions } from "@/components/entry-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { toneVariant, type Tone } from "@/lib/colors";
 import { cn, idString } from "@/lib/utils";
@@ -35,11 +36,12 @@ export default async function SewaPage({
   searchParams: Promise<{ tahap?: string; view?: string }>;
 }) {
   const { tahap } = await searchParams;
-  const [requestedLedger, currentLedger, sewaHistory, session] = await Promise.all([
+  const [requestedLedger, currentLedger, sewaHistory, session, accounts] = await Promise.all([
     tahap ? getLedgerByCode("sewa", tahap) : getLedger("sewa"),
     getLedger("sewa"),
     getSewaHistory(),
     getSession(),
+    getAccounts(),
   ]);
   const ledger = requestedLedger ?? currentLedger;
   const activeTahap = ledger?.period_code ?? ledger?.period;
@@ -237,11 +239,14 @@ return (
                         <p className="truncate text-sm font-medium">{e.counterparty}</p>
                         <p className="truncate text-xs text-muted-foreground">{e.description}</p>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-semibold text-destructive tabular-nums">
-                          −{formatRupiah(e.amount)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatDateShort(e.date)}</p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-destructive tabular-nums">
+                            −{formatRupiah(e.amount)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatDateShort(e.date)}</p>
+                        </div>
+                        <EntryRowActions entryId={idString(e._id)} accounts={accounts} />
                       </div>
                     </div>
                   ))}

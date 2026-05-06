@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { ObjectId } from "mongodb"
 import { getDb } from "@/lib/mongodb"
 import { dbCollections } from "@/lib/db/collections"
 import { getSession } from "@/lib/auth"
@@ -72,8 +73,8 @@ export async function updateLaporanOpAction(id: string, input: UpdateLaporanOpIn
   if (session?.role !== "admin") return { error: "Unauthorized" }
 
   const c = dbCollections(await getDb())
-  
-  const updateData: any = {
+
+  const updateData: Record<string, unknown> = {
     period: input.period,
     period_code: input.period_code ?? null,
     is_current: input.is_current ?? false,
@@ -90,14 +91,14 @@ export async function updateLaporanOpAction(id: string, input: UpdateLaporanOpIn
     }
     if (input.laporan_op.kewajiban) {
       await c.ledgers.updateOne(
-        { _id: new (require("mongodb").ObjectId)(id) },
+        { _id: new ObjectId(id) },
         { $set: { "laporan_op.kewajiban": { total: input.laporan_op.kewajiban.total, ...input.laporan_op.kewajiban.fields } } }
       );
     }
   }
 
   await c.ledgers.updateOne(
-    { _id: new (require("mongodb").ObjectId)(id) },
+    { _id: new ObjectId(id) },
     { $set: updateData }
   )
 

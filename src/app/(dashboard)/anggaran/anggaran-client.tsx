@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { formatRupiah, formatRupiahCompact, formatDateShort, formatMonthCodeLong } from "@/lib/format";
+import { formatRupiah, formatDateShort, formatMonthCodeLong } from "@/lib/format";
 import { updateBudgetAction, addBonusIncomeAction, resetBonusAction } from "@/lib/actions/budget";
 import { updateAccountBalanceAction } from "@/lib/actions/accounts";
 import { SectionCard } from "@/components/section-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Wallet,
   Landmark,
-  CreditCard,
   PiggyBank,
   TrendingDown,
   TrendingUp,
@@ -24,8 +25,10 @@ import {
   Banknote,
   ChevronRight,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Entry } from "@/lib/types";
 
 interface BudgetCategory {
   key: string;
@@ -53,7 +56,7 @@ interface BudgetSummaryProps {
   totalSaldo: number;
   month: string;
   actualSpending: Record<string, number>;
-  spendingDetails: Record<string, any[]>;
+  spendingDetails: Record<string, Entry[]>;
   loanTotalThisMonth: number;
   loanPaidThisMonth: number;
   recurringTotalThisMonth: number;
@@ -104,6 +107,7 @@ export default function AnggaranClientPage({
   // Local edit state
   const [editIncome, setEditIncome] = useState(config.monthly_income);
   const [editCats, setEditCats] = useState<BudgetCategory[]>(config.categories);
+  const [editDeductions, setEditDeductions] = useState<BudgetFixedDeduction[]>(config.fixed_deductions);
   const [editBca, setEditBca] = useState(bcaBalance);
   const [editBriKas, setEditBriKas] = useState(briKas);
 
@@ -113,7 +117,7 @@ export default function AnggaranClientPage({
         updateBudgetAction({
           monthly_income: editIncome,
           bonus_income: config.bonus_income,
-          fixed_deductions: config.fixed_deductions,
+          fixed_deductions: editDeductions,
           categories: editCats,
           month: config.month,
         })
@@ -348,34 +352,108 @@ export default function AnggaranClientPage({
       {/* Deductions */}
       <SectionCard icon={TrendingDown} title="Pengurang Tetap" tone="danger">
         <div className="space-y-2">
-          {config.fixed_deductions.map((d, i) => {
-            let amount = d.amount;
-            let status = "pending";
-            
-            if (d.type === "loan") {
-              amount = loanTotalThisMonth;
-              // Check if fully paid
-              if (loanPaidThisMonth >= loanTotalThisMonth && loanTotalThisMonth > 0) {
-                status = "lunas";
-              }
-            } else if (d.type === "recurring") {
-              amount = recurringTotalThisMonth;
-            }
-            
-            return (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">{d.name}</span>
-                  {status === "lunas" && (
-                    <Badge className="bg-success/10 text-success border-success/20 text-[10px] h-4 py-0">LUNAS</Badge>
-                  )}
-                </div>
-                <span className="text-sm font-bold tabular-nums text-destructive">
-                  -{formatRupiah(amount)}
-                </span>
-              </div>
-            );
-          })}
+          {editing ? (
+             <div className="space-y-3">
+               {editDeductions.map((d, i) => (
+                 <div key={i} className="flex flex-col gap-2 p-2 border rounded-md bg-muted/20">
+                   <div className="flex items-center gap-2">
+                     <Input 
+                       value={d.name} 
+                       onChange={(e) => {
+                         const next = [...editDeductions];
+                         next[i] = { ...next[i], name: e.target.value };
+                         setEditDeductions(next);
+                       }}
+                       placeholder="Nama item"
+                       className="h-8 text-xs"
+                     />
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       onClick={() => setEditDeductions(editDeductions.filter((_, idx) => idx !== i))}
+                       className="h-8 w-8 text-destructive"
+                     >
+                       <Trash2 className="h-4 w-4" />
+                     </Button>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <span className="text-[10px] text-muted-foreground w-12">Type:</span>
+                     <select 
+                       value={d.type}
+                       onChange={(e) => {
+                         const next = [...editDeductions];
+                         next[i] = {
+                          ...next[i],
+                          type: e.target.value as BudgetFixedDeduction["type"],
+                        };
+                         setEditDeductions(next);
+                       }}
+                       className="flex-1 bg-transparent text-xs border rounded px-1 h-8"
+                     >
+                       <option value="custom">Manual (Input nominal)</option>
+                       <option value="loan">Auto (Total Cicilan)</option>
+                       <option value="recurring">Auto (Total Wajib Bulanan)</option>
+                     </select>
+                   </div>
+                   {d.type === "custom" && (
+                     <div className="flex items-center gap-2">
+                       <span className="text-[10px] text-muted-foreground w-12">Nominal:</span>
+                       <Input 
+                         type="number" 
+                         value={d.amount} 
+                         onChange={(e) => {
+                           const next = [...editDeductions];
+                           next[i] = { ...next[i], amount: parseInt(e.target.value) || 0 };
+                           setEditDeductions(next);
+                         }}
+                         className="h-8 text-xs flex-1"
+                       />
+                     </div>
+                   )}
+                 </div>
+               ))}
+               <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setEditDeductions([...editDeductions, { name: "Baru", amount: 0, type: "custom" }])}
+                className="w-full h-8 text-xs gap-1"
+               >
+                 <Plus className="h-3 w-3" /> Tambah Pengurang
+               </Button>
+             </div>
+          ) : (
+            <>
+              {config.fixed_deductions.map((d, i) => {
+                let amount = d.amount;
+                let status = "pending";
+                
+                if (d.type === "loan") {
+                  amount = loanTotalThisMonth;
+                  // Check if fully paid
+                  if (loanPaidThisMonth >= loanTotalThisMonth && loanTotalThisMonth > 0) {
+                    status = "lunas";
+                  }
+                } else if (d.type === "recurring") {
+                  amount = recurringTotalThisMonth;
+                }
+                
+                return (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{d.name}</span>
+                      {status === "lunas" && (
+                        <Badge className="bg-success/10 text-success border-success/20 text-[10px] h-4 py-0">LUNAS</Badge>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold tabular-nums text-destructive">
+                      -{formatRupiah(amount)}
+                    </span>
+                  </div>
+                );
+              })}
+            </>
+          )}
           <div className="border-t pt-2 flex items-center justify-between">
             <span className="text-sm font-semibold">Total Pengurang</span>
             <div className="text-right">

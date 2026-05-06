@@ -55,8 +55,8 @@ export async function createEntryAction(data: EntryInput): Promise<EntryActionRe
     revalidatePath("/pribadi");
     revalidatePath("/");
     return { ok: true, id: result.insertedId.toString() };
-  } catch (e: any) {
-    return { ok: false, error: e.message };
+  } catch (e: unknown) {
+    return { ok: false, error: e instanceof Error ? e.message : "Gagal menyimpan" };
   }
 }
 
@@ -120,8 +120,8 @@ export async function updateEntryAction(
     revalidatePath("/pribadi");
     revalidatePath("/");
     return { ok: true };
-  } catch (e: any) {
-    return { ok: false, error: e.message };
+  } catch (e: unknown) {
+    return { ok: false, error: e instanceof Error ? e.message : "Gagal menyimpan" };
   }
 }
 
@@ -143,8 +143,8 @@ export async function deleteEntryAction(id: string): Promise<EntryActionResult> 
     revalidatePath("/pribadi");
     revalidatePath("/");
     return { ok: true };
-  } catch (e: any) {
-    return { ok: false, error: e.message };
+  } catch (e: unknown) {
+    return { ok: false, error: e instanceof Error ? e.message : "Gagal menghapus" };
   }
 }
 

@@ -136,7 +136,7 @@ export async function updateAccountBalanceAction(accountId: string, newBalance: 
     revalidatePath("/anggaran");
     revalidatePath("/");
     return { ok: true };
-  } catch (e: any) {
-    return { error: e.message };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Gagal memperbarui saldo" };
   }
 }

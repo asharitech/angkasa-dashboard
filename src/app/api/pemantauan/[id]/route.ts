@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
 import { ObjectId } from "mongodb";
