@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { getAccounts } from "@/lib/dal";
-import { getSession } from "@/lib/auth";
+import { isAdminSession, requireDashboardSession } from "@/lib/dashboard-auth";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { formatRupiah } from "@/lib/format";
 import { ShieldCheck, Database } from "lucide-react";
 import { ForbiddenState } from "@/components/forbidden-state";
-import { redirect } from "next/navigation";
 import { AdminMasterClient } from "./admin-master-client";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
@@ -17,10 +16,9 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireDashboardSession();
 
-  if (session.role !== "admin") {
+  if (!isAdminSession(session)) {
     return (
       <ForbiddenState
         icon={ShieldCheck}

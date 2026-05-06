@@ -1,8 +1,7 @@
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
-import { getSession } from "@/lib/auth";
+import { requireDashboardSession } from "@/lib/dashboard-auth";
 import { ORG_ID } from "@/lib/config";
-import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import {
   DocumentUploadButton,
@@ -38,8 +37,7 @@ export default async function DokumenPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  await requireDashboardSession();
 
   const params = await searchParams;
   const kategoriFilter = params.kategori ?? null;

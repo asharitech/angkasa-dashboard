@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { Shield, Users } from "lucide-react";
-import { getSession } from "@/lib/auth";
+import { isAdminSession, requireDashboardSession } from "@/lib/dashboard-auth";
 import { getUsersForAdmin } from "@/lib/dal";
 import { ForbiddenState } from "@/components/forbidden-state";
 import { PageHeader } from "@/components/page-header";
@@ -10,10 +9,9 @@ import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireDashboardSession();
 
-  if (session.role !== "admin") {
+  if (!isAdminSession(session)) {
     return (
       <ForbiddenState
         icon={Shield}

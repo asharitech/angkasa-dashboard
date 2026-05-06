@@ -1,7 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requireDashboardSession } from "@/lib/dashboard-auth";
 import { PageHeader } from "@/components/page-header";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import {
@@ -65,8 +64,7 @@ export default async function AgendaPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  await requireDashboardSession();
 
   const params = await searchParams;
   const view = (params.view ?? "belum") as "belum" | "selesai" | "semua";

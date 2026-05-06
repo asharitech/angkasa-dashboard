@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { dbCollections } from "@/lib/db/collections";
-import { getSession } from "@/lib/auth";
+import { isAdminSession, requireDashboardSession } from "@/lib/dashboard-auth";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
@@ -8,7 +8,6 @@ import { OmprengAddButton, OmprengRowActions } from "@/components/ompreng-manage
 import { DAPUR_LOCATIONS, DAPUR_LABELS, type DapurLocation, type OmprengDoc } from "@/lib/ompreng-constants";
 import { monthsInclusiveRange, monthLabel } from "@/lib/periods";
 import { UtensilsCrossed, LayoutGrid, Users } from "lucide-react";
-import { redirect } from "next/navigation";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -37,9 +36,8 @@ const KPI_RANGE_LABEL = (() => {
 type OmprengMonthRow = { dapur: DapurLocation; doc: OmprengDoc | undefined };
 
 export default async function OmprengPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  const isAdmin = session?.role === "admin";
+  const session = await requireDashboardSession();
+  const isAdmin = isAdminSession(session);
 
   const c = dbCollections(await getDb());
 
