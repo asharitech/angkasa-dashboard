@@ -30,7 +30,7 @@ export default async function PribadiPage({
   const accounts = await getAccounts();
 
   return (
-    <DashboardPageShell maxWidth="narrow" className="py-4 md:py-2">
+    <DashboardPageShell maxWidth="narrow">
       <PribadiClient
         entries={data.entries}
         entriesOut={data.entriesOut}

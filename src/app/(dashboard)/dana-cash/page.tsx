@@ -62,7 +62,7 @@ export default async function DanaCashPage({
 
   return (
     <DashboardPageShell>
-      <PageHeader title="Cash Yayasan" icon={Banknote} />
+      <PageHeader icon={Banknote} title="Cash Yayasan" />
 
       <PageToolbar>
         <PeriodPicker basePath="/dana-cash" current={period} />

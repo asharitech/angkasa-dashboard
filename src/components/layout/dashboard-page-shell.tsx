@@ -13,6 +13,7 @@ export type DashboardPageStackGap = keyof typeof GAP_CLASS;
 /**
  * Wraps dashboard page content with consistent stacking gap and optional width.
  * Use on server `page.tsx` files and client feature shells instead of ad-hoc `space-y-*` roots.
+ * Avoid extra vertical padding here — `Shell` already sets main content `pt` / `pb`.
  */
 export function DashboardPageShell({
   children,

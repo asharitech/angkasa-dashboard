@@ -14,7 +14,7 @@ import { formatPeriodLabel } from "@/lib/period"
 import { kewajibanRows } from "@/lib/kewajiban-display"
 import { cn } from "@/lib/utils"
 import { SectionCard } from "@/components/section-card"
-import { IconBadge } from "@/components/primitives/icon-badge"
+import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { EmptyState } from "@/components/empty-state"
@@ -34,6 +34,7 @@ import {
   ArrowDown,
 } from "lucide-react"
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell"
+import { DashboardSurface } from "@/components/layout/dashboard-surface"
 
 export const dynamic = "force-dynamic"
 export const metadata: Metadata = {
@@ -147,13 +148,16 @@ export default async function LaporanOpPage({
   if (!ledger || !ledger.laporan_op) {
     return (
       <DashboardPageShell>
-        <div className="flex items-center gap-3">
-          <IconBadge icon={FileText} tone="primary" size="md" />
-          <div>
-            <h1 className="text-lg font-semibold leading-tight">Laporan Operasional</h1>
-            <p className="text-xs text-muted-foreground">account: btn_yayasan</p>
-          </div>
-        </div>
+        <PageHeader
+          icon={FileText}
+          title="Laporan Operasional"
+          titleSuffix={
+            <Badge variant="secondary" className="text-xs">
+              btn_yayasan
+            </Badge>
+          }
+          description="Snapshot ledger belum di-publish untuk akun ini."
+        />
         {periods.length > 0 && (
           <PeriodChips periods={periods} activePeriod={activePeriod} />
         )}
@@ -202,26 +206,28 @@ export default async function LaporanOpPage({
 
   return (
     <DashboardPageShell>
-      {/* ── 1. Header ribbon ── */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <IconBadge icon={FileText} tone="primary" size="md" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold leading-tight">Laporan Operasional</h1>
-              <Badge variant="secondary" className="text-xs">btn_yayasan</Badge>
-            </div>
-            {ledger.as_of && (
-              <p className="text-xs text-muted-foreground">Snapshot per {formatDate(ledger.as_of)}</p>
-            )}
-          </div>
-        </div>
-        {isAdmin && (
+      <PageHeader
+        icon={FileText}
+        title="Laporan Operasional"
+        titleSuffix={
+          <Badge variant="secondary" className="text-xs">
+            btn_yayasan
+          </Badge>
+        }
+        description={
+          ledger.as_of ? (
+            <>
+              Snapshot per <strong>{formatDate(ledger.as_of)}</strong>
+            </>
+          ) : undefined
+        }
+      >
+        {isAdmin ? (
           <div className="hidden md:block">
             <LaporanOpAdminActions entries={entries} period={activePeriod} ledger={ledger} />
           </div>
-        )}
-      </div>
+        ) : null}
+      </PageHeader>
 
       {/* ── 2. Period chips ── */}
       {periods.length > 0 && (
@@ -231,7 +237,7 @@ export default async function LaporanOpPage({
       {/* ── 3. 3-up hero ── */}
       <div className="grid gap-4 md:grid-cols-[1.4fr_1fr_1fr]">
         {/* A. Dana Efektif */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <DashboardSurface>
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Dana Efektif
           </p>
@@ -268,10 +274,10 @@ export default async function LaporanOpPage({
               {formatRupiahCompact(Math.abs(delta))} vs bulan lalu
             </div>
           )}
-        </div>
+        </DashboardSurface>
 
         {/* B. Arus Bersih */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <DashboardSurface>
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Arus Bersih · {periodLabel}
           </p>
@@ -310,10 +316,10 @@ export default async function LaporanOpPage({
               keluar
             </span>
           </div>
-        </div>
+        </DashboardSurface>
 
         {/* C. Rekonsiliasi */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <DashboardSurface>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Rekonsiliasi
@@ -356,7 +362,7 @@ export default async function LaporanOpPage({
           ) : (
             <p className="text-xs text-muted-foreground">Data rekonsiliasi tidak tersedia.</p>
           )}
-        </div>
+        </DashboardSurface>
       </div>
 
       {/* ── 4. Kewajiban composition card ── */}

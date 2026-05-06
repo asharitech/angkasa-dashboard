@@ -19,7 +19,7 @@ export default async function NotifikasiPage() {
   ]);
 
   return (
-    <DashboardPageShell gap="relaxed" className="py-2 md:py-0">
+    <DashboardPageShell gap="relaxed">
       <PageHeader
         icon={Mail}
         title="Notifikasi email"
