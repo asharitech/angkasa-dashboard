@@ -4,8 +4,12 @@ import { idString } from "@/lib/utils";
 import { SectionCard } from "@/components/section-card";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { DataTable } from "@/components/data-table";
+import { EmptyState } from "@/components/empty-state";
 import { EntryRowActions } from "@/components/entry-row-actions";
-import { PiggyBank } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PiggyBank, Inbox } from "lucide-react";
+import type { Entry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -63,36 +67,76 @@ export default async function SavingsPage() {
         </p>
       </SectionCard>
 
-      <SectionCard title="Riwayat Transaksi" tone="muted">
-        {entries.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8 text-sm">Belum ada transaksi savings.</p>
-        ) : (
-          <div className="divide-y divide-border/50">
-            {entries.map((entry) => {
-              const isOut = entry.direction === "out";
-              return (
-                <div key={idString(entry._id)} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{entry.description}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatDateShort(entry.date)} · {entry.owner}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-sm font-bold tabular-nums ${
-                        isOut ? "text-success" : "text-destructive"
-                      }`}
-                    >
-                      {isOut ? "+" : "-"}{formatRupiah(entry.amount)}
-                    </span>
-                    <EntryRowActions entryId={idString(entry._id)} accounts={accounts} />
-                  </div>
+      <SectionCard title="Riwayat Transaksi" tone="muted" bodyClassName="px-0 md:px-4">
+        <DataTable<Entry>
+          minWidth={560}
+          rows={entries}
+          rowKey={(e) => idString(e._id)}
+          empty={
+            <EmptyState
+              icon={Inbox}
+              title="Belum ada transaksi savings"
+              description="Transaksi dengan kategori savings akan muncul di sini."
+              embedded
+            />
+          }
+          columns={[
+            {
+              key: "when",
+              header: "Tanggal",
+              className: "w-[7.5rem]",
+              cell: (e) => (
+                <span className="tabular-nums text-muted-foreground">{formatDateShort(e.date)}</span>
+              ),
+            },
+            {
+              key: "meta",
+              header: "Pemilik / Arah",
+              nowrap: false,
+              className: "w-36",
+              cell: (e) => (
+                <div className="flex flex-col gap-0.5">
+                  <Badge variant="outline" className="w-fit text-[10px] font-medium capitalize">
+                    {e.owner ?? "—"}
+                  </Badge>
+                  <span className="text-[11px] text-muted-foreground">
+                    {e.direction === "out" ? "Keluar" : "Masuk"}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              ),
+            },
+            {
+              key: "desc",
+              header: "Keterangan",
+              nowrap: false,
+              cell: (e) => <span className="font-medium leading-snug">{e.description}</span>,
+            },
+            {
+              key: "amount",
+              header: "Nominal",
+              align: "right",
+              className: "w-44",
+              cell: (e) => {
+                const isOut = e.direction === "out";
+                return (
+                  <div className="flex items-center justify-end gap-2">
+                    <span
+                      className={
+                        isOut
+                          ? "text-sm font-bold tabular-nums text-success"
+                          : "text-sm font-bold tabular-nums text-destructive"
+                      }
+                    >
+                      {isOut ? "+" : "−"}
+                      {formatRupiah(e.amount)}
+                    </span>
+                    <EntryRowActions entryId={idString(e._id)} accounts={accounts} />
+                  </div>
+                );
+              },
+            },
+          ]}
+        />
       </SectionCard>
     </DashboardPageShell>
   );
