@@ -28,6 +28,7 @@ import {
   type EmailSourceFilter,
   type EmailNotifSort,
   matchesEmailSourceFilter,
+  isLikelyShallowDescription,
 } from "./email-notif-helpers";
 import { ApproveNotifForm, type ApproveNotifPayload } from "./approve-notif-form";
 import { EmailNotifRow } from "./email-notif-row";
@@ -87,6 +88,11 @@ export function NotifikasiClient({
       return hay.includes(q);
     });
   }, [items, query, sourceFilter]);
+
+  const shallowLegacyCount = useMemo(
+    () => items.filter((n) => isLikelyShallowDescription(n)).length,
+    [items],
+  );
 
   const sortedRows = useMemo(() => {
     const copy = [...filtered];
@@ -189,6 +195,28 @@ export function NotifikasiClient({
             >
               Tutup
             </button>
+          </div>
+        </DashboardAlertBanner>
+      ) : null}
+
+      {shallowLegacyCount > 0 ? (
+        <DashboardAlertBanner className="border-info/40 bg-info/10 text-foreground">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-info" aria-hidden />
+          <div className="min-w-0 flex-1 space-y-2 text-sm leading-relaxed">
+            <p className="font-semibold">
+              {shallowLegacyCount} baris tampak dari ingest lama (hampir hanya subjek bank).
+            </p>
+            <p className="text-muted-foreground">
+              Dashboard tidak mengisi ulang dari inbox sendiri. Yang memperbarui <code className="rounded bg-background/80 px-1 py-px font-mono text-xs">description</code>,{" "}
+              <code className="rounded bg-background/80 px-1 py-px font-mono text-xs">beneficiary</code>, dan{" "}
+              <code className="rounded bg-background/80 px-1 py-px font-mono text-xs">raw_body</code> di Mongo adalah{" "}
+              <strong>satu sesi agen OpenClaw</strong> (instruksi sama seperti cron{" "}
+              <code className="rounded bg-background/80 px-1 py-px font-mono text-xs">angkasa-email-sync-ai-v4</code>
+              ), dengan fetch per UID dan reasoning di atas badan email — tanpa skrip parser batch di repo.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Minta agen: backfill pending yang dangkal + perbaiki tanggal invalid; atau tunggu jadwal cron berikutnya.
+            </p>
           </div>
         </DashboardAlertBanner>
       ) : null}

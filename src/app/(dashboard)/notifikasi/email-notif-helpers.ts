@@ -122,8 +122,10 @@ export function stripHtmlToPlain(htmlish: string): string {
 export function sanitizeBeneficiaryDisplay(value: string | undefined): string | undefined {
   if (!value) return undefined;
   let v = value.trim();
+  /** Cut at first bank footer / metadata tail (often merged into beneficiary by legacy ingest). */
   const cutRes = [
-    /Note\s*\(s\)\s*:/i,
+    /\s+Acquirer\s*:/i,
+    /\s+Note\s*\(s\)\s*:/i,
     /\bPlease save this email\b/i,
     /\bHalo BCA\b/i,
     /\bNPWP\s*:/i,
@@ -132,12 +134,17 @@ export function sanitizeBeneficiaryDisplay(value: string | undefined): string | 
     /PT BANK CENTRAL ASIA/i,
     /\bMENARA BCA\b/i,
     /\bFees Include VAT\b/i,
+    /\s+Ref\s*:\s*\d/i,
   ];
+  let cutAt = v.length;
   for (const re of cutRes) {
     const m = re.exec(v);
-    if (m?.index != null && m.index > 0) {
-      v = v.slice(0, m.index).trim();
+    if (m?.index != null && m.index > 0 && m.index < cutAt) {
+      cutAt = m.index;
     }
+  }
+  if (cutAt < v.length) {
+    v = v.slice(0, cutAt).trim();
   }
   v = v.replace(/\s+/g, " ").trim();
   if (v.length > 120) v = `${v.slice(0, 117)}…`;
@@ -160,6 +167,11 @@ export function isLikelyShallowDescription(n: {
   const src = (n.source || "").toLowerCase();
   if (src === "bri" && /^BRI:\s/i.test(d) && !n.beneficiary_name && d.length <= sub.length + 10) {
     return true;
+  }
+  if (src === "bca" && /^Transfer BCA ke\s+/i.test(d)) {
+    if (/Note\s*\(s\)|PT BANK CENTRAL|Acquirer\s*:|MENARA BCA|Halo BCA/i.test(n.beneficiary_name || "")) {
+      return true;
+    }
   }
   return false;
 }
