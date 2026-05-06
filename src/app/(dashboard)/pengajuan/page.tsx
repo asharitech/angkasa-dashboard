@@ -263,6 +263,7 @@ export default async function PengajuanPage({
             title={`Tidak ada ${statusView}`}
             description={`Belum ada pengajuan ${statusView} pada ${monthLabel(monthView, "long")}.`}
             action={isAdmin && statusView === "pending" ? <PengajuanCreateButton /> : undefined}
+            variant="dashed"
           />
         ) : (
           <div className="space-y-7">

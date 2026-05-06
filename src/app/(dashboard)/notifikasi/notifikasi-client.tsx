@@ -29,7 +29,9 @@ import type { EmailNotif } from "@/lib/dal";
 import type { Account } from "@/lib/types";
 import { idString, cn } from "@/lib/utils";
 import {
+  DASHBOARD_META_PILL,
   DASHBOARD_SEARCH_INPUT_CLASS,
+  DASHBOARD_STACK_HEADER_BORDER,
   DashboardAlertBanner,
   DashboardHeroPanel,
   DashboardIconFrame,
@@ -271,10 +273,10 @@ export function NotifikasiClient({
 
       {/* Hero + stats */}
       <DashboardHeroPanel>
-        <div className="border-b border-border/60 bg-muted/30 px-4 py-5 md:px-6 md:py-6">
+        <div className={cn(DASHBOARD_STACK_HEADER_BORDER, "bg-muted/30 px-4 py-5 md:px-6 md:py-6")}>
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className={DASHBOARD_META_PILL}>
                 <ListChecks className="h-3.5 w-3.5" aria-hidden />
                 Antrian pending
               </div>
@@ -326,6 +328,7 @@ export function NotifikasiClient({
             title="Antrian kosong"
             description="Tidak ada notifikasi pending. Yang sudah diproses tetap terlihat di ringkasan statistik di atas."
             tone="muted"
+            variant="dashed"
           />
         )}
 
@@ -335,6 +338,7 @@ export function NotifikasiClient({
             title="Tidak ada hasil"
             description="Coba kata kunci lain atau kosongkan pencarian."
             tone="muted"
+            variant="dashed"
             action={
               <Button type="button" variant="outline" size="sm" onClick={() => setQuery("")}>
                 Reset pencarian
@@ -496,7 +500,7 @@ export function NotifikasiClient({
       {selected && (
         <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
           <DialogContent className="max-w-lg gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-lg">
-            <div className="border-b border-border/60 bg-muted/40 px-6 py-4">
+            <div className={cn(DASHBOARD_STACK_HEADER_BORDER, "bg-muted/40 px-6 py-4")}>
               <DialogHeader className="space-y-1 text-left">
                 <DialogTitle className="text-lg">Catat transaksi</DialogTitle>
                 <DialogDescription>

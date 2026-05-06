@@ -165,6 +165,7 @@ export default async function LaporanOpPage({
           icon={Inbox}
           title="Laporan Op belum tersedia"
           description="Snapshot ledger belum di-publish."
+          variant="dashed"
         />
       </DashboardPageShell>
     )

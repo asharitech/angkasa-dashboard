@@ -7,7 +7,12 @@ import { updateAccountBalanceAction } from "@/lib/actions/accounts";
 import { SectionCard } from "@/components/section-card";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
-import { DashboardInset, DashboardSurface } from "@/components/layout/dashboard-surface";
+import {
+  DASHBOARD_CARD_EXPAND_FOOTER,
+  DASHBOARD_CONTROL_OUTLINE,
+  DashboardInset,
+  DashboardSurface,
+} from "@/components/layout/dashboard-surface";
 import { PageToolbar } from "@/components/layout/page-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -174,7 +179,10 @@ export default function AnggaranClientPage({
                 setEditBriKas(briKas);
                 setEditing(true);
               }}
-              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+              className={cn(
+                DASHBOARD_CONTROL_OUTLINE,
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent",
+              )}
             >
               <Edit2 className="h-3.5 w-3.5" />
               Edit Budget
@@ -193,7 +201,10 @@ export default function AnggaranClientPage({
               <button
                 type="button"
                 onClick={() => setEditing(false)}
-                className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+                className={cn(
+                  DASHBOARD_CONTROL_OUTLINE,
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent",
+                )}
               >
                 <X className="h-3.5 w-3.5" />
                 Batal
@@ -212,10 +223,11 @@ export default function AnggaranClientPage({
               key={m}
               href={`/anggaran?bulan=${m}`}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors border",
+                DASHBOARD_CONTROL_OUTLINE,
+                "px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
                 active
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-muted-foreground border-border hover:border-primary/50"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "bg-card text-muted-foreground border-border hover:border-primary/50",
               )}
             >
               {formatMonthCodeLong(m)}
@@ -232,7 +244,7 @@ export default function AnggaranClientPage({
               type="number"
               value={editBca}
               onChange={(e) => setEditBca(parseInt(e.target.value) || 0)}
-              className="w-full rounded-lg border px-2 py-1 text-sm font-bold text-primary"
+              className={cn(DASHBOARD_CONTROL_OUTLINE, "w-full px-2 py-1 text-sm font-bold text-primary")}
             />
           ) : (
             <p className="text-xl font-extrabold tabular-nums text-primary">
@@ -247,7 +259,7 @@ export default function AnggaranClientPage({
               type="number"
               value={editBriKas}
               onChange={(e) => setEditBriKas(parseInt(e.target.value) || 0)}
-              className="w-full rounded-lg border px-2 py-1 text-sm font-bold text-warning"
+              className={cn(DASHBOARD_CONTROL_OUTLINE, "w-full px-2 py-1 text-sm font-bold text-warning")}
             />
           ) : (
             <p className="text-xl font-extrabold tabular-nums text-warning">
@@ -277,7 +289,7 @@ export default function AnggaranClientPage({
                 type="number"
                 value={editIncome}
                 onChange={(e) => setEditIncome(parseInt(e.target.value) || 0)}
-                className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                className={cn(DASHBOARD_CONTROL_OUTLINE, "flex-1 px-3 py-2 text-sm")}
               />
             </div>
           ) : (
@@ -331,7 +343,7 @@ export default function AnggaranClientPage({
                 value={bonusInput}
                 onChange={(e) => setBonusInput(e.target.value)}
                 placeholder="Jumlah bonus..."
-                className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                className={cn(DASHBOARD_CONTROL_OUTLINE, "flex-1 px-3 py-2 text-sm")}
                 autoFocus
               />
               <button
@@ -343,7 +355,7 @@ export default function AnggaranClientPage({
               </button>
               <button
                 onClick={() => { setShowBonusInput(false); setBonusInput(""); }}
-                className="rounded-lg border px-3 py-2 text-xs font-medium"
+                className={cn(DASHBOARD_CONTROL_OUTLINE, "px-3 py-2 text-xs font-medium")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -394,7 +406,10 @@ export default function AnggaranClientPage({
                         };
                          setEditDeductions(next);
                        }}
-                       className="flex-1 bg-transparent text-xs border rounded px-1 h-8"
+                       className={cn(
+                         DASHBOARD_CONTROL_OUTLINE,
+                         "h-8 flex-1 rounded-md bg-transparent px-1 text-xs",
+                       )}
                      >
                        <option value="custom">Manual (Input nominal)</option>
                        <option value="loan">Auto (Total Cicilan)</option>
@@ -528,7 +543,7 @@ export default function AnggaranClientPage({
                     next[idx] = { ...next[idx], limit: parseInt(e.target.value) || 0 };
                     setEditCats(next);
                   }}
-                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  className={cn(DASHBOARD_CONTROL_OUTLINE, "flex-1 px-3 py-2 text-sm")}
                 />
               </div>
             ))}
@@ -607,7 +622,7 @@ export default function AnggaranClientPage({
 
                   {/* Details Dropdown */}
                   {isExpanded && (
-                    <div className="bg-muted/30 border-t border-border/50 px-4 py-3 space-y-2">
+                    <div className={cn(DASHBOARD_CARD_EXPAND_FOOTER, "space-y-2")}>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Rincian Pengeluaran</p>
                       {details.length === 0 ? (
                         <p className="text-xs text-muted-foreground italic py-1">Belum ada transaksi tercatat.</p>

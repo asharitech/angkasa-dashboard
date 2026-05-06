@@ -70,6 +70,7 @@ export default async function AuditPage() {
           tone="success"
           title="Data bersih"
           description="Tidak ada isu integritas saat ini."
+          variant="dashed"
         />
       ) : (
         <div className="space-y-4">

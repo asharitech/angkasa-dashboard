@@ -260,6 +260,7 @@ export function PribadiClient({
           title="Belum ada transaksi pribadi"
           description="Tambah pengeluaran pertama untuk mulai melacak per bulan. Data akan muncul di sini setelah tercatat di basis data."
           tone="muted"
+          variant="dashed"
           action={
             <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" />

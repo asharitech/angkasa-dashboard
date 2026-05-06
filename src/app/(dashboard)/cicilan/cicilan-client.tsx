@@ -5,7 +5,7 @@ import { formatRupiah } from "@/lib/format";
 import { toggleScheduleMonthAction, updateScheduleAmountAction } from "@/lib/actions/obligations";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
-import { DashboardSurface } from "@/components/layout/dashboard-surface";
+import { DASHBOARD_CONTROL_OUTLINE, DashboardSurface } from "@/components/layout/dashboard-surface";
 import { SectionGroupHeader } from "@/components/section-group-header";
 import { cn } from "@/lib/utils";
 import { CreditCard, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
@@ -212,7 +212,7 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
                               type="number"
                               value={editAmount}
                               onChange={(e) => setEditAmount(e.target.value)}
-                              className="w-24 text-right text-sm border rounded px-2 py-1"
+                              className={cn(DASHBOARD_CONTROL_OUTLINE, "w-24 px-2 py-1 text-right text-sm")}
                               autoFocus
                             />
                             <button onClick={() => saveAmount(it.loanId, month)} className="p-1 text-success hover:bg-success/10 rounded">

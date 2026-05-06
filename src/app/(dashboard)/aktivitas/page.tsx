@@ -115,6 +115,7 @@ export default async function AktivitasPage({
           icon={Inbox}
           title="Belum ada aktivitas"
           description="Tidak ada event sesuai filter yang dipilih."
+          variant="dashed"
         />
       ) : (
         Array.from(grouped.entries()).map(([day, dayEvents]) => (

@@ -109,6 +109,7 @@ export function UsersManager({
               icon={Users}
               title="Belum ada user"
               description="Tambahkan admin atau viewer untuk mulai menggunakan dashboard."
+              variant="dashed"
             />
           </div>
         ) : (

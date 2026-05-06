@@ -149,7 +149,13 @@ export function PemantauanCard({
       {/* Temuan list */}
       <div className="mt-2.5 space-y-1.5">
         {temuan.map((t, idx) => (
-          <div key={t.id} className="flex items-start gap-2 rounded-md bg-card px-2.5 py-2">
+          <div
+            key={t.id}
+            className={cn(
+              DASHBOARD_INSET_PANEL,
+              "flex items-start gap-2 bg-card px-2.5 py-2",
+            )}
+          >
             <span className="mt-0.5 text-xs font-medium text-muted-foreground tabular-nums shrink-0">
               {idx + 1}.
             </span>

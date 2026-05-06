@@ -85,6 +85,7 @@ export default async function SewaPage({
           icon={Inbox}
           title="Data sewa belum tersedia"
           description="Belum ada ledger sewa di-publish."
+          variant="dashed"
         />
       </DashboardPageShell>
     );
@@ -258,7 +259,7 @@ return (
                   icon={Inbox}
                   title="Belum ada pengeluaran"
                   description="Dana sewa belum dipakai untuk operasional."
-                  className="border-none shadow-none"
+                  embedded
                 />
               ) : (
                 <div className="divide-y divide-border/60">
@@ -306,7 +307,7 @@ return (
                 icon={Inbox}
                 title="Belum ada riwayat"
                 description="Hanya tahap aktif yang tercatat."
-                className="border-none shadow-none"
+                embedded
               />
             ) : (
               <div className="divide-y divide-border/60">

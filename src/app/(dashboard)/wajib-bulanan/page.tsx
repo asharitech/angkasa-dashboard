@@ -242,6 +242,7 @@ export default async function WajibBulananPage({
           title="Belum ada data"
           description={`Belum ada item ${statusView === "lunas" ? "yang lunas" : statusView === "aktif" ? "yang aktif" : ""} untuk ${monthLabel(monthView, "long")}.`}
           action={isAdmin ? <WajibBulananCreateButton /> : undefined}
+          variant="dashed"
         />
       ) : (
         <div className="space-y-4">

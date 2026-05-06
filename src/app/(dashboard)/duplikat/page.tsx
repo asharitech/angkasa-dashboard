@@ -48,6 +48,7 @@ export default async function DuplikatPage({
           tone="success"
           title="Tidak ada potensi duplikat"
           description="500 entry terbaru sudah dicek."
+          variant="dashed"
         />
       ) : (
         <div className="space-y-3">
