@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { randomUUID } from "crypto";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import { ORG_ID } from "@/lib/config";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true; id?: string; url?: string } | { error: string };
 
@@ -73,7 +72,7 @@ function keyFromUrl(url: string | null | undefined): string | null {
 export async function uploadDocumentAction(formData: FormData): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     const file = formData.get("file") as File | null;
     const judul = (formData.get("judul") as string)?.trim();
@@ -128,7 +127,7 @@ export async function updateDocumentAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.documents.findOne({ _id: new ObjectId(id) });
     if (!existing) return { error: "Dokumen tidak ditemukan" };
 
@@ -146,7 +145,7 @@ export async function updateDocumentAction(
 export async function deleteDocumentAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const doc = await c.documents.findOne({ _id: new ObjectId(id) });
     if (!doc) return { error: "Dokumen tidak ditemukan" };
 

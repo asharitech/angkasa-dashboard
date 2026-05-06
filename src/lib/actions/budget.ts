@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { BudgetConfigDoc } from "@/lib/db/schema";
+import { getCollections } from "@/lib/dal/context";
 
 type BudgetCategoryDoc = BudgetConfigDoc["categories"][number];
 type BudgetFixedDeductionDoc = BudgetConfigDoc["fixed_deductions"][number];
@@ -22,7 +21,7 @@ export interface UpdateBudgetInput {
 export async function updateBudgetAction(input: UpdateBudgetInput): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     if (!Number.isFinite(input.monthly_income) || input.monthly_income < 0) {
       return { error: "Pendapatan tidak valid" };
@@ -58,7 +57,7 @@ export async function updateBudgetAction(input: UpdateBudgetInput): Promise<Acti
 export async function addBonusIncomeAction(amount: number, _note?: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     if (!Number.isFinite(amount) || amount <= 0) {
       return { error: "Jumlah bonus tidak valid" };
@@ -89,7 +88,7 @@ export async function addBonusIncomeAction(amount: number, _note?: string): Prom
 export async function resetBonusAction(): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     await c.budget_configs.updateOne(
       { _id: "angkasa" },

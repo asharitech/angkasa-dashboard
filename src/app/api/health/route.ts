@@ -1,5 +1,5 @@
+import { getCollections } from "@/lib/dal/context";
 import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const db = await getDb();
     await db.command({ ping: 1 });
-    const c = dbCollections(db);
+    const c = await getCollections();
     const counts = {
       accounts: await c.accounts.countDocuments(),
       entries: await c.entries.countDocuments(),

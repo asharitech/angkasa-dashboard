@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { ObjectId } from "mongodb";
+import { getCollections } from "@/lib/dal/context";
 
 function ok(data: unknown) {
   return NextResponse.json(data);
@@ -18,7 +17,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     const update: Record<string, unknown> = {
       updated_at: new Date(),
@@ -47,7 +46,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const result = await c.pemantauan.deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return err("Not found", 404);
     return ok({ success: true });

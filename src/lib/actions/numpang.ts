@@ -2,11 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { validateNumpang } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { NumpangFields } from "@/lib/db/schema";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -25,7 +24,7 @@ export interface NumpangInput {
 export async function createNumpangAction(input: NumpangInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const now = new Date();
     const doc: NumpangFields = {
       description: input.description.trim(),
@@ -54,7 +53,7 @@ export async function updateNumpangAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.numpang.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Numpang tidak ditemukan" };
     const merged = { ...existing, ...patch };
@@ -83,7 +82,7 @@ export async function settleNumpangAction(id: string): Promise<ActionResult> {
 export async function deleteNumpangAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const result = await c.numpang.deleteOne({ _id: toObjectId(id) });
     if (result.deletedCount === 0) return { error: "Numpang tidak ditemukan" };
     revalidatePath("/pribadi");

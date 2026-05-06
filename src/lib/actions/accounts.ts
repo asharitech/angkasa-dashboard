@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true } | { error: string };
 
@@ -37,7 +36,7 @@ export async function adjustAccountBalanceAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     if (!Number.isFinite(input.newBalance)) {
       return { error: "Saldo baru tidak valid" };
@@ -115,7 +114,7 @@ export async function adjustAccountBalanceAction(
  */
 export async function updateAccountBalanceAction(accountId: string, newBalance: number): Promise<ActionResult> {
   try {
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     
     if (accountId === "bri_kas_virtual") {
       const numpangActive = await c.numpang.find({ status: "active" }).toArray();

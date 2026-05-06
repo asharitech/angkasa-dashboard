@@ -1,6 +1,5 @@
 import { getSession, hashPassword } from "@/lib/auth";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
+import { getCollections } from "@/lib/dal/context";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +9,7 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   const users = await c.users
     .find({}, { projection: { password_hash: 0 } })
     .sort({ created_at: -1 })
@@ -35,7 +34,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Role tidak valid" }, { status: 400 });
   }
 
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   const existing = await c.users.findOne({ username });
   if (existing) {
     return Response.json({ error: "Username sudah dipakai" }, { status: 409 });

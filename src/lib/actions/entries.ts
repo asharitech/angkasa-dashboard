@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { ObjectId } from "mongodb";
+import { getCollections } from "@/lib/dal/context";
 
 export interface EntryInput {
   date: string;
@@ -28,7 +27,7 @@ export interface EntryActionResult {
 
 export async function createEntryAction(data: EntryInput): Promise<EntryActionResult> {
   try {
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const entry = {
       ...data,
       owner: data.owner ?? "angkasa",
@@ -65,7 +64,7 @@ export async function updateEntryAction(
   data: Partial<EntryInput>
 ): Promise<EntryActionResult> {
   try {
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     // Get old entry to adjust balance
     const old = await c.entries.findOne({ _id: new ObjectId(id) });
@@ -127,7 +126,7 @@ export async function updateEntryAction(
 
 export async function deleteEntryAction(id: string): Promise<EntryActionResult> {
   try {
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const entry = await c.entries.findOne({ _id: new ObjectId(id) });
     if (!entry) throw new Error("Transaksi tidak ditemukan");
 
@@ -149,7 +148,7 @@ export async function deleteEntryAction(id: string): Promise<EntryActionResult> 
 }
 
 export async function getEntryByIdAction(id: string) {
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   const entry = await c.entries.findOne({ _id: new ObjectId(id) });
   if (!entry) return null;
   // Simple serialization for RSC/Client boundary

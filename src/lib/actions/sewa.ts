@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { SewaLocation, SewaPipelineStage } from "@/lib/types";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true } | { error: string };
 
@@ -35,7 +34,7 @@ export async function updateSewaLocationAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const ledger = await c.ledgers.findOne({ type: "sewa", is_current: true });
     if (!ledger) return { error: "Ledger sewa aktif tidak ditemukan" };
 

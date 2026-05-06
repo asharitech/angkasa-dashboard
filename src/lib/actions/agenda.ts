@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import type { AgendaDoc } from "@/lib/db/schema";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -33,7 +32,7 @@ export interface AgendaInput {
 export async function createAgendaAction(input: AgendaInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const now = new Date();
 
     if (!input.title?.trim()) return { error: "Judul agenda wajib diisi" };
@@ -70,7 +69,7 @@ export async function updateAgendaAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.agenda.findOne({ _id: new ObjectId(id) });
     if (!existing) return { error: "Agenda tidak ditemukan" };
 
@@ -98,7 +97,7 @@ export async function toggleAgendaStatusAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const newStatus: AgendaStatus = currentStatus === "belum" ? "selesai" : "belum";
     const now = new Date();
 
@@ -123,7 +122,7 @@ export async function toggleAgendaStatusAction(
 export async function deleteAgendaAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const result = await c.agenda.deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return { error: "Agenda tidak ditemukan" };
     revalidatePath("/agenda");

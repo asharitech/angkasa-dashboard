@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongodb";
 import { requireAdmin, AuthError } from "@/lib/auth-helpers";
 import { ADMIN_RAW_COLLECTION_SET } from "@/lib/admin-raw-collections";
+import { getDb } from "@/lib/mongodb";
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +17,6 @@ export async function GET(req: Request) {
     if (!ADMIN_RAW_COLLECTION_SET.has(collectionName)) {
       return NextResponse.json({ error: "Koleksi tidak diizinkan" }, { status: 400 });
     }
-
     const db = await getDb();
     const collection = db.collection<{ _id: ObjectId | string }>(collectionName);
 

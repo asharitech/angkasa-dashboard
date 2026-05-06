@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { ObjectId } from "mongodb";
+import { getCollections } from "@/lib/dal/context";
 
 export async function updateEmailNotifAction(
   id: string,
@@ -15,7 +14,7 @@ export async function updateEmailNotifAction(
     notes?: string;
   }
 ) {
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   const update: Record<string, unknown> = { updated_at: new Date() };
   if (data.status != null) update.status = data.status;
   if (data.classification != null) update.classification = data.classification;
@@ -38,7 +37,7 @@ export async function approveEmailNotifAction(
     type?: "debit" | "credit";
   }
 ) {
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   const notif = await c.email_notifs.findOne({ _id: new ObjectId(id) });
   if (!notif) throw new Error("Notifikasi tidak ditemukan");
 
@@ -93,7 +92,7 @@ export async function approveEmailNotifAction(
 }
 
 export async function deleteEmailNotifAction(id: string) {
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   await c.email_notifs.deleteOne({ _id: new ObjectId(id) });
   revalidatePath("/notifikasi");
   return { ok: true };

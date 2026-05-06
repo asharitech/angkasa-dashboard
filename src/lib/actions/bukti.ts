@@ -3,9 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { randomUUID } from "crypto";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true; url?: string } | { error: string };
 
@@ -66,7 +65,7 @@ export async function uploadBuktiAction(
 ): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     const file = formData.get("file") as File | null;
     if (!file || !file.size) return { error: "File tidak ditemukan" };
@@ -116,7 +115,7 @@ export async function uploadBuktiAction(
 export async function deleteBuktiAction(obligationId: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     const doc = await c.obligations.findOne(
       { _id: new ObjectId(obligationId) },

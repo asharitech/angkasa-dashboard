@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { ObjectId } from "mongodb";
+import { getCollections } from "@/lib/dal/context";
 
 export async function GET() {
   try {
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const docs = await c.pemantauan.find().sort({ holder: 1, lokasi_code: 1 }).toArray();
     return NextResponse.json(docs);
   } catch (err) {
@@ -17,7 +16,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
 
     const doc = {
       ...body,

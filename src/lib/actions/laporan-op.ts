@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache"
 import { ObjectId } from "mongodb"
-import { getDb } from "@/lib/mongodb"
-import { dbCollections } from "@/lib/db/collections"
 import { getSession } from "@/lib/auth"
 import { ACCOUNTS } from "@/lib/config"
+import { getCollections } from "@/lib/dal/context";
 
 /**
  * Syncs laporan_op.totals from live btn_yayasan entries.
@@ -16,7 +15,7 @@ export async function refreshLaporanOpTotals(): Promise<{ error?: string }> {
   const session = await getSession()
   if (session?.role !== "admin") return { error: "Unauthorized" }
 
-  const c = dbCollections(await getDb())
+  const c = await getCollections()
 
   const ledger = await c.ledgers.findOne({ type: "laporan_op", is_current: true })
   if (!ledger?.laporan_op) return { error: "Ledger tidak ditemukan" }
@@ -72,7 +71,7 @@ export async function updateLaporanOpAction(id: string, input: UpdateLaporanOpIn
   const session = await getSession()
   if (session?.role !== "admin") return { error: "Unauthorized" }
 
-  const c = dbCollections(await getDb())
+  const c = await getCollections()
 
   const updateData: Record<string, unknown> = {
     period: input.period,

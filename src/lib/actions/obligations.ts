@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { validateObligation, validateEntry } from "@/lib/validate";
 import { requireAdmin, actionError } from "@/lib/auth-helpers";
 import { ORG_ID } from "@/lib/config";
 import type { ObligationDoc, EntryFields, ScheduleItemDoc } from "@/lib/db/schema";
+import { getCollections } from "@/lib/dal/context";
 
 type ActionResult = { ok: true; id?: string } | { error: string };
 
@@ -46,7 +45,7 @@ export interface PengajuanInput {
 export async function createObligationAction(input: PengajuanInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const now = new Date();
     const doc: Omit<ObligationDoc, "_id"> = {
       type: input.type,
@@ -90,7 +89,7 @@ export async function updateObligationAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.obligations.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Pengajuan tidak ditemukan" };
     const merged = { ...existing, ...patch };
@@ -121,7 +120,7 @@ export async function updateObligationAction(
 export async function deleteObligationAction(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const linkedEntries = await c.entries.countDocuments({ obligation_id: id });
     if (linkedEntries > 0) {
       return {
@@ -166,7 +165,7 @@ export interface MarkLunasInput {
 export async function markLunasAction(input: MarkLunasInput): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const oblig = await c.obligations.findOne({ _id: toObjectId(input.obligationId) });
     if (!oblig) return { error: "Pengajuan tidak ditemukan" };
     if (oblig.status === "lunas") return { error: "Pengajuan sudah lunas" };
@@ -229,7 +228,7 @@ export async function markLunasAction(input: MarkLunasInput): Promise<ActionResu
 export async function unmarkLunasAction(id: string): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.obligations.findOne({ _id: toObjectId(id) });
     if (!existing) return { error: "Pengajuan tidak ditemukan" };
     if (existing.status !== "lunas") return { error: "Pengajuan belum lunas" };
@@ -275,7 +274,7 @@ export async function toggleScheduleMonthAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.obligations.findOne({ _id: toObjectId(obligationId) });
     if (!existing) return { error: "Cicilan tidak ditemukan" };
 
@@ -314,7 +313,7 @@ export async function updateScheduleAmountAction(
 ): Promise<ActionResult> {
   try {
     const session = await requireAdmin();
-    const c = dbCollections(await getDb());
+    const c = await getCollections();
     const existing = await c.obligations.findOne({ _id: toObjectId(obligationId) });
     if (!existing) return { error: "Cicilan tidak ditemukan" };
 
