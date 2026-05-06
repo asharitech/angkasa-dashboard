@@ -13,7 +13,8 @@ import { SectionCard } from "@/components/section-card";
 import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { IconBadge } from "@/components/primitives/icon-badge";
+import { PageHeader } from "@/components/page-header";
+import { DashboardSurface } from "@/components/layout/dashboard-surface";
 import {
   Landmark,
   Building2,
@@ -189,37 +190,36 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Desktop: text header with action buttons */}
-      <div className="hidden md:flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <IconBadge icon={Landmark} tone="primary" size="lg" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Yayasan YRBB</h1>
-            <div className="mt-0.5 flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Dana efektif{" "}
-                <span className="font-semibold text-foreground">{formatRupiah(danaEfektif)}</span>
-              </span>
-              <Badge variant={healthBadgeVariant} className="text-xs">
+      {/* Desktop: same PageHeader pattern as inner routes */}
+      <div className="hidden md:block">
+        <PageHeader
+          icon={Landmark}
+          title="Yayasan YRBB"
+          description={
+            <>
+              Dana efektif{" "}
+              <span className="font-semibold text-foreground">{formatRupiah(danaEfektif)}</span>{" "}
+              <Badge variant={healthBadgeVariant} className="text-xs align-middle">
                 {health.label}
               </Badge>
-            </div>
+            </>
+          }
+        >
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/laporan-op" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              <FileText className="mr-1.5 h-4 w-4" />
+              Laporan Op
+            </Link>
+            <Link href="/pengajuan" className={buttonVariants({ size: "sm" })}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Pengajuan
+            </Link>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link href="/laporan-op" className={buttonVariants({ variant: "outline", size: "sm" })}>
-            <FileText className="mr-1.5 h-4 w-4" />
-            Laporan Op
-          </Link>
-          <Link href="/pengajuan" className={buttonVariants({ size: "sm" })}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Pengajuan
-          </Link>
-        </div>
+        </PageHeader>
       </div>
 
       {/* Akses cepat — pribadi & inbox */}
-      <div className="rounded-xl border border-border/80 bg-card/80 p-3 shadow-sm backdrop-blur-sm md:p-4">
+      <DashboardSurface className="border-border/80 bg-card/80 p-3 shadow-sm backdrop-blur-sm md:p-4">
         <p className="mb-2.5 px-0.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Akses cepat
         </p>
@@ -278,11 +278,11 @@ export default async function DashboardPage() {
             </div>
           </Link>
         </div>
-      </div>
+      </DashboardSurface>
 
       {/* Perlu ditindak */}
       {actionItems.length > 0 && (
-        <div className="rounded-xl border border-border bg-card shadow-sm">
+        <DashboardSurface className="overflow-hidden p-0">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">Perlu ditindak</span>
@@ -312,12 +312,12 @@ export default async function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
+        </DashboardSurface>
       )}
 
       {/* Pengajuan per Requestor */}
       {data.pengajuanPending > 0 && (
-        <div className="rounded-xl border border-border bg-card shadow-sm">
+        <DashboardSurface className="overflow-hidden p-0">
           {/* Card header */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-destructive/10">
@@ -368,7 +368,7 @@ export default async function DashboardPage() {
               );
             })}
           </div>
-        </div>
+        </DashboardSurface>
       )}
 
       {/* Bottom grid — single col on mobile, 2-col on desktop */}

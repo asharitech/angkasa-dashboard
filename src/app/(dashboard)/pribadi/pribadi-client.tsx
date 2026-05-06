@@ -244,7 +244,7 @@ export function PribadiClient({
     .reduce((s, e) => s + e.amount, 0);
 
   return (
-    <DashboardPageShell>
+    <DashboardPageShell maxWidth="narrow">
       <PageHeader icon={Wallet} title="Pengeluaran Angkasa">
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1" />

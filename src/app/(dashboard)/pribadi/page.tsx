@@ -1,5 +1,4 @@
 import { getPengeluaranAngkasa, getAccounts } from "@/lib/dal";
-import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { PribadiClient } from "./pribadi-client";
 
 export const dynamic = "force-dynamic";
@@ -30,16 +29,14 @@ export default async function PribadiPage({
   const accounts = await getAccounts();
 
   return (
-    <DashboardPageShell maxWidth="narrow">
-      <PribadiClient
-        entries={data.entries}
-        entriesOut={data.entriesOut}
-        months={data.months}
-        cashflowByMonth={data.cashflowByMonth as Record<string, { in: number; out: number }>}
-        activeMonth={activeMonth}
-        activeLabel={params.label as "makan_minum" | "grab_gojek" | "belanja" | "top_up" | "pulsa" | "lainnya" | undefined}
-        accounts={accounts}
-      />
-    </DashboardPageShell>
+    <PribadiClient
+      entries={data.entries}
+      entriesOut={data.entriesOut}
+      months={data.months}
+      cashflowByMonth={data.cashflowByMonth as Record<string, { in: number; out: number }>}
+      activeMonth={activeMonth}
+      activeLabel={params.label as "makan_minum" | "grab_gojek" | "belanja" | "top_up" | "pulsa" | "lainnya" | undefined}
+      accounts={accounts}
+    />
   );
 }
