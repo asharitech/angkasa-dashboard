@@ -1,5 +1,6 @@
 import { formatRupiah, formatRupiahCompact } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { DASHBOARD_CARD_SHELL } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
 function Sparkline({ data, width = 140, height = 40 }: { data: number[]; width?: number; height?: number }) {
@@ -62,7 +63,7 @@ export function BalanceSheetPanel({
     healthTone === "success" ? "success" : healthTone === "warning" ? "warning" : "destructive";
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className={cn(DASHBOARD_CARD_SHELL, "overflow-hidden")}>
       {/* 3-column balance sheet */}
       <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-[1fr_1fr_1.4fr] md:divide-x md:divide-y-0">
         {/* Column 1: Saldo Total */}

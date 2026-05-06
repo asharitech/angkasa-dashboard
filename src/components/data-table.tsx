@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DASHBOARD_CARD_SHELL_SOFT } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
 type CellAlign = "left" | "right" | "center" | undefined;
@@ -161,7 +162,7 @@ export function DataTable<T>({
     <div
       className={cn(
         bleedMobile && "-mx-4 md:mx-0",
-        framed && "overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm",
+        framed && cn(DASHBOARD_CARD_SHELL_SOFT, "overflow-hidden"),
         className,
       )}
     >

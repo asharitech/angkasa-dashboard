@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_SOFT } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
-/** Standard bordered panel for dashboard metrics and dense blocks (matches Laporan Op hero cards). */
+export { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_SOFT };
+
+/** Standard bordered panel for dashboard metrics and dense blocks. */
 export function DashboardSurface({
   children,
   className,
@@ -10,14 +14,59 @@ export function DashboardSurface({
   className?: string;
 }) {
   return (
-    <div
+    <div className={cn(DASHBOARD_CARD_SHELL, "p-5", className)}>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Compact dashboard nav tile (Beranda “Akses cepat”, similar grids).
+ */
+export function DashboardQuickLink({
+  href,
+  title,
+  subtitle,
+  icon,
+  iconFrameClassName,
+  badge,
+  contentClassName,
+  className,
+}: {
+  href: string;
+  title: string;
+  subtitle?: string;
+  icon: ReactNode;
+  /** Classes for the square behind the icon (tone / bg). */
+  iconFrameClassName?: string;
+  badge?: ReactNode;
+  contentClassName?: string;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
       className={cn(
-        "rounded-xl border border-border bg-card p-5 shadow-sm",
+        "relative flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-3 py-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50",
         className,
       )}
     >
-      {children}
-    </div>
+      {badge}
+      <div
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+          iconFrameClassName,
+        )}
+      >
+        {icon}
+      </div>
+      <div className={cn("min-w-0", contentClassName)}>
+        <p className="text-xs font-semibold leading-tight">{title}</p>
+        {subtitle ? (
+          <p className="text-[10px] text-muted-foreground">{subtitle}</p>
+        ) : null}
+      </div>
+    </Link>
   );
 }
 
@@ -64,7 +113,8 @@ export function DashboardInteractiveRow({
   return (
     <div
       className={cn(
-        "group flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:border-border hover:shadow-md",
+        "group flex items-start gap-3 p-4 transition-all hover:border-border hover:shadow-md",
+        DASHBOARD_CARD_SHELL_SOFT,
         className,
       )}
     >
@@ -84,7 +134,8 @@ export function DashboardIconFrame({
   return (
     <div
       className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm",
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+        DASHBOARD_CARD_SHELL_SOFT,
         className,
       )}
     >

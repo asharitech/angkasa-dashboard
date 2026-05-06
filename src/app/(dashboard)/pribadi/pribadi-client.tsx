@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { DASHBOARD_CARD_SHELL } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 import { formatRupiah, formatDateShort, formatMonthCodeLong } from "@/lib/format";
 import { idString } from "@/lib/utils";
@@ -276,10 +277,10 @@ export function PribadiClient({
                 key={m}
                 href={`/pribadi?bulan=${m}${activeLabel ? `&label=${activeLabel}` : ""}`}
                 className={cn(
-                  "block rounded-xl border px-4 py-3 transition-all",
+                  "block border px-4 py-3 transition-all",
                   active
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-card border-border hover:border-primary/40 hover:shadow-sm"
+                    ? "rounded-xl border-primary bg-primary text-primary-foreground shadow-sm"
+                    : cn(DASHBOARD_CARD_SHELL, "hover:border-primary/40"),
                 )}
               >
                 <div className="flex items-center justify-between">

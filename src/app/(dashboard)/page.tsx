@@ -14,7 +14,7 @@ import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
-import { DashboardSurface } from "@/components/layout/dashboard-surface";
+import { DashboardQuickLink, DashboardSurface } from "@/components/layout/dashboard-surface";
 import {
   Landmark,
   Building2,
@@ -224,59 +224,42 @@ export default async function DashboardPage() {
           Akses cepat
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Link
+          <DashboardQuickLink
             href="/pribadi"
-            className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-3 py-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Wallet className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold leading-tight">Pengeluaran</p>
-              <p className="text-[10px] text-muted-foreground">Pribadi</p>
-            </div>
-          </Link>
-          <Link
+            title="Pengeluaran"
+            subtitle="Pribadi"
+            icon={<Wallet className="h-4 w-4" />}
+            iconFrameClassName="bg-primary/10 text-primary"
+          />
+          <DashboardQuickLink
             href="/anggaran"
-            className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-3 py-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
-              <Target className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold leading-tight">Anggaran</p>
-              <p className="text-[10px] text-muted-foreground">Budget</p>
-            </div>
-          </Link>
-          <Link
+            title="Anggaran"
+            subtitle="Budget"
+            icon={<Target className="h-4 w-4" />}
+            iconFrameClassName="bg-info/10 text-info"
+          />
+          <DashboardQuickLink
             href="/cicilan"
-            className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-3 py-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-200">
-              <CreditCard className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold leading-tight">Cicilan</p>
-              <p className="text-[10px] text-muted-foreground">Loan</p>
-            </div>
-          </Link>
-          <Link
+            title="Cicilan"
+            subtitle="Loan"
+            icon={<CreditCard className="h-4 w-4" />}
+            iconFrameClassName="bg-amber-500/15 text-amber-800 dark:text-amber-200"
+          />
+          <DashboardQuickLink
             href="/notifikasi"
-            className="relative flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-3 py-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50"
-          >
-            {notifStats.pending > 0 && (
-              <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                {notifStats.pending > 99 ? "99+" : notifStats.pending}
-              </span>
-            )}
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
-              <Mail className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 pr-6">
-              <p className="text-xs font-semibold leading-tight">Notifikasi</p>
-              <p className="text-[10px] text-muted-foreground">Email bank</p>
-            </div>
-          </Link>
+            title="Notifikasi"
+            subtitle="Email bank"
+            icon={<Mail className="h-4 w-4" />}
+            iconFrameClassName="bg-secondary text-secondary-foreground"
+            contentClassName={notifStats.pending > 0 ? "pr-6" : undefined}
+            badge={
+              notifStats.pending > 0 ? (
+                <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {notifStats.pending > 99 ? "99+" : notifStats.pending}
+                </span>
+              ) : undefined
+            }
+          />
         </div>
       </DashboardSurface>
 

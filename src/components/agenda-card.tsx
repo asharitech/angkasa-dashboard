@@ -5,6 +5,7 @@ import { AgendaRowActions, AgendaReopenButton } from "./agenda-manager";
 import type { AgendaDoc } from "./agenda-manager";
 import { KATEGORI_CONFIG, getDueStatus } from "@/lib/agenda-config";
 import { formatDate } from "@/lib/format";
+import { DASHBOARD_CARD_SHELL_SOFT } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 import {
   CalendarCheck2,
@@ -130,10 +131,10 @@ export function AgendaCard({
     ? "border-warning/40 bg-gradient-to-br from-warning/5 to-transparent shadow-sm shadow-warning/10"
     : ds === "besok"
     ? "border-warning/20 bg-gradient-to-br from-warning/4 to-transparent"
-    : "border-border/60 bg-card shadow-sm hover:shadow-md hover:border-border/80";
+    : cn(DASHBOARD_CARD_SHELL_SOFT, "hover:shadow-md hover:border-border/80");
 
   return (
-    <div className={cn("group relative rounded-2xl border transition-all duration-200", cardCls)}>
+    <div className={cn("group relative rounded-xl border transition-all duration-200", cardCls)}>
       {/* Priority left accent bar */}
       {!done && (
         <div
