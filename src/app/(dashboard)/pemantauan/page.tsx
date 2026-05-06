@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";
 import { PemantauanCard } from "@/components/pemantauan-editor";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { ClipboardList, MapPin, AlertTriangle, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +59,7 @@ export default async function PemantauanPage() {
   ];
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={ClipboardList} title="Pemantauan SPPG" />
 
       <KpiStrip items={kpis} cols={3} />
@@ -94,6 +95,6 @@ export default async function PemantauanPage() {
           </SectionCard>
         );
       })}
-    </div>
+    </DashboardPageShell>
   );
 }

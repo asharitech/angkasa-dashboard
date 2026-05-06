@@ -12,6 +12,7 @@ import {
   Info,
   ShieldAlert,
 } from "lucide-react";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ export default async function AuditPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={ShieldCheck} title="Audit Data">
         <Badge
           variant={issues.length === 0 ? "success" : "warning"}
@@ -131,6 +132,6 @@ export default async function AuditPage() {
           })}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

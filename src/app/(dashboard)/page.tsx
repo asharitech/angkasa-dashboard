@@ -31,6 +31,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import Link from "next/link";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -150,7 +151,7 @@ export default async function DashboardPage() {
     health.tone === "success" ? "success" : health.tone === "warning" ? "warning" : "destructive";
 
   return (
-    <div className="space-y-4">
+    <DashboardPageShell gap="compact">
       {/* Mobile: teal hero card */}
       <div className="md:hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-5 shadow-md">
         <div className="flex items-center justify-between">
@@ -515,6 +516,6 @@ export default async function DashboardPage() {
           </SectionCard>
         )}
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }

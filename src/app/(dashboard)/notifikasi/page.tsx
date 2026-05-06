@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getEmailNotifs, getEmailNotifStats, getAccounts } from "@/lib/data";
 import { NotifikasiClient } from "./notifikasi-client";
 import { PageHeader } from "@/components/page-header";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { Mail } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +19,13 @@ export default async function NotifikasiPage() {
   ]);
 
   return (
-    <div className="space-y-6 py-2 md:py-0">
+    <DashboardPageShell gap="relaxed" className="py-2 md:py-0">
       <PageHeader
         icon={Mail}
         title="Notifikasi email"
         description="Antrean pending dari inbox terhubung (bank, e-commerce, e-wallet, dll.). Klasifikasi lalu catat ke ledger — atau abaikan jika bukan transaksi relevan."
       />
       <NotifikasiClient notifs={notifs} stats={stats} accounts={accounts} />
-    </div>
+    </DashboardPageShell>
   );
 }

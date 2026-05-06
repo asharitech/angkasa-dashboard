@@ -6,6 +6,7 @@ import { dbCollections } from "@/lib/db/collections";
 import { ForbiddenState } from "@/components/forbidden-state";
 import { PageHeader } from "@/components/page-header";
 import { UsersManager, type UserRow } from "@/components/users-manager";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +42,9 @@ export default async function UsersPage() {
   }));
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={Users} title="Manajemen User" />
       <UsersManager users={users} currentUserId={session.userId} />
-    </div>
+    </DashboardPageShell>
   );
 }

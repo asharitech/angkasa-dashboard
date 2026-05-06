@@ -17,6 +17,7 @@ import { SectionGroupHeader } from "@/components/section-group-header";
 import { cn } from "@/lib/utils";
 import type { AgendaKategori } from "@/lib/actions/agenda";
 import { CalendarCheck2, ListChecks, AlertCircle } from "lucide-react";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -145,7 +146,7 @@ export default async function AgendaPage({
   ];
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={CalendarCheck2} title="Agenda Saya">
         <AgendaCreateButton />
       </PageHeader>
@@ -242,6 +243,6 @@ export default async function AgendaPage({
           ))}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

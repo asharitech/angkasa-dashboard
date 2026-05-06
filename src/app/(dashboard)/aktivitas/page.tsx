@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { FeedEventIcon } from "@/components/feed-event-icon";
 import { Activity, Inbox } from "lucide-react";
 import { SectionGroupHeader } from "@/components/section-group-header";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +93,7 @@ export default async function AktivitasPage({
   }
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={Activity} title="Aktivitas">
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground tabular-nums">{events.length} event</span>
@@ -165,6 +166,6 @@ export default async function AktivitasPage({
           </section>
         ))
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

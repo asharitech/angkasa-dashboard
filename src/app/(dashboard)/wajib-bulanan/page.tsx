@@ -14,6 +14,7 @@ import { MeterBarLabeled } from "@/components/meter-bar";
 import { cn, idString } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, Clock, Wallet, ListChecks, AlertCircle, RotateCcw } from "lucide-react";
 import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { formatIdentifier } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
 
@@ -210,7 +211,7 @@ export default async function WajibBulananPage({
   ];
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={CalendarDays} title="Wajib Bulanan Yayasan">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={sisaAmount > 0 ? "warning" : "success"} className="font-semibold">
@@ -251,6 +252,6 @@ export default async function WajibBulananPage({
           ))}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

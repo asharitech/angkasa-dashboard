@@ -10,6 +10,7 @@ import { monthsInclusiveRange, monthLabel } from "@/lib/periods";
 import { UtensilsCrossed, LayoutGrid, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -89,7 +90,7 @@ export default async function OmprengPage() {
   ];
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={UtensilsCrossed} title="Data Ompreng Dapur">
         {isAdmin && <OmprengAddButton />}
       </PageHeader>
@@ -172,6 +173,6 @@ export default async function OmprengPage() {
           </SectionCard>
         );
       })}
-    </div>
+    </DashboardPageShell>
   );
 }

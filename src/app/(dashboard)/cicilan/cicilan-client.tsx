@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { formatRupiah } from "@/lib/format";
 import { toggleScheduleMonthAction, updateScheduleAmountAction } from "@/lib/actions/obligations";
+import { PageHeader } from "@/components/page-header";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { CreditCard, CheckCircle2, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
 
 interface ScheduleItem {
@@ -111,14 +113,8 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
   });
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <CreditCard className="h-6 w-6 text-primary" />
-          Cicilan
-        </h2>
-      </div>
+    <DashboardPageShell gap="relaxed" maxWidth="narrow">
+      <PageHeader icon={CreditCard} title="Cicilan Bulanan" />
 
       {/* Progress Overview */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -270,6 +266,6 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
           </div>
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

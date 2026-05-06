@@ -1,4 +1,5 @@
 import { getPengeluaranAngkasa, getAccounts } from "@/lib/data";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { PribadiClient } from "./pribadi-client";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function PribadiPage({
   const accounts = await getAccounts();
 
   return (
-    <div className="mx-auto max-w-3xl py-4 md:py-2">
+    <DashboardPageShell maxWidth="narrow" className="py-4 md:py-2">
       <PribadiClient
         entries={data.entries}
         entriesOut={data.entriesOut}
@@ -39,6 +40,6 @@ export default async function PribadiPage({
         activeLabel={params.label as "makan_minum" | "grab_gojek" | "belanja" | "top_up" | "pulsa" | "lainnya" | undefined}
         accounts={accounts}
       />
-    </div>
+    </DashboardPageShell>
   );
 }

@@ -17,6 +17,7 @@ import type { DocKategori } from "@/lib/actions/documents";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { FolderOpen, ExternalLink } from "lucide-react";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default async function DokumenPage({
   }
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={FolderOpen} title="Dokumen Yayasan">
         <DocumentUploadButton />
       </PageHeader>
@@ -177,6 +178,6 @@ export default async function DokumenPage({
           })}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { toneVariant, type Tone } from "@/lib/colors";
 import { cn, idString } from "@/lib/utils";
 import { getSewaStageMeta, getRegionTone, SEWA_LOCATION_REFS } from "@/lib/sewa-meta";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import {
   Building2,
   MapPin,
@@ -51,14 +52,14 @@ export default async function SewaPage({
 
   if (!ledger?.sewa) {
     return (
-      <div className="space-y-5">
+      <DashboardPageShell>
         <PageHeader icon={Building2} title="Sewa Dapur" />
         <EmptyState
           icon={Inbox}
           title="Data sewa belum tersedia"
           description="Belum ada ledger sewa di-publish."
         />
-      </div>
+      </DashboardPageShell>
     );
   }
 
@@ -104,7 +105,7 @@ export default async function SewaPage({
   });
 
 return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={Building2} title="Sewa Dapur">
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="font-semibold">
@@ -345,7 +346,7 @@ return (
           </SectionCard>
         }
       />
-    </div>
+    </DashboardPageShell>
   );
 }
 

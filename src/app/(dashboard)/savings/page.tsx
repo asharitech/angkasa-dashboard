@@ -2,6 +2,8 @@ import { getEntries, getAccounts } from "@/lib/data";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { SectionCard } from "@/components/section-card";
+import { PageHeader } from "@/components/page-header";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { EntryRowActions } from "@/components/entry-row-actions";
 import { PiggyBank } from "lucide-react";
 
@@ -29,13 +31,8 @@ export default async function SavingsPage() {
   const ebaCount = ebaEntries.length;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight md:text-2xl flex items-center gap-2">
-          <PiggyBank className="h-6 w-6 text-primary shrink-0" />
-          Savings
-        </h2>
-      </div>
+    <DashboardPageShell>
+      <PageHeader icon={PiggyBank} title="Savings" />
 
       {/* Total per owner */}
       <div className="grid grid-cols-2 gap-3">
@@ -97,6 +94,6 @@ export default async function SavingsPage() {
           </div>
         )}
       </SectionCard>
-    </div>
+    </DashboardPageShell>
   );
 }

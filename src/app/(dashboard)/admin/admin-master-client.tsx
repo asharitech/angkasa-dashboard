@@ -89,8 +89,7 @@ export function AdminMasterClient() {
   }
 
   return (
-    <div className="space-y-6">
-      <SectionCard icon={Search} title="Cari & Edit Dokumen (Raw)" tone="muted">
+    <SectionCard icon={Search} title="Cari & Edit Dokumen (Raw)" tone="muted">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -154,6 +153,5 @@ export function AdminMasterClient() {
           )}
         </div>
       </SectionCard>
-    </div>
   );
 }

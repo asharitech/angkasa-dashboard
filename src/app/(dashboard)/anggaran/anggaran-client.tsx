@@ -5,6 +5,8 @@ import { formatRupiah, formatDateShort, formatMonthCodeLong } from "@/lib/format
 import { updateBudgetAction, addBonusIncomeAction, resetBonusAction } from "@/lib/actions/budget";
 import { updateAccountBalanceAction } from "@/lib/actions/accounts";
 import { SectionCard } from "@/components/section-card";
+import { PageHeader } from "@/components/page-header";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -156,19 +158,16 @@ export default function AnggaranClientPage({
   const budgetDeficit = Math.max(0, totalBudgeted - netAvailable);
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight md:text-2xl flex items-center gap-2">
-          <Target className="h-6 w-6 text-primary shrink-0" />
-          Anggaran Pribadi
-        </h2>
+    <DashboardPageShell>
+      <PageHeader icon={Target} title="Anggaran Pribadi">
         <div className="flex items-center gap-2">
           {!editing ? (
             <button
+              type="button"
               onClick={() => {
                 setEditIncome(config.monthly_income);
                 setEditCats([...config.categories]);
+                setEditDeductions([...config.fixed_deductions]);
                 setEditBca(bcaBalance);
                 setEditBriKas(briKas);
                 setEditing(true);
@@ -181,6 +180,7 @@ export default function AnggaranClientPage({
           ) : (
             <div className="flex items-center gap-1.5">
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={isPending}
                 className="flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
@@ -189,6 +189,7 @@ export default function AnggaranClientPage({
                 Simpan
               </button>
               <button
+                type="button"
                 onClick={() => setEditing(false)}
                 className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
               >
@@ -198,7 +199,7 @@ export default function AnggaranClientPage({
             </div>
           )}
         </div>
-      </div>
+      </PageHeader>
 
       {/* Month selector */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -649,6 +650,6 @@ export default function AnggaranClientPage({
       <p className="text-[10px] text-muted-foreground text-center px-4">
         Dana pribadi terpisah dari yayasan. Angka actual dari transaksi tercatat di database.
       </p>
-    </div>
+    </DashboardPageShell>
   );
 }

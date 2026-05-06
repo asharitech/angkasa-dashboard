@@ -29,6 +29,8 @@ import {
   deleteEntryAction,
 } from "@/lib/actions/entries";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { Wallet, Receipt, CalendarDays, Tag, Plus, Pencil, Trash2, CalendarX2 } from "lucide-react";
 import type { Entry } from "@/lib/types";
 import type { Account } from "@/lib/types";
@@ -242,18 +244,13 @@ export function PribadiClient({
     .reduce((s, e) => s + e.amount, 0);
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight md:text-2xl flex items-center gap-2">
-          <Wallet className="h-6 w-6 text-primary shrink-0" />
-          Pengeluaran Angkasa
-        </h2>
+    <DashboardPageShell>
+      <PageHeader icon={Wallet} title="Pengeluaran Angkasa">
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1" />
           Tambah
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Month List */}
       {months.length === 0 ? (
@@ -559,6 +556,6 @@ export function PribadiClient({
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardPageShell>
   );
 }

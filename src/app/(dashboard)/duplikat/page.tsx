@@ -6,6 +6,7 @@ import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function DuplikatPage({
   const dupes = await findDuplicateEntries({ period });
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={AlertTriangle} title="Cek Duplikat">
         <Badge
           variant={dupes.length === 0 ? "success" : "warning"}
@@ -94,6 +95,6 @@ export default async function DuplikatPage({
           ))}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

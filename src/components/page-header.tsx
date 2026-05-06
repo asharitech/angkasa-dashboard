@@ -14,12 +14,12 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <header className="space-y-1.5">
       <div className="flex min-w-0 items-center justify-between gap-3">
-        <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold tracking-tight md:text-2xl">
-          <Icon className="h-5 w-5 shrink-0 text-primary md:h-6 md:w-6" aria-hidden />
+        <h1 className="flex min-w-0 items-center gap-2 text-xl font-bold tracking-tight md:text-2xl">
+          <Icon className="h-6 w-6 shrink-0 text-primary" aria-hidden />
           <span className="truncate">{title}</span>
-        </h2>
+        </h1>
         {children ? <div className="shrink-0">{children}</div> : null}
       </div>
       {description ? (
@@ -27,6 +27,6 @@ export function PageHeader({
           {description}
         </p>
       ) : null}
-    </div>
+    </header>
   );
 }

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { idString } from "@/lib/utils";
 import { ListSectionTitle } from "@/components/list-section-title";
 import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import type { Obligation, Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -226,7 +227,7 @@ export default async function PengajuanPage({
   ];
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       <PageHeader icon={Receipt} title="Pengajuan">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="warning" className="font-semibold">
@@ -273,6 +274,6 @@ export default async function PengajuanPage({
           </div>
         )}
       </SectionCard>
-    </div>
+    </DashboardPageShell>
   );
 }

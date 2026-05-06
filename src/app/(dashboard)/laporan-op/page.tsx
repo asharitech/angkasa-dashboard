@@ -33,6 +33,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react"
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell"
 
 export const dynamic = "force-dynamic"
 export const metadata: Metadata = {
@@ -145,8 +146,7 @@ export default async function LaporanOpPage({
 
   if (!ledger || !ledger.laporan_op) {
     return (
-      <div className="space-y-5">
-        {/* Header */}
+      <DashboardPageShell>
         <div className="flex items-center gap-3">
           <IconBadge icon={FileText} tone="primary" size="md" />
           <div>
@@ -162,7 +162,7 @@ export default async function LaporanOpPage({
           title="Laporan Op belum tersedia"
           description="Snapshot ledger belum di-publish."
         />
-      </div>
+      </DashboardPageShell>
     )
   }
 
@@ -201,7 +201,7 @@ export default async function LaporanOpPage({
   const periodLabel = activePeriod ? formatPeriodLabel(activePeriod) : ""
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell>
       {/* ── 1. Header ribbon ── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -403,6 +403,6 @@ export default async function LaporanOpPage({
       >
         <EntriesTable entries={entries} />
       </SectionCard>
-    </div>
+    </DashboardPageShell>
   )
 }

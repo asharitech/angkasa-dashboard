@@ -9,6 +9,7 @@ import { ShieldCheck, Database } from "lucide-react";
 import { ForbiddenState } from "@/components/forbidden-state";
 import { redirect } from "next/navigation";
 import { AdminMasterClient } from "./admin-master-client";
+import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -31,7 +32,7 @@ export default async function AdminPage() {
   const accounts = await getAccounts();
 
   return (
-    <div className="space-y-6">
+    <DashboardPageShell gap="relaxed">
       <PageHeader icon={ShieldCheck} title="Admin Master Data" />
       
       <SectionCard icon={Database} title="Semua Rekening & Saldo" tone="info">
@@ -57,6 +58,6 @@ export default async function AdminPage() {
       </SectionCard>
 
       <AdminMasterClient />
-    </div>
+    </DashboardPageShell>
   );
 }
