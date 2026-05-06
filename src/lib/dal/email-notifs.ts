@@ -33,13 +33,15 @@ export async function getEmailNotifStats(): Promise<{
   pending: number;
   approved: number;
   rejected: number;
+  ignored: number;
 }> {
   const c = await getCollections();
-  const [total, pending, approved, rejected] = await Promise.all([
+  const [total, pending, approved, rejected, ignored] = await Promise.all([
     c.email_notifs.countDocuments(),
     c.email_notifs.countDocuments({ status: "pending" }),
     c.email_notifs.countDocuments({ status: "approved" }),
     c.email_notifs.countDocuments({ status: "rejected" }),
+    c.email_notifs.countDocuments({ status: "ignored" }),
   ]);
-  return { total, pending, approved, rejected };
+  return { total, pending, approved, rejected, ignored };
 }

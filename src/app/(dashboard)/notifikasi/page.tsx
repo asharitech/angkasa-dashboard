@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { getEmailNotifs, getEmailNotifStats, getAccounts } from "@/lib/dal";
 import { NotifikasiClient } from "./notifikasi-client";
-import { PageHeader } from "@/components/page-header";
-import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
-import { Mail } from "lucide-react";
+import { ListPageLayout } from "@/components/layout/list-page-layout";
+import type { KpiItem } from "@/components/kpi-strip";
+import { Mail, Inbox, ListChecks, CheckCircle2, XCircle, EyeOff } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -18,14 +18,50 @@ export default async function NotifikasiPage() {
     getAccounts(),
   ]);
 
+  const kpi: KpiItem[] = [
+    {
+      label: "Menunggu",
+      value: String(stats.pending),
+      icon: Inbox,
+      tone: "warning",
+      hint: "Perlu review",
+    },
+    {
+      label: "Total rekaman",
+      value: String(stats.total),
+      icon: ListChecks,
+      tone: "neutral",
+    },
+    {
+      label: "Sudah dicatat",
+      value: String(stats.approved),
+      icon: CheckCircle2,
+      tone: "success",
+    },
+    {
+      label: "Ditolak",
+      value: String(stats.rejected),
+      icon: XCircle,
+      tone: "danger",
+    },
+    {
+      label: "Diabaikan",
+      value: String(stats.ignored),
+      icon: EyeOff,
+      tone: "muted",
+    },
+  ];
+
   return (
-    <DashboardPageShell gap="relaxed">
-      <PageHeader
-        icon={Mail}
-        title="Notifikasi email"
-        description="Antrean pending dari inbox terhubung (bank, e-commerce, e-wallet, dll.). Klasifikasi lalu catat ke ledger — atau abaikan jika bukan transaksi relevan."
-      />
-      <NotifikasiClient notifs={notifs} stats={stats} accounts={accounts} />
-    </DashboardPageShell>
+    <ListPageLayout
+      title="Notifikasi email"
+      icon={Mail}
+      description="Antrean dari inbox Gmail (akun angkasa): diisi otomatis oleh cron OpenClaw AI — agen membaca email mentah, lalu menulis ke database sebagai pending. Review di sini, klasifikasikan, lalu posting ke buku besar (domain yayasan atau pribadi saat menyimpan)."
+      kpi={kpi}
+      kpiCols={5}
+      gap="relaxed"
+    >
+      <NotifikasiClient notifs={notifs} accounts={accounts} />
+    </ListPageLayout>
   );
 }

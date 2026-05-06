@@ -392,7 +392,7 @@ export interface BudgetConfigDoc {
 // ── Email Notification / Pending Transaction ──
 export interface EmailNotifDoc {
   _id: ObjectId;
-  source: "bri" | "bca" | "mega" | "shopee" | "other";
+  source: "bri" | "bca" | "btn" | "mega" | "shopee" | "other";
   email_subject: string;
   email_date: Date;
   parsed_date: Date;
