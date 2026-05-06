@@ -39,3 +39,24 @@ export function dbCollections(db: Db) {
 }
 
 export type DbCollections = ReturnType<typeof dbCollections>;
+
+/**
+ * Ordered physical collection names — must match every key on `DbCollections`.
+ * Use for health probes, admin allowlists, docs.
+ */
+export const DB_COLLECTION_NAMES = [
+  "accounts",
+  "entries",
+  "obligations",
+  "ledgers",
+  "numpang",
+  "users",
+  "agenda",
+  "documents",
+  "ompreng",
+  "pemantauan",
+  "budget_configs",
+  "email_notifs",
+] as const satisfies ReadonlyArray<keyof DbCollections>;
+
+export type DbCollectionName = (typeof DB_COLLECTION_NAMES)[number];
