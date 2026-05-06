@@ -1,5 +1,4 @@
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
+import { getAgendaForOwner } from "@/lib/dal";
 import { requireDashboardSession } from "@/lib/dashboard-auth";
 import { PageHeader } from "@/components/page-header";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
@@ -70,19 +69,7 @@ export default async function AgendaPage({
   const view = (params.view ?? "belum") as "belum" | "selesai" | "semua";
   const kategoriFilter = params.kategori ?? null;
 
-  const c = dbCollections(await getDb());
-  const rawDocs = await c.agenda
-    .find({ owner: "angkasa" })
-    .sort({ due_date: 1, created_at: -1 })
-    .toArray();
-
-  const all = rawDocs.map((d) => ({
-    ...d,
-    _id: d._id.toString(),
-    created_at: d.created_at instanceof Date ? d.created_at.toISOString() : (d.created_at ?? null),
-    updated_at: d.updated_at instanceof Date ? d.updated_at.toISOString() : (d.updated_at ?? null),
-    completed_at: d.completed_at instanceof Date ? d.completed_at.toISOString() : (d.completed_at ?? null),
-  })) as unknown as (AgendaDoc & { completed_at?: string | null })[];
+  const all = await getAgendaForOwner("angkasa") as AgendaDoc[];
 
   const belum = all.filter((a) => a.status === "belum");
   const selesai = all.filter((a) => a.status === "selesai");

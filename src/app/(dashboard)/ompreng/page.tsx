@@ -1,6 +1,5 @@
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
 import { isAdminSession, requireDashboardSession } from "@/lib/dashboard-auth";
+import { getOmprengByMonths } from "@/lib/dal";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
@@ -38,29 +37,7 @@ type OmprengMonthRow = { dapur: DapurLocation; doc: OmprengDoc | undefined };
 export default async function OmprengPage() {
   const session = await requireDashboardSession();
   const isAdmin = isAdminSession(session);
-
-  const c = dbCollections(await getDb());
-
-  const rawDocs = await c.ompreng
-    .find({ month: { $in: MONTHS.map((m) => m.value) } })
-    .sort({ month: 1, dapur: 1 })
-    .toArray();
-
-  const iso = (v: unknown) =>
-    v instanceof Date ? v.toISOString() : typeof v === "string" ? v : "";
-
-  const docs: OmprengDoc[] = rawDocs.map((d) => ({
-    _id: d._id.toString(),
-    dapur: d.dapur as DapurLocation,
-    month: d.month,
-    jumlah_ompreng: d.jumlah_ompreng ?? 0,
-    jumlah_sasaran: d.jumlah_sasaran ?? 0,
-    kekurangan_ompreng: d.kekurangan_ompreng ?? 0,
-    alasan_tambah: d.alasan_tambah ?? "",
-    notes: d.notes ?? "",
-    created_at: iso(d.created_at),
-    updated_at: iso(d.updated_at),
-  }));
+  const docs: OmprengDoc[] = await getOmprengByMonths(MONTHS.map((m) => m.value));
 
   const lookup = new Map<string, OmprengDoc>();
   for (const doc of docs) {

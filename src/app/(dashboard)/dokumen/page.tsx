@@ -1,5 +1,4 @@
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
+import { getDocumentsForOrg } from "@/lib/dal";
 import { requireDashboardSession } from "@/lib/dashboard-auth";
 import { ORG_ID } from "@/lib/config";
 import { PageHeader } from "@/components/page-header";
@@ -42,11 +41,7 @@ export default async function DokumenPage({
   const params = await searchParams;
   const kategoriFilter = params.kategori ?? null;
 
-  const c = dbCollections(await getDb());
-  const all = (await c.documents
-    .find({ org: ORG_ID })
-    .sort({ created_at: -1 })
-    .toArray()) as unknown as DocumentDoc[];
+  const all = await getDocumentsForOrg(ORG_ID) as DocumentDoc[];
 
   const displayed = kategoriFilter
     ? all.filter((d) => (d.kategori ?? "lainnya") === kategoriFilter)

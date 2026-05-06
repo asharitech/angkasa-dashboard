@@ -88,3 +88,38 @@ export interface UserListRow {
   phone?: string;
   created_at: string;
 }
+
+export interface AgendaListItem {
+  _id: string;
+  title: string;
+  description?: string | null;
+  due_date: string;
+  priority: "tinggi" | "sedang" | "rendah";
+  kategori?: string;
+  status: "belum" | "selesai";
+  tags?: string[];
+  completed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface DocumentListItem {
+  _id: string;
+  judul: string;
+  kategori:
+    | "akta"
+    | "sk"
+    | "surat"
+    | "kontrak"
+    | "laporan"
+    | "perizinan"
+    | "keuangan"
+    | "lainnya";
+  keterangan?: string | null;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  file_url: string;
+  created_at: string;
+  updated_at?: string;
+}

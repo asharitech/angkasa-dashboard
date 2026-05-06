@@ -1,6 +1,8 @@
 export type {
+  AgendaListItem,
   BudgetSummary,
   DataQualityReport,
+  DocumentListItem,
   DuplicateGroup,
   DuplicateObligation,
   EmailNotif,
@@ -38,3 +40,6 @@ export { getPengeluaranAngkasa } from "./pengeluaran-angkasa";
 export { getBudgetConfig, getBudgetSummary } from "./budget";
 export { getEmailNotifs, getEmailNotifById, getEmailNotifStats } from "./email-notifs";
 export { getUsersForAdmin } from "./users";
+export { getAgendaForOwner } from "./agenda";
+export { getDocumentsForOrg } from "./documents";
+export { getOmprengByMonths } from "./ompreng";
