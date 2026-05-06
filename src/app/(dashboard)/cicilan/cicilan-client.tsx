@@ -5,7 +5,10 @@ import { formatRupiah } from "@/lib/format";
 import { toggleScheduleMonthAction, updateScheduleAmountAction } from "@/lib/actions/obligations";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
-import { CreditCard, CheckCircle2, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
+import { DashboardSurface } from "@/components/layout/dashboard-surface";
+import { SectionGroupHeader } from "@/components/section-group-header";
+import { cn } from "@/lib/utils";
+import { CreditCard, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
 
 interface ScheduleItem {
   month: string;
@@ -117,22 +120,22 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
       <PageHeader icon={CreditCard} title="Cicilan Bulanan" />
 
       {/* Progress Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {loanProgress.map((loan) => (
-          <div key={loan._id} className="bg-card border rounded-xl p-4 shadow-sm">
+          <DashboardSurface key={loan._id} className="p-4">
             <p className="text-[11px] font-semibold uppercase text-muted-foreground truncate">{loan.item}</p>
             <p className="text-lg font-bold tabular-nums mt-1">{formatRupiah(loan.remaining)}</p>
             <div className="mt-2 h-1.5 w-full bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${loan.pct}%` }} />
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">{loan.paid}/{loan.total} lunas</p>
-          </div>
+          </DashboardSurface>
         ))}
       </div>
 
       {/* Monthly Schedule */}
       <div className="space-y-3">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Jadwal Pembayaran</h3>
+        <SectionGroupHeader label="Jadwal pembayaran" count={months.length} />
 
         {months.map((month) => {
           const items = monthGroups[month];
@@ -143,11 +146,12 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
           const isCurrent = month === currentMonth;
 
           return (
-            <div
+            <DashboardSurface
               key={month}
-              className={`border rounded-xl overflow-hidden transition-all ${
-                isCurrent ? "border-warning bg-warning/5" : "border-border bg-card"
-              }`}
+              className={cn(
+                "overflow-hidden p-0 transition-all",
+                isCurrent ? "border-warning bg-warning/5" : "border-border bg-card",
+              )}
             >
               <button
                 onClick={() => setOpenMonth(isOpen ? null : month)}
@@ -239,7 +243,7 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
                   </div>
                 </div>
               )}
-            </div>
+            </DashboardSurface>
           );
         })}
       </div>
@@ -247,13 +251,13 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
       {/* History */}
       {history.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            Riwayat Lunas ({history.length}x)
-          </h3>
+          <SectionGroupHeader label="Riwayat lunas" count={history.length} />
           <div className="space-y-2">
             {history.map((h, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 border">
+              <DashboardSurface
+                key={idx}
+                className="flex items-center justify-between bg-muted/40 px-3 py-2 shadow-sm"
+              >
                 <div>
                   <p className="text-sm font-medium">{h.loanName}</p>
                   <p className="text-[10px] text-muted-foreground">{monthLabel(h.month)}</p>
@@ -261,7 +265,7 @@ export default function CicilanClientPage({ loans, currentMonth }: CicilanClient
                 <span className="text-sm font-semibold tabular-nums text-muted-foreground line-through">
                   {formatRupiah(h.amount)}
                 </span>
-              </div>
+              </DashboardSurface>
             ))}
           </div>
         </div>
