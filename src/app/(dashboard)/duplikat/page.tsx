@@ -2,6 +2,7 @@ import { findDuplicateEntries } from "@/lib/data";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +38,9 @@ export default async function DuplikatPage({
         </p>
       </div>
 
-      <PeriodPicker basePath="/duplikat" current={period} />
+      <PageToolbar>
+        <PeriodPicker basePath="/duplikat" current={period} />
+      </PageToolbar>
 
       {dupes.length === 0 ? (
         <EmptyState

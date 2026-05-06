@@ -3,9 +3,8 @@ import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";
 import { buildDashboardHref } from "@/lib/dashboard-query";
 import { getSession } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
-import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import type { KpiItem } from "@/components/kpi-strip";
 import { EmptyState } from "@/components/empty-state";
 import { WajibBulananRow } from "@/components/wajib-bulanan-row";
 import { WajibBulananCreateButton } from "@/components/wajib-bulanan-actions";
@@ -13,8 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { MeterBarLabeled } from "@/components/meter-bar";
 import { cn, idString } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, Clock, Wallet, ListChecks, AlertCircle, RotateCcw } from "lucide-react";
-import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
-import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { ListPageLayout } from "@/components/layout/list-page-layout";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { formatIdentifier } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
 
@@ -211,23 +211,26 @@ export default async function WajibBulananPage({
   ];
 
   return (
-    <DashboardPageShell>
-      <PageHeader icon={CalendarDays} title="Wajib Bulanan Yayasan">
+    <ListPageLayout
+      title="Wajib Bulanan Yayasan"
+      icon={CalendarDays}
+      headerActions={
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={sisaAmount > 0 ? "warning" : "success"} className="font-semibold">
             {activeItems.length} aktif · {formatRupiah(sisaAmount)}
           </Badge>
           {isAdmin && <WajibBulananCreateButton />}
         </div>
-      </PageHeader>
-
-      <KpiStrip items={kpis} cols={4} />
-
-      <FilterBar>
-        <FilterTabs tabs={monthTabs} />
-        <FilterTabs tabs={statusTabs} size="sm" />
-      </FilterBar>
-      
+      }
+      kpi={kpis}
+      kpiCols={4}
+      toolbar={
+        <PageToolbar>
+          <FilterTabs tabs={monthTabs} />
+          <FilterTabs tabs={statusTabs} size="sm" />
+        </PageToolbar>
+      }
+    >
       <p className="text-sm text-muted-foreground">
         Menampilkan data untuk <strong>{monthLabel(monthView, "long")}</strong>
       </p>
@@ -252,6 +255,6 @@ export default async function WajibBulananPage({
           ))}
         </div>
       )}
-    </DashboardPageShell>
+    </ListPageLayout>
   );
 }

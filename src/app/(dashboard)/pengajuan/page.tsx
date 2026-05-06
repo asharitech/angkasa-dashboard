@@ -5,18 +5,18 @@ import { formatRupiah } from "@/lib/format";
 import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";
 import { buildDashboardHref } from "@/lib/dashboard-query";
 import { formatRequestorName } from "@/lib/names";
-import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
+import type { KpiItem } from "@/components/kpi-strip";
 import { EmptyState } from "@/components/empty-state";
-import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { ListPageLayout } from "@/components/layout/list-page-layout";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { PengajuanCreateButton } from "@/components/pengajuan-row-actions";
 import { PengajuanAccordionRow } from "@/components/pengajuan-accordion";
 import { Badge } from "@/components/ui/badge";
 import { idString } from "@/lib/utils";
 import { ListSectionTitle } from "@/components/list-section-title";
 import { Receipt, Inbox, ListChecks, Wallet, Users } from "lucide-react";
-import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import type { Obligation, Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -227,23 +227,26 @@ export default async function PengajuanPage({
   ];
 
   return (
-    <DashboardPageShell>
-      <PageHeader icon={Receipt} title="Pengajuan">
+    <ListPageLayout
+      title="Pengajuan"
+      icon={Receipt}
+      headerActions={
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="warning" className="font-semibold">
             {pendingItems.length} pending · {formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0))}
           </Badge>
           {isAdmin && <PengajuanCreateButton />}
         </div>
-      </PageHeader>
-
-      <KpiStrip items={kpis} cols={4} />
-
-      <FilterBar>
-        <FilterTabs tabs={monthTabs} />
-        <FilterTabs tabs={statusTabs} size="sm" />
-      </FilterBar>
-
+      }
+      kpi={kpis}
+      kpiCols={4}
+      toolbar={
+        <PageToolbar>
+          <FilterTabs tabs={monthTabs} />
+          <FilterTabs tabs={statusTabs} size="sm" />
+        </PageToolbar>
+      }
+    >
       <SectionCard
         icon={Receipt}
         title={`Pengajuan ${monthLabel(monthView, "long")}`}
@@ -274,6 +277,6 @@ export default async function PengajuanPage({
           </div>
         )}
       </SectionCard>
-    </DashboardPageShell>
+    </ListPageLayout>
   );
 }

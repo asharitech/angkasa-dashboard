@@ -12,6 +12,7 @@ import { MeterBarLabeled } from "@/components/meter-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { EntryRowActions } from "@/components/entry-row-actions";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import {
   Banknote,
   TrendingDown,
@@ -63,7 +64,9 @@ export default async function DanaCashPage({
     <DashboardPageShell>
       <PageHeader title="Cash Yayasan" icon={Banknote} />
 
-      <PeriodPicker basePath="/dana-cash" current={period} />
+      <PageToolbar>
+        <PeriodPicker basePath="/dana-cash" current={period} />
+      </PageToolbar>
 
       <KpiStrip items={kpis} cols={3} />
 

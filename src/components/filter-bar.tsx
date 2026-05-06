@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PageToolbar } from "@/components/layout/page-toolbar";
+
+export { PageToolbar } from "@/components/layout/page-toolbar";
 
 export type FilterTab = {
   label: string;
@@ -53,6 +56,7 @@ export function FilterTabs({
   );
 }
 
+/** Same as `PageToolbar`; kept for existing imports. */
 export function FilterBar({ children }: { children: React.ReactNode }) {
-  return <div className="space-y-2">{children}</div>;
+  return <PageToolbar>{children}</PageToolbar>;
 }

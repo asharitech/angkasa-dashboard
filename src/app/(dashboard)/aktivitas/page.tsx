@@ -1,9 +1,10 @@
 import { getActivityFeed, getAccounts } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format";
-import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";
-import { FilterBar, FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { FilterTabs, type FilterTab } from "@/components/filter-bar";
+import { ListPageLayout } from "@/components/layout/list-page-layout";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -17,8 +18,6 @@ import { cn } from "@/lib/utils";
 import { FeedEventIcon } from "@/components/feed-event-icon";
 import { Activity, Inbox } from "lucide-react";
 import { SectionGroupHeader } from "@/components/section-group-header";
-import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
-
 export const dynamic = "force-dynamic";
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -93,20 +92,23 @@ export default async function AktivitasPage({
   }
 
   return (
-    <DashboardPageShell>
-      <PageHeader icon={Activity} title="Aktivitas">
+    <ListPageLayout
+      title="Aktivitas"
+      icon={Activity}
+      headerActions={
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground tabular-nums">{events.length} event</span>
           {isAdmin && <EntryCreateButton accounts={accounts} />}
         </div>
-      </PageHeader>
-
-      <FilterBar>
-        <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
-        <FilterTabs tabs={typeTabs} size="sm" />
-        <FilterTabs tabs={domainTabs} size="sm" />
-      </FilterBar>
-
+      }
+      toolbar={
+        <PageToolbar>
+          <PeriodPicker basePath="/aktivitas" current={period} extraParams={periodExtra} />
+          <FilterTabs tabs={typeTabs} size="sm" />
+          <FilterTabs tabs={domainTabs} size="sm" />
+        </PageToolbar>
+      }
+    >
       {events.length === 0 ? (
         <EmptyState
           icon={Inbox}
@@ -166,6 +168,6 @@ export default async function AktivitasPage({
           </section>
         ))
       )}
-    </DashboardPageShell>
+    </ListPageLayout>
   );
 }
