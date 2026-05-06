@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { uploadBuktiAction, deleteBuktiAction } from "@/lib/actions/bukti";
+import { DASHBOARD_DROPZONE_SHELL, DASHBOARD_INSET_PANEL } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
 interface BuktiButtonProps {
@@ -100,7 +101,7 @@ export function BuktiButton({
         <div className="space-y-4">
           {/* Preview area */}
           {currentUrl ? (
-            <div className="rounded-lg border bg-muted/30 overflow-hidden">
+            <div className={cn(DASHBOARD_INSET_PANEL, "overflow-hidden p-0")}>
               {isImage ? (
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -126,7 +127,7 @@ export function BuktiButton({
               )}
             </div>
           ) : (
-            <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
+            <div className={cn(DASHBOARD_DROPZONE_SHELL, "p-8 text-center")}>
               <Paperclip className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">Belum ada bukti terlampir</p>
               <p className="text-xs text-muted-foreground/60 mt-1">

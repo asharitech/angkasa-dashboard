@@ -7,7 +7,7 @@ import { updateAccountBalanceAction } from "@/lib/actions/accounts";
 import { SectionCard } from "@/components/section-card";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
-import { DashboardSurface } from "@/components/layout/dashboard-surface";
+import { DashboardInset, DashboardSurface } from "@/components/layout/dashboard-surface";
 import { PageToolbar } from "@/components/layout/page-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -358,7 +358,10 @@ export default function AnggaranClientPage({
           {editing ? (
              <div className="space-y-3">
                {editDeductions.map((d, i) => (
-                 <div key={i} className="flex flex-col gap-2 p-2 border rounded-md bg-muted/20">
+                 <DashboardInset
+                   key={i}
+                   className="flex flex-col gap-2 rounded-md bg-muted/20 p-2"
+                 >
                    <div className="flex items-center gap-2">
                      <Input 
                        value={d.name} 
@@ -413,7 +416,7 @@ export default function AnggaranClientPage({
                        />
                      </div>
                    )}
-                 </div>
+                 </DashboardInset>
                ))}
                <Button 
                 type="button" 

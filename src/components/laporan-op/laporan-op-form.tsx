@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { DashboardInset } from "@/components/layout/dashboard-surface"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -117,7 +118,7 @@ export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProp
         </div>
       </div>
 
-      <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+      <DashboardInset className="space-y-3 p-4">
         <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Arus Kas (Snapshot Totals)</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -137,7 +138,7 @@ export function LaporanOpForm({ ledger, onSuccess, onCancel }: LaporanOpFormProp
             <Input id="danaEfektif" type="number" value={danaEfektif} onChange={(e) => setDanaEfektif(Number(e.target.value))} />
           </div>
         </div>
-      </div>
+      </DashboardInset>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">

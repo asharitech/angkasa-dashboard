@@ -8,7 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DASHBOARD_CARD_SHELL_SOFT } from "@/lib/dashboard-card-shell";
+import {
+  DASHBOARD_CARD_SHELL_SOFT,
+  DASHBOARD_PLACEHOLDER_SHELL,
+} from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
 type CellAlign = "left" | "right" | "center" | undefined;
@@ -79,7 +82,8 @@ export function DataTable<T>({
     return (
       <div
         className={cn(
-          "flex min-h-[12rem] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/5 px-4 py-8",
+          DASHBOARD_PLACEHOLDER_SHELL,
+          "flex min-h-[12rem] items-center justify-center px-4 py-8",
           bleedMobile && "-mx-4 md:mx-0",
           framed && "shadow-sm",
           className,

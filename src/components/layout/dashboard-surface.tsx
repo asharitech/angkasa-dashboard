@@ -1,9 +1,21 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_SOFT } from "@/lib/dashboard-card-shell";
+import {
+  DASHBOARD_CARD_SHELL,
+  DASHBOARD_CARD_SHELL_SOFT,
+  DASHBOARD_DROPZONE_SHELL,
+  DASHBOARD_INSET_PANEL,
+  DASHBOARD_PLACEHOLDER_SHELL,
+} from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 
-export { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_SOFT };
+export {
+  DASHBOARD_CARD_SHELL,
+  DASHBOARD_CARD_SHELL_SOFT,
+  DASHBOARD_DROPZONE_SHELL,
+  DASHBOARD_INSET_PANEL,
+  DASHBOARD_PLACEHOLDER_SHELL,
+};
 
 /** Standard bordered panel for dashboard metrics and dense blocks. */
 export function DashboardSurface({
@@ -23,6 +35,21 @@ export function DashboardSurface({
 /**
  * Compact dashboard nav tile (Beranda “Akses cepat”, similar grids).
  */
+/** Muted inset panel (rincian inside accordion, form sub-groups). Default padding p-3. */
+export function DashboardInset({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn(DASHBOARD_INSET_PANEL, "p-3", className)}>
+      {children}
+    </div>
+  );
+}
+
 export function DashboardQuickLink({
   href,
   title,

@@ -14,7 +14,11 @@ import { AccountAdjustButton } from "@/components/account-adjust-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
-import { DashboardQuickLink, DashboardSurface } from "@/components/layout/dashboard-surface";
+import {
+  DashboardInset,
+  DashboardQuickLink,
+  DashboardSurface,
+} from "@/components/layout/dashboard-surface";
 import {
   Landmark,
   Building2,
@@ -328,9 +332,9 @@ export default async function DashboardPage() {
               const name = formatRequestorName(r._id) || "—";
               const initials = name === "—" ? "?" : name.slice(0, 2).toUpperCase();
               return (
-                <div
+                <DashboardInset
                   key={r._id}
-                  className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5"
+                  className="flex items-center gap-2.5 px-3 py-2.5"
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
                     {initials}
@@ -347,7 +351,7 @@ export default async function DashboardPage() {
                   <span className="hidden sm:block shrink-0 text-sm font-bold tabular-nums">
                     {formatRupiahCompact(r.total)}
                   </span>
-                </div>
+                </DashboardInset>
               );
             })}
           </div>

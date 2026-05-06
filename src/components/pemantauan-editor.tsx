@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { DASHBOARD_INSET_PANEL } from "@/lib/dashboard-card-shell";
 import { cn } from "@/lib/utils";
 import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
 
@@ -98,12 +99,13 @@ export function PemantauanCard({
   }
 
   return (
-    <div className={cn(
-      "rounded-lg border p-3",
-      doc.temuan.length > 0
-        ? "border-warning/20 bg-warning/5"
-        : "border-border/60 bg-muted/30"
-    )}>
+    <div
+      className={cn(
+        DASHBOARD_INSET_PANEL,
+        "p-3",
+        doc.temuan.length > 0 && "border-warning/20 bg-warning/5",
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">

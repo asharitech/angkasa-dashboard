@@ -12,6 +12,7 @@ import type { Obligation } from "@/lib/types";
 import { markLunasAction, unmarkLunasAction } from "@/lib/actions/obligations";
 import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { DashboardInset } from "@/components/layout/dashboard-surface";
 import { WajibBulananEditButton, WajibBulananDeleteButton } from "./wajib-bulanan-actions";
 import { ACCOUNTS } from "@/lib/config";
 
@@ -237,7 +238,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
         <div className="overflow-hidden">
           <div className="mt-3 space-y-3 pl-11 text-sm">
             {hasDetails && (
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+              <DashboardInset>
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Rincian Pembayaran
                 </p>
@@ -257,7 +258,7 @@ export function WajibBulananRow({ item, index, isAdmin, yayasanAccounts }: Wajib
                     </li>
                   ))}
                 </ul>
-              </div>
+              </DashboardInset>
             )}
 
             {/* Info and actions */}
