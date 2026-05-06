@@ -38,6 +38,8 @@ export type DataTableProps<T> = {
   compact?: boolean;
   caption?: ReactNode;
   footer?: ReactNode;
+  /** Extra classes on each body row (e.g. muted row when data missing). */
+  getRowClassName?: (row: T, index: number) => string | undefined;
 };
 
 function headAlignClass(align: CellAlign): string {
@@ -67,6 +69,7 @@ export function DataTable<T>({
   compact = false,
   caption,
   footer,
+  getRowClassName,
 }: DataTableProps<T>) {
   if (rows.length === 0 && empty != null) {
     return (
@@ -122,7 +125,10 @@ export function DataTable<T>({
           rows.map((row, idx) => (
             <TableRow
               key={rowKey(row, idx)}
-              className="border-border/50 transition-colors hover:bg-muted/35"
+              className={cn(
+                "border-border/50 transition-colors hover:bg-muted/35",
+                getRowClassName?.(row, idx),
+              )}
             >
               {columns.map((c) => (
                 <TableCell

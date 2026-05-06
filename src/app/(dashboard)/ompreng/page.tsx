@@ -8,9 +8,10 @@ import { OmprengAddButton, OmprengRowActions } from "@/components/ompreng-manage
 import { DAPUR_LOCATIONS, DAPUR_LABELS, type DapurLocation, type OmprengDoc } from "@/lib/ompreng-constants";
 import { monthsInclusiveRange, monthLabel } from "@/lib/periods";
 import { UtensilsCrossed, LayoutGrid, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { TableRow, TableCell } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,8 @@ const KPI_RANGE_LABEL = (() => {
   const y = first.slice(0, 4);
   return `${monthToken(first)}–${monthToken(last)} ${y}`;
 })();
+
+type OmprengMonthRow = { dapur: DapurLocation; doc: OmprengDoc | undefined };
 
 export default async function OmprengPage() {
   const session = await getSession();
@@ -99,6 +102,73 @@ export default async function OmprengPage() {
 
       {MONTHS.map((m) => {
         const mt = monthTotals.find((t) => t.month === m.value)!;
+        const rows: OmprengMonthRow[] = DAPUR_LOCATIONS.map((dapur) => ({
+          dapur,
+          doc: lookup.get(`${dapur}::${m.value}`),
+        }));
+
+        const baseColumns: DataTableColumn<OmprengMonthRow>[] = [
+          {
+            key: "dapur",
+            header: "Dapur",
+            nowrap: false,
+            cell: (r) => (
+              <span className={r.doc ? "font-medium" : "font-medium text-muted-foreground"}>
+                {DAPUR_LABELS[r.dapur]}
+              </span>
+            ),
+          },
+          {
+            key: "ompreng",
+            header: "Ompreng",
+            align: "right",
+            cell: (r) => (r.doc ? r.doc.jumlah_ompreng.toLocaleString("id-ID") : "—"),
+          },
+          {
+            key: "sasaran",
+            header: "Sasaran",
+            align: "right",
+            cell: (r) => (r.doc ? r.doc.jumlah_sasaran.toLocaleString("id-ID") : "—"),
+          },
+          {
+            key: "kekurangan",
+            header: "Kekurangan",
+            align: "right",
+            cell: (r) =>
+              r.doc?.kekurangan_ompreng ? (
+                <span className="font-semibold text-warning">
+                  {r.doc.kekurangan_ompreng.toLocaleString("id-ID")}
+                </span>
+              ) : (
+                "—"
+              ),
+          },
+          {
+            key: "alasan",
+            header: "Alasan tambah",
+            nowrap: false,
+            className: "max-w-[220px]",
+            cell: (r) => (
+              <span className="text-xs text-muted-foreground line-clamp-2">
+                {r.doc?.alasan_tambah || "—"}
+              </span>
+            ),
+          },
+        ];
+
+        const columns: DataTableColumn<OmprengMonthRow>[] = isAdmin
+          ? [
+              ...baseColumns,
+              {
+                key: "actions",
+                header: "\u00a0",
+                align: "right",
+                headerClassName: "w-14",
+                className: "w-14",
+                cell: (r) => (r.doc ? <OmprengRowActions row={r.doc} /> : null),
+              },
+            ]
+          : baseColumns;
 
         return (
           <SectionCard
@@ -106,70 +176,47 @@ export default async function OmprengPage() {
             icon={UtensilsCrossed}
             title={m.labelLong}
             tone="info"
+            bodyClassName="px-0 md:px-4"
             badge={
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>Ompreng: <strong className="text-foreground">{mt.total_ompreng.toLocaleString("id-ID")}</strong></span>
-                <span>Sasaran: <strong className="text-foreground">{mt.total_sasaran.toLocaleString("id-ID")}</strong></span>
+                <span>
+                  Ompreng: <strong className="text-foreground">{mt.total_ompreng.toLocaleString("id-ID")}</strong>
+                </span>
+                <span>
+                  Sasaran: <strong className="text-foreground">{mt.total_sasaran.toLocaleString("id-ID")}</strong>
+                </span>
                 {mt.total_kekurangan > 0 && (
-                  <span>Kurang: <strong className="text-warning">{mt.total_kekurangan.toLocaleString("id-ID")}</strong></span>
+                  <span>
+                    Kurang: <strong className="text-warning">{mt.total_kekurangan.toLocaleString("id-ID")}</strong>
+                  </span>
                 )}
               </div>
             }
           >
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/60 text-muted-foreground text-xs">
-                    <th className="py-2 pr-4 text-left font-medium">Dapur</th>
-                    <th className="py-2 px-4 text-right font-medium">Ompreng</th>
-                    <th className="py-2 px-4 text-right font-medium">Sasaran</th>
-                    <th className="py-2 px-4 text-right font-medium">Kekurangan</th>
-                    <th className="py-2 pl-4 text-left font-medium">Alasan Tambah</th>
-                    {isAdmin && <th className="py-2 w-16" />}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {DAPUR_LOCATIONS.map((dapur) => {
-                    const doc = lookup.get(`${dapur}::${m.value}`);
-                    return (
-                      <tr key={dapur} className={cn("transition-colors", !doc && "opacity-40")}>
-                        <td className="py-2 pr-4 font-medium">{DAPUR_LABELS[dapur]}</td>
-                        <td className="py-2 px-4 text-right tabular-nums">
-                          {doc ? doc.jumlah_ompreng.toLocaleString("id-ID") : "—"}
-                        </td>
-                        <td className="py-2 px-4 text-right tabular-nums">
-                          {doc ? doc.jumlah_sasaran.toLocaleString("id-ID") : "—"}
-                        </td>
-                        <td className="py-2 px-4 text-right tabular-nums">
-                          {doc?.kekurangan_ompreng ? (
-                            <span className="text-warning font-semibold">{doc.kekurangan_ompreng.toLocaleString("id-ID")}</span>
-                          ) : "—"}
-                        </td>
-                        <td className="py-2 pl-4 text-muted-foreground text-xs max-w-[200px] truncate">
-                          {doc?.alasan_tambah || "—"}
-                        </td>
-                        {isAdmin && (
-                          <td className="py-2 text-right">
-                            {doc && <OmprengRowActions row={doc} />}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-border font-bold text-sm">
-                    <td className="py-2 pr-4">Total</td>
-                    <td className="py-2 px-4 text-right tabular-nums">{mt.total_ompreng.toLocaleString("id-ID")}</td>
-                    <td className="py-2 px-4 text-right tabular-nums">{mt.total_sasaran.toLocaleString("id-ID")}</td>
-                    <td className="py-2 px-4 text-right tabular-nums text-warning">
-                      {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
-                    </td>
-                    <td colSpan={isAdmin ? 2 : 1} />
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+            <DataTable<OmprengMonthRow>
+              bleedMobile={false}
+              compact
+              minWidth={720}
+              rows={rows}
+              rowKey={(r) => `${m.value}-${r.dapur}`}
+              getRowClassName={(r) => (!r.doc ? "opacity-40" : undefined)}
+              columns={columns}
+              footer={
+                <TableRow className="hover:bg-transparent border-t border-border font-bold">
+                  <TableCell className="py-2">Total</TableCell>
+                  <TableCell className="py-2 text-right tabular-nums">
+                    {mt.total_ompreng.toLocaleString("id-ID")}
+                  </TableCell>
+                  <TableCell className="py-2 text-right tabular-nums">
+                    {mt.total_sasaran.toLocaleString("id-ID")}
+                  </TableCell>
+                  <TableCell className="py-2 text-right tabular-nums text-warning">
+                    {mt.total_kekurangan > 0 ? mt.total_kekurangan.toLocaleString("id-ID") : "—"}
+                  </TableCell>
+                  <TableCell colSpan={isAdmin ? 2 : 1} className="py-2" />
+                </TableRow>
+              }
+            />
           </SectionCard>
         );
       })}

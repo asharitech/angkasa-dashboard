@@ -15,8 +15,9 @@ import { EntryRowActions } from "@/components/entry-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { toneVariant, type Tone } from "@/lib/colors";
 import { cn, idString } from "@/lib/utils";
-import { getSewaStageMeta, getRegionTone, SEWA_LOCATION_REFS } from "@/lib/sewa-meta";
+import { getSewaStageMeta, getRegionTone, SEWA_LOCATION_REFS, type SewaLocationRef } from "@/lib/sewa-meta";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import {
   Building2,
   MapPin,
@@ -30,6 +31,31 @@ import {
   AlertTriangle,
   Inbox,
 } from "lucide-react";
+
+const SEWA_REF_COLUMNS: DataTableColumn<SewaLocationRef>[] = [
+  {
+    key: "code",
+    header: "Kode DB",
+    cell: (l) => <span className="font-semibold">{l.code}</span>,
+  },
+  {
+    key: "bgn",
+    header: "BGN",
+    cell: (l) => <span className="text-muted-foreground">{l.bgn}</span>,
+  },
+  { key: "name", header: "Nama", cell: (l) => l.name },
+  {
+    key: "region",
+    header: "Region",
+    cell: (l) => <span className="text-muted-foreground">{l.region}</span>,
+  },
+  {
+    key: "holder",
+    header: "Via",
+    nowrap: false,
+    cell: (l) => <span className="text-muted-foreground">{l.holder}</span>,
+  },
+];
 
 export default async function SewaPage({
   searchParams,
@@ -319,30 +345,13 @@ return (
         }
         referensi={
           <SectionCard icon={BookOpen} title="Referensi Kode Lokasi" bodyClassName="px-0 md:px-4">
-            <div className="-mx-4 overflow-x-auto md:mx-0">
-              <table className="w-full text-sm" style={{ minWidth: "560px" }}>
-                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Kode DB</th>
-                    <th className="px-3 py-2 text-left font-medium">BGN</th>
-                    <th className="px-3 py-2 text-left font-medium">Nama</th>
-                    <th className="px-3 py-2 text-left font-medium">Region</th>
-                    <th className="px-3 py-2 text-left font-medium">Via</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {SEWA_LOCATION_REFS.map((l) => (
-                    <tr key={l.code} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 font-semibold">{l.code}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.bgn}</td>
-                      <td className="px-3 py-2">{l.name}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.region}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.holder}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable<SewaLocationRef>
+              bleedMobile={false}
+              minWidth={560}
+              rows={SEWA_LOCATION_REFS}
+              rowKey={(l) => l.code}
+              columns={SEWA_REF_COLUMNS}
+            />
           </SectionCard>
         }
       />
