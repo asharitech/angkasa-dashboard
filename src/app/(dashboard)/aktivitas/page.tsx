@@ -4,6 +4,7 @@ import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format"
 import { PeriodPicker } from "@/components/period-picker";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { ListPageLayout } from "@/components/layout/list-page-layout";
+import { PageHeaderActions } from "@/components/layout/page-header-actions";
 import { PageToolbar } from "@/components/layout/page-toolbar";
 import { SectionCard } from "@/components/section-card";
 import { EmptyState } from "@/components/empty-state";
@@ -96,10 +97,10 @@ export default async function AktivitasPage({
       title="Aktivitas"
       icon={Activity}
       headerActions={
-        <div className="flex items-center gap-3">
+        <PageHeaderActions wrap={false} className="gap-3">
           <span className="text-xs text-muted-foreground tabular-nums">{events.length} event</span>
           {isAdmin && <EntryCreateButton accounts={accounts} />}
-        </div>
+        </PageHeaderActions>
       }
       toolbar={
         <PageToolbar>

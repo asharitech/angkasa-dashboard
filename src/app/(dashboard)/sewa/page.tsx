@@ -17,6 +17,7 @@ import { toneVariant, type Tone } from "@/lib/colors";
 import { cn, idString } from "@/lib/utils";
 import { getSewaStageMeta, getRegionTone, SEWA_LOCATION_REFS, type SewaLocationRef } from "@/lib/sewa-meta";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import {
   Building2,
@@ -145,7 +146,11 @@ return (
         </div>
       </PageHeader>
 
-      {sewaHistory.length > 1 && <FilterTabs tabs={tahapTabs} />}
+      {sewaHistory.length > 1 && (
+        <PageToolbar>
+          <FilterTabs tabs={tahapTabs} />
+        </PageToolbar>
+      )}
 
       <KpiStrip items={kpis} cols={3} />
 

@@ -14,6 +14,7 @@ import { cn, idString } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, Clock, Wallet, ListChecks, AlertCircle, RotateCcw } from "lucide-react";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { ListPageLayout } from "@/components/layout/list-page-layout";
+import { PageHeaderActions } from "@/components/layout/page-header-actions";
 import { PageToolbar } from "@/components/layout/page-toolbar";
 import { formatIdentifier } from "@/lib/names";
 import type { Obligation } from "@/lib/types";
@@ -215,12 +216,12 @@ export default async function WajibBulananPage({
       title="Wajib Bulanan Yayasan"
       icon={CalendarDays}
       headerActions={
-        <div className="flex flex-wrap items-center gap-2">
+        <PageHeaderActions>
           <Badge variant={sisaAmount > 0 ? "warning" : "success"} className="font-semibold">
             {activeItems.length} aktif · {formatRupiah(sisaAmount)}
           </Badge>
           {isAdmin && <WajibBulananCreateButton />}
-        </div>
+        </PageHeaderActions>
       }
       kpi={kpis}
       kpiCols={4}

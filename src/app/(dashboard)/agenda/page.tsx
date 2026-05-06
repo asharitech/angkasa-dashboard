@@ -12,6 +12,7 @@ import { MeterBar, agendaMeterFillClass } from "@/components/meter-bar";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { KategoriChips } from "@/components/kategori-chips";
 import { SectionGroupHeader } from "@/components/section-group-header";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { cn } from "@/lib/utils";
 import type { AgendaKategori } from "@/lib/actions/agenda";
 import { CalendarCheck2, ListChecks, AlertCircle } from "lucide-react";
@@ -161,17 +162,18 @@ export default async function AgendaPage({
         </div>
       )}
 
-      <FilterTabs tabs={tabs} />
-
-      {baseItems.length > 0 && (
-        <KategoriChips
-          items={baseItems}
-          getKey={(a) => (a.kategori ?? "lainnya") as string}
-          configMap={KATEGORI_CONFIG as Record<string, { label: string; emoji: string; cls: string }>}
-          activeKey={kategoriFilter}
-          baseHref={baseHref}
-        />
-      )}
+      <PageToolbar>
+        <FilterTabs tabs={tabs} />
+        {baseItems.length > 0 && (
+          <KategoriChips
+            items={baseItems}
+            getKey={(a) => (a.kategori ?? "lainnya") as string}
+            configMap={KATEGORI_CONFIG as Record<string, { label: string; emoji: string; cls: string }>}
+            activeKey={kategoriFilter}
+            baseHref={baseHref}
+          />
+        )}
+      </PageToolbar>
 
       {displayed.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/60 py-16 text-center">

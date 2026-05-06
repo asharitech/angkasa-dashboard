@@ -10,6 +10,7 @@ import type { KpiItem } from "@/components/kpi-strip";
 import { EmptyState } from "@/components/empty-state";
 import { FilterTabs, type FilterTab } from "@/components/filter-bar";
 import { ListPageLayout } from "@/components/layout/list-page-layout";
+import { PageHeaderActions } from "@/components/layout/page-header-actions";
 import { PageToolbar } from "@/components/layout/page-toolbar";
 import { PengajuanCreateButton } from "@/components/pengajuan-row-actions";
 import { PengajuanAccordionRow } from "@/components/pengajuan-accordion";
@@ -231,12 +232,12 @@ export default async function PengajuanPage({
       title="Pengajuan"
       icon={Receipt}
       headerActions={
-        <div className="flex flex-wrap items-center gap-2">
+        <PageHeaderActions>
           <Badge variant="warning" className="font-semibold">
             {pendingItems.length} pending · {formatRupiah(pendingItems.reduce((s, o) => s + (o.amount ?? 0), 0))}
           </Badge>
           {isAdmin && <PengajuanCreateButton />}
-        </div>
+        </PageHeaderActions>
       }
       kpi={kpis}
       kpiCols={4}
