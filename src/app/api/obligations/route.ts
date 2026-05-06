@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fail, ok } from "@/lib/api/route-helpers";
 import { getObligations } from "@/lib/dal";
 
 export async function GET(request: Request) {
@@ -15,12 +15,9 @@ export async function GET(request: Request) {
 
     const obligations = await getObligations(filter);
 
-    return NextResponse.json(obligations);
+    return ok(obligations);
   } catch (error) {
     console.error("Failed to fetch obligations:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch obligations" },
-      { status: 500 }
-    );
+    return fail("Failed to fetch obligations");
   }
 }

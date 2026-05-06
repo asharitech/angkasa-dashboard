@@ -1,14 +1,6 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ObjectId } from "mongodb";
 import { getCollections } from "@/lib/dal/context";
-
-function ok(data: unknown) {
-  return NextResponse.json(data);
-}
-function err(message: string, status = 500) {
-  return NextResponse.json({ error: message }, { status });
-}
+import { fail, ok, parseObjectId } from "@/lib/api/route-helpers";
 
 export async function PUT(
   req: NextRequest,
@@ -16,6 +8,8 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    const objectId = parseObjectId(id);
+    if (!objectId) return fail("ID tidak valid", 400);
     const body = await req.json();
     const c = await getCollections();
 
@@ -29,14 +23,14 @@ export async function PUT(
     if (body.notes !== undefined) update.notes = body.notes;
 
     const result = await c.pemantauan.updateOne(
-      { _id: new ObjectId(id) },
+      { _id: objectId },
       { $set: update }
     );
 
-    if (result.matchedCount === 0) return err("Not found", 404);
+    if (result.matchedCount === 0) return fail("Not found", 404);
     return ok({ success: true });
   } catch (e) {
-    return err(String(e));
+    return fail(String(e));
   }
 }
 
@@ -46,11 +40,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const objectId = parseObjectId(id);
+    if (!objectId) return fail("ID tidak valid", 400);
     const c = await getCollections();
-    const result = await c.pemantauan.deleteOne({ _id: new ObjectId(id) });
-    if (result.deletedCount === 0) return err("Not found", 404);
+    const result = await c.pemantauan.deleteOne({ _id: objectId });
+    if (result.deletedCount === 0) return fail("Not found", 404);
     return ok({ success: true });
   } catch (e) {
-    return err(String(e));
+    return fail(String(e));
   }
 }

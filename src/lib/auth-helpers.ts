@@ -1,31 +1,32 @@
-import { getSession, type SessionPayload } from "./auth";
+import { getSession, type SessionPayload } from "@/lib/auth";
 
+/** Thrown by `requireAdmin` when the caller is not allowed (API routes). */
 export class AuthError extends Error {
-  status: number;
-  constructor(message: string, status = 403) {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
     super(message);
     this.name = "AuthError";
-    this.status = status;
   }
 }
 
 /**
- * Guard for server actions and route handlers that require an admin session.
- * Throws AuthError (401 if no session, 403 if non-admin) so callers can
- * rethrow or translate to a user-facing message.
+ * Require an authenticated session with role `admin`.
+ * Matches prior `/api/users` behavior: 403 + "Unauthorized" when missing or non-admin.
  */
 export async function requireAdmin(): Promise<SessionPayload> {
   const session = await getSession();
-  if (!session) throw new AuthError("Sesi tidak valid", 401);
-  if (session.role !== "admin") throw new AuthError("Hanya admin yang dapat melakukan aksi ini", 403);
+  if (!session || session.role !== "admin") {
+    throw new AuthError("Unauthorized", 403);
+  }
   return session;
 }
 
-/**
- * Translate unknown errors thrown inside a server action into a user-facing
- * { error } shape. Keeps form code free of try/catch boilerplate.
- */
-export function actionError(err: unknown): { error: string } {
-  if (err instanceof Error) return { error: err.message };
+/** Normalizes server-action catch values into `{ error: string }`. */
+export function actionError(e: unknown): { error: string } {
+  if (e instanceof AuthError) return { error: e.message };
+  if (typeof e === "string") return { error: e };
+  if (e instanceof Error) return { error: e.message };
   return { error: "Terjadi kesalahan" };
 }

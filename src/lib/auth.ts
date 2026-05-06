@@ -1,7 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { getDb } from "./mongodb";
-import { dbCollections } from "./db/collections";
+import { getCollections } from "@/lib/dal/context";
 import bcrypt from "bcryptjs";
 
 if (!process.env.JWT_SECRET) {
@@ -54,7 +53,7 @@ export async function login(
   username: string,
   password: string
 ): Promise<{ success: boolean; error?: string; user?: User }> {
-  const c = dbCollections(await getDb());
+  const c = await getCollections();
   const user = await c.users.findOne({ username });
   if (!user) return { success: false, error: "Username tidak ditemukan" };
 

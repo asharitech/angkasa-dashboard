@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
+import type { Document, Filter } from "mongodb";
 import { requireAdmin, AuthError } from "@/lib/auth-helpers";
+import { fail, ok, mongoIdFilter } from "@/lib/api/route-helpers";
 import { ADMIN_RAW_COLLECTION_SET } from "@/lib/admin-raw-collections";
 import { getDb } from "@/lib/mongodb";
 
@@ -12,31 +12,29 @@ export async function GET(req: Request) {
     const id = searchParams.get("id");
 
     if (!collectionName || !id) {
-      return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
+      return fail("Missing parameters", 400);
     }
     if (!ADMIN_RAW_COLLECTION_SET.has(collectionName)) {
-      return NextResponse.json({ error: "Koleksi tidak diizinkan" }, { status: 400 });
+      return fail("Koleksi tidak diizinkan", 400);
     }
     const db = await getDb();
-    const collection = db.collection<{ _id: ObjectId | string }>(collectionName);
+    const collection = db.collection(collectionName);
 
-    const idFilter = {
-      _id: id.length === 24 ? new ObjectId(id) : id,
-    };
-    const doc = await collection.findOne(idFilter);
+    const doc = await collection.findOne(
+      mongoIdFilter(id) as Filter<Document>,
+    );
 
     if (!doc) {
-      return NextResponse.json({ error: "Dokumen tidak ditemukan" }, { status: 404 });
+      return fail("Dokumen tidak ditemukan", 404);
     }
 
-    return NextResponse.json({ doc });
+    return ok({ doc });
   } catch (err: unknown) {
     if (err instanceof AuthError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
+      return fail(err.message, err.status);
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Gagal mengambil dokumen" },
-      { status: 500 }
+    return fail(
+      err instanceof Error ? err.message : "Gagal mengambil dokumen",
     );
   }
 }

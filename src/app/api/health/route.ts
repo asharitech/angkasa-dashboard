@@ -1,3 +1,4 @@
+import { ok } from "@/lib/api/route-helpers";
 import { getCollections } from "@/lib/dal/context";
 import { getDb } from "@/lib/mongodb";
 
@@ -14,11 +15,11 @@ export async function GET() {
       obligations: await c.obligations.countDocuments(),
       ledgers: await c.ledgers.countDocuments(),
     };
-    return Response.json({ status: "ok", db: counts });
+    return ok({ status: "ok", db: counts });
   } catch (e) {
     return Response.json(
       { status: "error", message: (e as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

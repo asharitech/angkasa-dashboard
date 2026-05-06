@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { getCollections } from "@/lib/dal/context";
+import { fail, ok } from "@/lib/api/route-helpers";
 
 export async function GET() {
   try {
     const c = await getCollections();
     const docs = await c.pemantauan.find().sort({ holder: 1, lokasi_code: 1 }).toArray();
-    return NextResponse.json(docs);
+    return ok(docs);
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return fail(String(err));
   }
 }
 
@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     };
 
     await c.pemantauan.insertOne(doc);
-    return NextResponse.json(doc, { status: 201 });
+    return ok(doc, 201);
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return fail(String(err));
   }
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fail, ok } from "@/lib/api/route-helpers";
 import { validateObligationData } from "@/lib/dal";
 
 export async function GET(request: Request) {
@@ -11,12 +11,9 @@ export async function GET(request: Request) {
 
     const report = await validateObligationData(opts);
 
-    return NextResponse.json(report);
+    return ok(report);
   } catch (error) {
     console.error("Failed to generate quality report:", error);
-    return NextResponse.json(
-      { error: "Failed to generate quality report" },
-      { status: 500 }
-    );
+    return fail("Failed to generate quality report");
   }
 }
