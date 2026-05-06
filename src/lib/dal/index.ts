@@ -5,6 +5,7 @@ export type {
   DuplicateObligation,
   EmailNotif,
   LaporanOpReconciliation,
+  UserListRow,
 } from "./types";
 
 export { getPemantauan } from "./pemantauan";
@@ -36,3 +37,4 @@ export {
 export { getPengeluaranAngkasa } from "./pengeluaran-angkasa";
 export { getBudgetConfig, getBudgetSummary } from "./budget";
 export { getEmailNotifs, getEmailNotifById, getEmailNotifStats } from "./email-notifs";
+export { getUsersForAdmin } from "./users";

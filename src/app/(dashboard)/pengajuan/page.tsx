@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getObligations, getAccounts } from "@/lib/data";
+import { getObligations, getAccounts } from "@/lib/dal";
 import { getSession } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
 import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";

@@ -79,3 +79,12 @@ export type EmailNotif = {
   reviewed_by?: string;
   reviewed_at?: string;
 };
+
+export interface UserListRow {
+  _id: string;
+  username: string;
+  name: string;
+  role: "admin" | "viewer";
+  phone?: string;
+  created_at: string;
+}

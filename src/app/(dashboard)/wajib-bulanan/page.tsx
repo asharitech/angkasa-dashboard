@@ -1,4 +1,4 @@
-import { getWajibBulanan, getAccounts } from "@/lib/data";
+import { getWajibBulanan, getAccounts } from "@/lib/dal";
 import { monthLabel, recentMonths, currentWitaMonth } from "@/lib/periods";
 import { buildDashboardHref } from "@/lib/dashboard-query";
 import { getSession } from "@/lib/auth";

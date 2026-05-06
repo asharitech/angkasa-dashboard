@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getDanaCashSummary, type DanaCashPengeluaranRow } from "@/lib/dana-cash";
-import { getAccounts } from "@/lib/data";
+import { getAccounts } from "@/lib/dal";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";

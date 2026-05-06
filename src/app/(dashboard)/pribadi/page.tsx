@@ -1,4 +1,4 @@
-import { getPengeluaranAngkasa, getAccounts } from "@/lib/data";
+import { getPengeluaranAngkasa, getAccounts } from "@/lib/dal";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
 import { PribadiClient } from "./pribadi-client";
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAccounts } from "@/lib/data";
+import { getAccounts } from "@/lib/dal";
 import { getSession } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";

@@ -1,4 +1,4 @@
-import { getObligations } from "@/lib/data";
+import { getObligations } from "@/lib/dal";
 import CicilanClientPage from "./cicilan-client";
 
 export const dynamic = "force-dynamic";

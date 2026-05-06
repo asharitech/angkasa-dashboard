@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage, getAccounts } from "@/lib/data";
+import { getLedger, getLedgerByCode, getSewaHistory, getSewaDanaUsage, getAccounts } from "@/lib/dal";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatDateShort, formatDateRange } from "@/lib/format";
 import { formatRequestorName } from "@/lib/names";

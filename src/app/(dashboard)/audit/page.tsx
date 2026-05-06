@@ -1,4 +1,4 @@
-import { getDataIntegrityIssues } from "@/lib/data";
+import { getDataIntegrityIssues } from "@/lib/dal";
 import { PageHeader } from "@/components/page-header";
 import { KpiStrip, type KpiItem } from "@/components/kpi-strip";
 import { SectionCard } from "@/components/section-card";

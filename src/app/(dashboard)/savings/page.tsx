@@ -1,4 +1,4 @@
-import { getEntries, getAccounts } from "@/lib/data";
+import { getEntries, getAccounts } from "@/lib/dal";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { idString } from "@/lib/utils";
 import { SectionCard } from "@/components/section-card";

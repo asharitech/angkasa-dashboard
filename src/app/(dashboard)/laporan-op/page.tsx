@@ -7,7 +7,7 @@ import {
   getDashboardTrend,
   getLaporanOpPeriods,
   getLaporanOpMonthlyFlow,
-} from "@/lib/data"
+} from "@/lib/dal"
 import { getSession } from "@/lib/auth"
 import { formatRupiahCompact, formatDate } from "@/lib/format"
 import { formatPeriodLabel } from "@/lib/period"

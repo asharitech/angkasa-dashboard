@@ -4,7 +4,7 @@ import {
   getDataIntegrityIssues,
   getLaporanOpReconciliation,
   getEmailNotifStats,
-} from "@/lib/data";
+} from "@/lib/dal";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRupiahCompact } from "@/lib/format"
 import { kewajibanRows } from "@/lib/kewajiban-display";

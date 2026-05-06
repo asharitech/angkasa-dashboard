@@ -25,7 +25,7 @@ import {
 import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { updateEmailNotifAction, approveEmailNotifAction, deleteEmailNotifAction } from "@/lib/actions/email-notifs";
 import { formatRupiah, formatDateTime } from "@/lib/format";
-import type { EmailNotif } from "@/lib/data";
+import type { EmailNotif } from "@/lib/dal";
 import type { Account } from "@/lib/types";
 import { idString, cn } from "@/lib/utils";
 import {

@@ -1,4 +1,4 @@
-import { getActivityFeed, getAccounts } from "@/lib/data";
+import { getActivityFeed, getAccounts } from "@/lib/dal";
 import { getSession } from "@/lib/auth";
 import { formatRupiah, formatRelativeTime, formatDateShort } from "@/lib/format";
 import { PeriodPicker } from "@/components/period-picker";

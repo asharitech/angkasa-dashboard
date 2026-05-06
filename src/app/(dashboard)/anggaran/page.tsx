@@ -1,4 +1,4 @@
-import { getBudgetSummary } from "@/lib/data";
+import { getBudgetSummary } from "@/lib/dal";
 import { recentMonths, currentWitaMonth } from "@/lib/periods";
 import AnggaranClientPage from "./anggaran-client";
 

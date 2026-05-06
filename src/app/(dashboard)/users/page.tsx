@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { Shield, Users } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { getDb } from "@/lib/mongodb";
-import { dbCollections } from "@/lib/db/collections";
+import { getUsersForAdmin } from "@/lib/dal";
 import { ForbiddenState } from "@/components/forbidden-state";
 import { PageHeader } from "@/components/page-header";
 import { UsersManager, type UserRow } from "@/components/users-manager";
@@ -23,23 +22,7 @@ export default async function UsersPage() {
     );
   }
 
-  const c = dbCollections(await getDb());
-  const rows = await c.users
-    .find({}, { projection: { password_hash: 0 } })
-    .sort({ created_at: -1 })
-    .toArray();
-
-  const users: UserRow[] = rows.map((u) => ({
-    _id: String(u._id),
-    username: String(u.username ?? ""),
-    name: String(u.name ?? ""),
-    role: u.role === "admin" ? "admin" : "viewer",
-    phone: u.phone ? String(u.phone) : undefined,
-    created_at:
-      u.created_at instanceof Date
-        ? u.created_at.toISOString()
-        : String(u.created_at ?? ""),
-  }));
+  const users: UserRow[] = await getUsersForAdmin();
 
   return (
     <DashboardPageShell>

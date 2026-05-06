@@ -1,4 +1,4 @@
-import { findDuplicateEntries } from "@/lib/data";
+import { findDuplicateEntries } from "@/lib/dal";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { PeriodPicker } from "@/components/period-picker";

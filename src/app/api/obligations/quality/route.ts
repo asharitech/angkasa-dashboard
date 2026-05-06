@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateObligationData } from "@/lib/data";
+import { validateObligationData } from "@/lib/dal";
 
 export async function GET(request: Request) {
   try {

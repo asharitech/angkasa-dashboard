@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getEmailNotifs, getEmailNotifStats, getAccounts } from "@/lib/data";
+import { getEmailNotifs, getEmailNotifStats, getAccounts } from "@/lib/dal";
 import { NotifikasiClient } from "./notifikasi-client";
 import { PageHeader } from "@/components/page-header";
 import { DashboardPageShell } from "@/components/layout/dashboard-page-shell";
